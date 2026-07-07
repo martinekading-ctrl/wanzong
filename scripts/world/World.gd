@@ -21,6 +21,33 @@ const GRID_SIZE: float = 256.0
 # 资源点与宗门之间的最小距离，避免图标重叠。
 const RESOURCE_MIN_DISTANCE_TO_SECT: float = 250.0
 
+# 地图层，只放地图绘制节点。
+@onready var map_layer: Node2D = $MapLayer
+
+# 领地层，只放宗门领地范围。
+@onready var territory_layer: Node2D = $TerritoryLayer
+
+# 资源层，只放灵矿、灵脉、灵草地、秘境入口。
+@onready var resource_layer: Node2D = $ResourceLayer
+
+# 建设点层，只放可建设空地。
+@onready var build_slot_layer: Node2D = $BuildSlotLayer
+
+# 宗门层，只放宗门节点。
+@onready var sect_layer: Node2D = $SectLayer
+
+# 角色层，以后放弟子、妖兽、NPC。
+@onready var character_layer: Node2D = $CharacterLayer
+
+# 建筑层，以后放宗门建筑。
+@onready var building_layer: Node2D = $BuildingLayer
+
+# 特效层，以后放攻击特效、天气、动画、伤害数字。
+@onready var effect_layer: Node2D = $EffectLayer
+
+# UI 层，只放信息面板、以后的小地图、时间、按钮。
+@onready var ui_layer: CanvasLayer = $UILayer
+
 # 世界镜头。
 @onready var world_camera: Camera2D = $WorldCamera
 
@@ -45,20 +72,21 @@ func _ready() -> void:
 	_create_build_slot_nodes()
 	_create_sect_nodes()
 	_show_empty_panel()
-	queue_redraw()
+	map_layer.draw.connect(_on_map_layer_draw)
+	map_layer.queue_redraw()
 
 
 # 绘制绿色地图底色、网格和边界。
-func _draw() -> void:
-	draw_rect(Rect2(Vector2.ZERO, MAP_SIZE), Color(0.16, 0.32, 0.18), true)
+func _on_map_layer_draw() -> void:
+	map_layer.draw_rect(Rect2(Vector2.ZERO, MAP_SIZE), Color(0.16, 0.32, 0.18), true)
 
 	for x in range(0, int(MAP_SIZE.x) + 1, int(GRID_SIZE)):
-		draw_line(Vector2(x, 0), Vector2(x, MAP_SIZE.y), Color(0.25, 0.42, 0.25), 2.0)
+		map_layer.draw_line(Vector2(x, 0), Vector2(x, MAP_SIZE.y), Color(0.25, 0.42, 0.25), 2.0)
 
 	for y in range(0, int(MAP_SIZE.y) + 1, int(GRID_SIZE)):
-		draw_line(Vector2(0, y), Vector2(MAP_SIZE.x, y), Color(0.25, 0.42, 0.25), 2.0)
+		map_layer.draw_line(Vector2(0, y), Vector2(MAP_SIZE.x, y), Color(0.25, 0.42, 0.25), 2.0)
 
-	draw_rect(Rect2(Vector2.ZERO, MAP_SIZE), Color(0.72, 0.86, 0.62), false, 6.0)
+	map_layer.draw_rect(Rect2(Vector2.ZERO, MAP_SIZE), Color(0.72, 0.86, 0.62), false, 6.0)
 
 
 # 创建地图上的宗门据点。
@@ -67,7 +95,7 @@ func _create_sect_nodes() -> void:
 		var sect_node: SectNode = SectNodeScript.new()
 		sect_node.setup(sect_data)
 		sect_node.selected.connect(_on_sect_selected)
-		add_child(sect_node)
+		sect_layer.add_child(sect_node)
 
 
 # 创建宗门领地范围，先生成它们，保证显示在图标和文字下方。
@@ -75,7 +103,7 @@ func _create_territory_areas() -> void:
 	for sect_data in WorldDataManager.get_all_sects():
 		var territory_area: TerritoryArea = TerritoryAreaScript.new()
 		territory_area.setup(sect_data)
-		add_child(territory_area)
+		territory_layer.add_child(territory_area)
 
 
 # 创建地图上的资源点。
@@ -84,7 +112,7 @@ func _create_resource_nodes() -> void:
 		var resource_node: ResourceNode = ResourceNodeScript.new()
 		resource_node.setup(resource_data)
 		resource_node.selected.connect(_on_resource_selected)
-		add_child(resource_node)
+		resource_layer.add_child(resource_node)
 
 
 # 创建玩家宗门建设点。
@@ -93,7 +121,7 @@ func _create_build_slot_nodes() -> void:
 		var build_slot_node: BuildSlotNode = BuildSlotNodeScript.new()
 		build_slot_node.setup(slot_data)
 		build_slot_node.selected.connect(_on_build_slot_selected)
-		add_child(build_slot_node)
+		build_slot_layer.add_child(build_slot_node)
 
 
 # 未选择对象时，信息面板显示地图概况。

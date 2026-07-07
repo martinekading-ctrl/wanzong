@@ -6,10 +6,21 @@
 [node name="World" type="Node2D"]
 script = ExtResource("1_world")
 
-[node name="WorldCamera" type="Camera2D" parent="."]
-position = Vector2(2048, 2048)
-enabled = true
-script = ExtResource("2_world_camera")
+[node name="MapLayer" type="Node2D" parent="."]
+
+[node name="TerritoryLayer" type="Node2D" parent="."]
+
+[node name="ResourceLayer" type="Node2D" parent="."]
+
+[node name="BuildSlotLayer" type="Node2D" parent="."]
+
+[node name="SectLayer" type="Node2D" parent="."]
+
+[node name="CharacterLayer" type="Node2D" parent="."]
+
+[node name="BuildingLayer" type="Node2D" parent="."]
+
+[node name="EffectLayer" type="Node2D" parent="."]
 
 [node name="UILayer" type="CanvasLayer" parent="."]
 
@@ -61,3 +72,8 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "点击地图上的宗门查看信息"
 autowrap_mode = 3
+
+[node name="WorldCamera" type="Camera2D" parent="."]
+position = Vector2(2048, 2048)
+enabled = true
+script = ExtResource("2_world_camera")
