@@ -1,13 +1,13 @@
 extends Camera2D
 
-# 地图尺寸，由 WorldMap 设置。
-var map_size: Vector2 = Vector2(4000, 4000)
+# 地图尺寸，由 World 设置。
+var map_size: Vector2 = Vector2(4096, 4096)
 
 # 镜头移动速度。
 var move_speed: float = 900.0
 
 # 镜头最小缩放，数值越小视野越大。
-var min_zoom: float = 0.35
+var min_zoom: float = 0.32
 
 # 镜头最大缩放，数值越大视野越近。
 var max_zoom: float = 1.8
@@ -16,7 +16,7 @@ var max_zoom: float = 1.8
 var zoom_step: float = 0.12
 
 # 初始缩放，进入地图时先看到完整原型布局。
-var start_zoom: float = 0.45
+var start_zoom: float = 0.36
 
 # 鼠标是否正在拖动镜头。
 var is_dragging: bool = false
@@ -47,14 +47,14 @@ func _process(delta: float) -> void:
 		_clamp_camera_position()
 
 
-# 处理滚轮缩放和鼠标拖动镜头。
+# 处理滚轮缩放和鼠标中键拖动镜头。
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_WHEEL_UP and event.pressed:
 			_set_zoom(zoom.x + zoom_step)
 		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN and event.pressed:
 			_set_zoom(zoom.x - zoom_step)
-		elif event.button_index == MOUSE_BUTTON_MIDDLE or event.button_index == MOUSE_BUTTON_RIGHT:
+		elif event.button_index == MOUSE_BUTTON_MIDDLE:
 			is_dragging = event.pressed
 
 	if event is InputEventMouseMotion and is_dragging:

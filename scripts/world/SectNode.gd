@@ -24,17 +24,17 @@ func setup(data: Dictionary) -> void:
 	queue_redraw()
 
 
-# 绘制宗门据点图标，玩家宗门使用金色，AI 宗门使用蓝色。
+# 绘制宗门据点图标，玩家宗门使用绿色，AI 宗门使用蓝色。
 func _draw() -> void:
 	var is_player: bool = bool(sect_data.get("is_player", false))
-	var fill_color: Color = Color(0.95, 0.78, 0.20) if is_player else Color(0.25, 0.55, 0.95)
-	var border_color: Color = Color(1.0, 0.95, 0.70) if is_player else Color(0.70, 0.86, 1.0)
+	var fill_color: Color = Color(0.20, 0.85, 0.35) if is_player else Color(0.25, 0.55, 0.95)
+	var border_color: Color = Color(0.75, 1.0, 0.78) if is_player else Color(0.70, 0.86, 1.0)
 
 	draw_circle(Vector2.ZERO, NODE_RADIUS, fill_color)
 	draw_arc(Vector2.ZERO, NODE_RADIUS, 0.0, TAU, 48, border_color, 4.0)
 
 	if is_player:
-		draw_circle(Vector2.ZERO, 12.0, Color(1.0, 0.95, 0.55))
+		draw_circle(Vector2.ZERO, 12.0, Color(0.78, 1.0, 0.55))
 	else:
 		draw_rect(Rect2(Vector2(-10, -10), Vector2(20, 20)), Color(0.75, 0.90, 1.0), true)
 

@@ -6,8 +6,8 @@ const MAIN_MENU_SCENE: String = "res://scenes/ui/MainMenu.tscn"
 # 宗门主界面场景路径。
 const SECT_MAIN_SCENE: String = "res://scenes/sect/SectMain.tscn"
 
-# 俯视大地图场景路径。
-const WORLD_MAP_SCENE: String = "res://scenes/world/WorldMap.tscn"
+# 世界地图场景路径。
+const WORLD_SCENE: String = "res://scenes/world/World.tscn"
 
 # 游戏常驻根节点 Main。
 var main_root: Node = null
@@ -34,7 +34,7 @@ func go_to_sect_main() -> void:
 
 # 切换到俯视大地图。
 func go_to_world_map() -> void:
-	_change_page(WORLD_MAP_SCENE)
+	_change_page(WORLD_SCENE)
 
 
 # 退出游戏。
