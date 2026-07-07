@@ -3,9 +3,6 @@ extends Node
 # 主菜单场景路径。
 const MAIN_MENU_SCENE: String = "res://scenes/ui/MainMenu.tscn"
 
-# 宗门主界面场景路径。
-const SECT_MAIN_SCENE: String = "res://scenes/sect/SectMain.tscn"
-
 # 世界地图场景路径。
 const WORLD_SCENE: String = "res://scenes/world/World.tscn"
 
@@ -25,11 +22,6 @@ func setup_main(root_node: Node, current_page_node: Node) -> void:
 # 切换到主菜单。
 func go_to_main_menu() -> void:
 	_change_page(MAIN_MENU_SCENE)
-
-
-# 切换到宗门主界面。
-func go_to_sect_main() -> void:
-	_change_page(SECT_MAIN_SCENE)
 
 
 # 切换到俯视大地图。

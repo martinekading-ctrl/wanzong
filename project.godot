@@ -18,7 +18,6 @@ config/icon="res://icon.svg"
 [autoload]
 
 SceneManager="*res://scripts/managers/SceneManager.gd"
-DiscipleManager="*res://scripts/managers/DiscipleManager.gd"
 
 [display]
 

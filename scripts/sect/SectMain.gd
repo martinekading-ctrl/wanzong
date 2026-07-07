@@ -30,7 +30,12 @@ func _ready() -> void:
 
 # 点击“生成测试弟子”后，生成 20 个测试弟子。
 func _on_generate_button_pressed() -> void:
-	DiscipleManager.generate_test_disciples(20)
+	var manager = _get_disciple_manager()
+	if manager == null:
+		disciple_detail_label.text = "弟子管理器未启用。"
+		return
+
+	manager.call("generate_test_disciples", 20)
 	_refresh_disciple_list()
 	_refresh_summary()
 	disciple_detail_label.text = "已生成 20 名测试弟子，请从左侧选择一名弟子。"
@@ -43,8 +48,13 @@ func _on_back_button_pressed() -> void:
 
 # 点击左侧弟子列表后，显示弟子详情。
 func _on_disciple_selected(index: int) -> void:
+	var manager = _get_disciple_manager()
+	if manager == null:
+		disciple_detail_label.text = "弟子管理器未启用。"
+		return
+
 	var disciple_id: int = int(disciple_list.get_item_metadata(index))
-	var disciple: DiscipleData = DiscipleManager.get_disciple_by_id(disciple_id)
+	var disciple: DiscipleData = manager.call("get_disciple_by_id", disciple_id)
 	if disciple == null:
 		disciple_detail_label.text = "没有找到这个弟子。"
 		return
@@ -56,7 +66,11 @@ func _on_disciple_selected(index: int) -> void:
 func _refresh_disciple_list() -> void:
 	disciple_list.clear()
 
-	for disciple in DiscipleManager.get_all_disciples():
+	var manager = _get_disciple_manager()
+	if manager == null:
+		return
+
+	for disciple in manager.call("get_all_disciples"):
 		var item_text: String = "%s  %s  战力：%d" % [disciple.name, disciple.realm, disciple.power]
 		disciple_list.add_item(item_text)
 		var item_index: int = disciple_list.get_item_count() - 1
@@ -65,7 +79,13 @@ func _refresh_disciple_list() -> void:
 
 # 刷新顶部弟子数量和宗门总战力。
 func _refresh_summary() -> void:
-	var disciples: Array[DiscipleData] = DiscipleManager.get_all_disciples()
+	var manager = _get_disciple_manager()
+	if manager == null:
+		disciple_count_label.text = "弟子：0"
+		power_label.text = "战力：0"
+		return
+
+	var disciples: Array = manager.call("get_all_disciples")
 	var total_power: int = 0
 
 	for disciple in disciples:
@@ -73,6 +93,11 @@ func _refresh_summary() -> void:
 
 	disciple_count_label.text = "弟子：" + str(disciples.size())
 	power_label.text = "战力：" + str(total_power)
+
+
+# 旧宗门界面已不在主流程中，这里只在需要时动态查找弟子管理器。
+func _get_disciple_manager() -> Node:
+	return get_node_or_null("/root/DiscipleManager")
 
 
 # 显示单名弟子的详细属性。
