@@ -63,6 +63,6 @@ func _create_info_label() -> void:
 	info_label.position = Vector2(-90, 42)
 	info_label.custom_minimum_size = Vector2(180, 52)
 	info_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	info_label.text = str(sect_data["name"]) + "\n战力：" + str(sect_data["power"])
+	info_label.text = str(sect_data["sect_name"]) + "\n战力：" + str(sect_data["power"])
 	info_label.add_theme_font_size_override("font_size", 22)
 	add_child(info_label)

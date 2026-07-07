@@ -19,8 +19,8 @@ var resource_type: String = ""
 # 资源储量。
 var amount: int = 0
 
-# 当前归属宗门编号，-1 表示无主。
-var owner_sect_id: int = -1
+# 当前归属宗门编号，0 表示无主。
+var owner_sect_id: int = 0
 
 # 资源点等级。
 var level: int = 1
