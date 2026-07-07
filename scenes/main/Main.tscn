@@ -1,0 +1,11 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/core/Main.gd" id="1_main_script"]
+
+[node name="Main" type="Node2D"]
+script = ExtResource("1_main_script")
+
+[node name="CurrentPage" type="Control" parent="."]
+layout_mode = 3
+offset_right = 1920.0
+offset_bottom = 1080.0

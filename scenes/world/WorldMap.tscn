@@ -1,0 +1,60 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/WorldMap.gd" id="1_world_map"]
+[ext_resource type="Script" path="res://scripts/world/WorldCamera.gd" id="2_world_camera"]
+
+[node name="WorldMap" type="Node2D"]
+script = ExtResource("1_world_map")
+
+[node name="WorldCamera" type="Camera2D" parent="."]
+position = Vector2(2000, 2000)
+enabled = true
+script = ExtResource("2_world_camera")
+
+[node name="UILayer" type="CanvasLayer" parent="."]
+
+[node name="InfoPanel" type="PanelContainer" parent="UILayer"]
+offset_left = 1520.0
+offset_top = 40.0
+offset_right = 1880.0
+offset_bottom = 360.0
+
+[node name="InfoBox" type="VBoxContainer" parent="UILayer/InfoPanel"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="TitleLabel" type="Label" parent="UILayer/InfoPanel/InfoBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "宗门信息"
+
+[node name="NameLabel" type="Label" parent="UILayer/InfoPanel/InfoBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "宗门名称：未选择"
+
+[node name="OwnerLabel" type="Label" parent="UILayer/InfoPanel/InfoBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "是否玩家宗门：-"
+
+[node name="PowerLabel" type="Label" parent="UILayer/InfoPanel/InfoBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "战力：-"
+
+[node name="SpiritStoneLabel" type="Label" parent="UILayer/InfoPanel/InfoBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "灵石：-"
+
+[node name="DiscipleCountLabel" type="Label" parent="UILayer/InfoPanel/InfoBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "弟子数量：-"
+
+[node name="TipLabel" type="Label" parent="UILayer/InfoPanel/InfoBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "点击地图上的宗门查看信息"
+autowrap_mode = 3

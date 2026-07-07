@@ -1,0 +1,104 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/sect/SectMain.gd" id="1_sect_main_script"]
+
+[node name="SectMain" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_sect_main_script")
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 48
+theme_override_constants/margin_top = 40
+theme_override_constants/margin_right = 48
+theme_override_constants/margin_bottom = 40
+
+[node name="RootBox" type="VBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="TopBar" type="HBoxContainer" parent="MarginContainer/RootBox"]
+layout_mode = 2
+theme_override_constants/separation = 28
+
+[node name="SectNameLabel" type="Label" parent="MarginContainer/RootBox/TopBar"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+text = "宗门名称：青云宗"
+
+[node name="SpiritStoneLabel" type="Label" parent="MarginContainer/RootBox/TopBar"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+text = "灵石：1000"
+
+[node name="DiscipleCountLabel" type="Label" parent="MarginContainer/RootBox/TopBar"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+text = "弟子：0"
+
+[node name="PowerLabel" type="Label" parent="MarginContainer/RootBox/TopBar"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+text = "战力：0"
+
+[node name="ButtonBar" type="HBoxContainer" parent="MarginContainer/RootBox"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="GenerateButton" type="Button" parent="MarginContainer/RootBox/ButtonBar"]
+custom_minimum_size = Vector2(220, 56)
+layout_mode = 2
+text = "生成测试弟子"
+
+[node name="BackButton" type="Button" parent="MarginContainer/RootBox/ButtonBar"]
+custom_minimum_size = Vector2(220, 56)
+layout_mode = 2
+text = "返回主菜单"
+
+[node name="ContentBox" type="HBoxContainer" parent="MarginContainer/RootBox"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 24
+
+[node name="ListBox" type="VBoxContainer" parent="MarginContainer/RootBox/ContentBox"]
+custom_minimum_size = Vector2(520, 0)
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 12
+
+[node name="ListTitleLabel" type="Label" parent="MarginContainer/RootBox/ContentBox/ListBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "弟子列表"
+
+[node name="DiscipleList" type="ItemList" parent="MarginContainer/RootBox/ContentBox/ListBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="DetailBox" type="VBoxContainer" parent="MarginContainer/RootBox/ContentBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 12
+
+[node name="DetailTitleLabel" type="Label" parent="MarginContainer/RootBox/ContentBox/DetailBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "弟子详情"
+
+[node name="DiscipleDetailLabel" type="Label" parent="MarginContainer/RootBox/ContentBox/DetailBox"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_font_sizes/font_size = 26
+text = "请先点击“生成测试弟子”，然后从左侧选择一名弟子。"
+vertical_alignment = 0
