@@ -6,20 +6,23 @@ var sects: Array = []
 # 世界地图上的资源点数据。
 var resources: Array = []
 
+# 玩家宗门可建设点数据。
+var build_slots: Array = []
+
 
 # 初始化世界数据。当前是固定原型数据，后续可以替换为存档或随机生成。
 func init_world_data() -> void:
 	sects = [
-		{"sect_id": 1, "sect_name": "青云宗", "is_player": true, "position": Vector2(2048, 2048), "disciples_count": 20, "spirit_stones": 1000, "power": 5000},
-		{"sect_id": 2, "sect_name": "玄天宗", "is_player": false, "position": Vector2(720, 900), "disciples_count": 16, "spirit_stones": 800, "power": 4200},
-		{"sect_id": 3, "sect_name": "万剑宗", "is_player": false, "position": Vector2(1500, 780), "disciples_count": 28, "spirit_stones": 1300, "power": 6800},
-		{"sect_id": 4, "sect_name": "赤阳宗", "is_player": false, "position": Vector2(3050, 900), "disciples_count": 24, "spirit_stones": 960, "power": 5900},
-		{"sect_id": 5, "sect_name": "寒月宗", "is_player": false, "position": Vector2(3500, 1700), "disciples_count": 18, "spirit_stones": 740, "power": 4700},
-		{"sect_id": 6, "sect_name": "天机宗", "is_player": false, "position": Vector2(2840, 2700), "disciples_count": 30, "spirit_stones": 1500, "power": 7300},
-		{"sect_id": 7, "sect_name": "魔罗宗", "is_player": false, "position": Vector2(3400, 3300), "disciples_count": 36, "spirit_stones": 2100, "power": 8800},
-		{"sect_id": 8, "sect_name": "灵兽宗", "is_player": false, "position": Vector2(1900, 3250), "disciples_count": 22, "spirit_stones": 900, "power": 5200},
-		{"sect_id": 9, "sect_name": "丹霞宗", "is_player": false, "position": Vector2(760, 3050), "disciples_count": 14, "spirit_stones": 620, "power": 3900},
-		{"sect_id": 10, "sect_name": "归墟宗", "is_player": false, "position": Vector2(520, 1900), "disciples_count": 32, "spirit_stones": 1700, "power": 7600},
+		{"sect_id": 1, "sect_name": "青云宗", "is_player": true, "position": Vector2(2048, 2048), "disciples_count": 20, "spirit_stones": 1000, "power": 5000, "territory_radius": 450, "territory_level": 1},
+		{"sect_id": 2, "sect_name": "玄天宗", "is_player": false, "position": Vector2(720, 900), "disciples_count": 16, "spirit_stones": 800, "power": 4200, "territory_radius": 350, "territory_level": 1},
+		{"sect_id": 3, "sect_name": "万剑宗", "is_player": false, "position": Vector2(1500, 780), "disciples_count": 28, "spirit_stones": 1300, "power": 6800, "territory_radius": 350, "territory_level": 1},
+		{"sect_id": 4, "sect_name": "赤阳宗", "is_player": false, "position": Vector2(3050, 900), "disciples_count": 24, "spirit_stones": 960, "power": 5900, "territory_radius": 350, "territory_level": 1},
+		{"sect_id": 5, "sect_name": "寒月宗", "is_player": false, "position": Vector2(3500, 1700), "disciples_count": 18, "spirit_stones": 740, "power": 4700, "territory_radius": 350, "territory_level": 1},
+		{"sect_id": 6, "sect_name": "天机宗", "is_player": false, "position": Vector2(2840, 2700), "disciples_count": 30, "spirit_stones": 1500, "power": 7300, "territory_radius": 350, "territory_level": 1},
+		{"sect_id": 7, "sect_name": "魔罗宗", "is_player": false, "position": Vector2(3400, 3300), "disciples_count": 36, "spirit_stones": 2100, "power": 8800, "territory_radius": 350, "territory_level": 1},
+		{"sect_id": 8, "sect_name": "灵兽宗", "is_player": false, "position": Vector2(1900, 3250), "disciples_count": 22, "spirit_stones": 900, "power": 5200, "territory_radius": 350, "territory_level": 1},
+		{"sect_id": 9, "sect_name": "丹霞宗", "is_player": false, "position": Vector2(760, 3050), "disciples_count": 14, "spirit_stones": 620, "power": 3900, "territory_radius": 350, "territory_level": 1},
+		{"sect_id": 10, "sect_name": "归墟宗", "is_player": false, "position": Vector2(520, 1900), "disciples_count": 32, "spirit_stones": 1700, "power": 7600, "territory_radius": 350, "territory_level": 1},
 	]
 
 	resources = [
@@ -51,6 +54,15 @@ func init_world_data() -> void:
 		{"resource_id": 26, "resource_name": "秘境入口", "resource_type": "secret_realm", "position": Vector2(1100, 2200), "level": 1, "amount": 1, "owner_sect_id": 0},
 	]
 
+	build_slots = [
+		{"slot_id": 1, "owner_sect_id": 1, "position": Vector2(1868, 1928), "is_empty": true},
+		{"slot_id": 2, "owner_sect_id": 1, "position": Vector2(2048, 1868), "is_empty": true},
+		{"slot_id": 3, "owner_sect_id": 1, "position": Vector2(2228, 1938), "is_empty": true},
+		{"slot_id": 4, "owner_sect_id": 1, "position": Vector2(1848, 2168), "is_empty": true},
+		{"slot_id": 5, "owner_sect_id": 1, "position": Vector2(2068, 2198), "is_empty": true},
+		{"slot_id": 6, "owner_sect_id": 1, "position": Vector2(2268, 2148), "is_empty": true},
+	]
+
 
 # 获取全部宗门数据。
 func get_all_sects() -> Array:
@@ -60,6 +72,11 @@ func get_all_sects() -> Array:
 # 获取全部资源点数据。
 func get_all_resources() -> Array:
 	return resources
+
+
+# 获取全部建设点数据。
+func get_all_build_slots() -> Array:
+	return build_slots
 
 
 # 根据宗门编号查找宗门数据。
@@ -78,3 +95,14 @@ func get_resource_by_id(resource_id: int) -> Dictionary:
 			return resource_data
 
 	return {}
+
+
+# 根据宗门编号获取建设点数据。
+func get_build_slots_by_sect_id(sect_id: int) -> Array:
+	var result: Array = []
+
+	for slot_data in build_slots:
+		if int(slot_data["owner_sect_id"]) == sect_id:
+			result.append(slot_data)
+
+	return result

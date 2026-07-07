@@ -3,8 +3,14 @@ extends Node2D
 # 宗门节点脚本，用来生成地图上的宗门据点。
 const SectNodeScript := preload("res://scripts/world/SectNode.gd")
 
+# 宗门领地范围脚本，用来显示宗门控制范围。
+const TerritoryAreaScript := preload("res://scripts/world/TerritoryArea.gd")
+
 # 资源点节点脚本，用来生成地图上的灵矿、灵脉、灵草地和秘境入口。
 const ResourceNodeScript := preload("res://scripts/world/ResourceNode.gd")
+
+# 建设点脚本，用来显示青云宗的可建设空地。
+const BuildSlotNodeScript := preload("res://scripts/world/BuildSlotNode.gd")
 
 # 世界地图尺寸。
 const MAP_SIZE: Vector2 = Vector2(4096, 4096)
@@ -34,7 +40,9 @@ func _ready() -> void:
 	world_camera.make_current()
 	WorldDataManager.init_world_data()
 	_validate_resource_positions()
+	_create_territory_areas()
 	_create_resource_nodes()
+	_create_build_slot_nodes()
 	_create_sect_nodes()
 	_show_empty_panel()
 	queue_redraw()
@@ -62,6 +70,14 @@ func _create_sect_nodes() -> void:
 		add_child(sect_node)
 
 
+# 创建宗门领地范围，先生成它们，保证显示在图标和文字下方。
+func _create_territory_areas() -> void:
+	for sect_data in WorldDataManager.get_all_sects():
+		var territory_area: TerritoryArea = TerritoryAreaScript.new()
+		territory_area.setup(sect_data)
+		add_child(territory_area)
+
+
 # 创建地图上的资源点。
 func _create_resource_nodes() -> void:
 	for resource_data in WorldDataManager.get_all_resources():
@@ -71,6 +87,15 @@ func _create_resource_nodes() -> void:
 		add_child(resource_node)
 
 
+# 创建玩家宗门建设点。
+func _create_build_slot_nodes() -> void:
+	for slot_data in WorldDataManager.get_build_slots_by_sect_id(1):
+		var build_slot_node: BuildSlotNode = BuildSlotNodeScript.new()
+		build_slot_node.setup(slot_data)
+		build_slot_node.selected.connect(_on_build_slot_selected)
+		add_child(build_slot_node)
+
+
 # 未选择对象时，信息面板显示地图概况。
 func _show_empty_panel() -> void:
 	title_label.text = "地图信息"
@@ -78,7 +103,7 @@ func _show_empty_panel() -> void:
 	owner_label.text = "资源点：未选择"
 	disciple_count_label.text = "宗门数量：" + str(WorldDataManager.get_all_sects().size())
 	spirit_stone_label.text = "资源点数量：" + str(WorldDataManager.get_all_resources().size())
-	power_label.text = "地图大小：4096 x 4096"
+	power_label.text = "建设点数量：" + str(WorldDataManager.get_all_build_slots().size())
 	tip_label.text = "点击宗门或资源点查看信息。"
 
 
@@ -102,6 +127,17 @@ func _on_resource_selected(resource_data: Dictionary) -> void:
 	spirit_stone_label.text = "储量：" + str(resource_data["amount"])
 	power_label.text = "当前归属：" + _get_resource_owner_name(int(resource_data["owner_sect_id"]))
 	tip_label.text = "resource_id：" + str(resource_data["resource_id"])
+
+
+# 点击建设点后，右侧显示建设点信息。
+func _on_build_slot_selected(slot_data: Dictionary) -> void:
+	title_label.text = "建设点信息"
+	name_label.text = "建设点ID：" + str(slot_data["slot_id"])
+	owner_label.text = "所属宗门：" + _get_sect_name_by_id(int(slot_data["owner_sect_id"]))
+	disciple_count_label.text = "状态：" + ("空地" if bool(slot_data["is_empty"]) else "已占用")
+	spirit_stone_label.text = "类型：可建设区域"
+	power_label.text = "说明：这里以后可以建造宗门建筑"
+	tip_label.text = "当前只显示空地，不开放建造。"
 
 
 # 检查资源点是否离宗门太近，方便开发阶段排查摆放问题。
@@ -134,6 +170,15 @@ func _get_resource_owner_name(owner_sect_id: int) -> String:
 		return "无主资源点"
 
 	var sect_data: Dictionary = WorldDataManager.get_sect_by_id(owner_sect_id)
+	if sect_data.is_empty():
+		return "未知宗门"
+
+	return str(sect_data["sect_name"])
+
+
+# 根据宗门编号获取宗门名称。
+func _get_sect_name_by_id(sect_id: int) -> String:
+	var sect_data: Dictionary = WorldDataManager.get_sect_by_id(sect_id)
 	if sect_data.is_empty():
 		return "未知宗门"
 
