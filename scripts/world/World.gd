@@ -15,11 +15,11 @@ const BuildSlotNodeScript := preload("res://scripts/world/BuildSlotNode.gd")
 # 世界地图尺寸。
 const MAP_SIZE: Vector2 = Vector2(4096, 4096)
 
-# 简单网格间距。
-const GRID_SIZE: float = 256.0
-
 # 资源点与宗门之间的最小距离，避免图标重叠。
 const RESOURCE_MIN_DISTANCE_TO_SECT: float = 250.0
+
+# 地形贴图缓存，避免每个格子重复读取素材。
+var terrain_textures: Dictionary = {}
 
 # 地图层，只放地图绘制节点。
 @onready var map_layer: Node2D = $MapLayer
@@ -66,27 +66,70 @@ func _ready() -> void:
 	world_camera.map_size = MAP_SIZE
 	world_camera.make_current()
 	WorldDataManager.init_world_data()
+	_create_map_tiles()
 	_validate_resource_positions()
 	_create_territory_areas()
 	_create_resource_nodes()
 	_create_build_slot_nodes()
 	_create_sect_nodes()
 	_show_empty_panel()
-	map_layer.draw.connect(_on_map_layer_draw)
-	map_layer.queue_redraw()
 
 
-# 绘制绿色地图底色、网格和边界。
-func _on_map_layer_draw() -> void:
-	map_layer.draw_rect(Rect2(Vector2.ZERO, MAP_SIZE), Color(0.16, 0.32, 0.18), true)
+# 使用 Sprite2D 网格铺出基础地形。后续可以整体替换为 TileMapLayer。
+func _create_map_tiles() -> void:
+	_load_terrain_textures()
 
-	for x in range(0, int(MAP_SIZE.x) + 1, int(GRID_SIZE)):
-		map_layer.draw_line(Vector2(x, 0), Vector2(x, MAP_SIZE.y), Color(0.25, 0.42, 0.25), 2.0)
+	var tile_size: int = TerrainConfig.TILE_SIZE
+	var columns: int = int(MAP_SIZE.x / tile_size)
+	var rows: int = int(MAP_SIZE.y / tile_size)
 
-	for y in range(0, int(MAP_SIZE.y) + 1, int(GRID_SIZE)):
-		map_layer.draw_line(Vector2(0, y), Vector2(MAP_SIZE.x, y), Color(0.25, 0.42, 0.25), 2.0)
+	for tile_y in range(rows):
+		for tile_x in range(columns):
+			var terrain_type: String = _get_terrain_type_for_tile(tile_x, tile_y)
+			var texture: Texture2D = _get_texture_for_terrain(terrain_type, tile_x, tile_y)
+			if texture == null:
+				continue
 
-	map_layer.draw_rect(Rect2(Vector2.ZERO, MAP_SIZE), Color(0.72, 0.86, 0.62), false, 6.0)
+			var tile_sprite: Sprite2D = Sprite2D.new()
+			tile_sprite.texture = texture
+			tile_sprite.centered = false
+			tile_sprite.position = Vector2(tile_x * tile_size, tile_y * tile_size)
+			tile_sprite.scale = Vector2(float(tile_size) / float(texture.get_width()), float(tile_size) / float(texture.get_height()))
+			map_layer.add_child(tile_sprite)
+
+
+# 读取 TerrainConfig 中登记的地形贴图。
+func _load_terrain_textures() -> void:
+	terrain_textures.clear()
+
+	for terrain_type in TerrainConfig.get_terrain_types():
+		var textures: Array[Texture2D] = []
+		for texture_path in TerrainConfig.get_texture_paths(terrain_type):
+			var texture: Texture2D = load(texture_path) as Texture2D
+			if texture != null:
+				textures.append(texture)
+
+		terrain_textures[terrain_type] = textures
+
+
+# 按固定规则生成地形类型，保持每次运行地图一致。
+func _get_terrain_type_for_tile(tile_x: int, tile_y: int) -> String:
+	var region_x: int = int(tile_x / 2)
+	var region_y: int = int(tile_y / 2)
+	var roll: int = abs((region_x * 928371 + region_y * 364479 + 13579) % 100)
+	return TerrainConfig.get_terrain_type_by_roll(roll)
+
+
+# 从某种地形的素材列表中选择一张贴图。
+func _get_texture_for_terrain(terrain_type: String, tile_x: int, tile_y: int) -> Texture2D:
+	var textures: Array = terrain_textures.get(terrain_type, [])
+	if textures.is_empty():
+		textures = terrain_textures.get("grass", [])
+	if textures.is_empty():
+		return null
+
+	var texture_index: int = abs((tile_x * 137 + tile_y * 311) % textures.size())
+	return textures[texture_index] as Texture2D
 
 
 # 创建地图上的宗门据点。
