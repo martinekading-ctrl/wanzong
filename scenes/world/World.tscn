@@ -16,6 +16,8 @@ script = ExtResource("1_world")
 
 [node name="SectLayer" type="Node2D" parent="."]
 
+[node name="NatureLayer" type="Node2D" parent="."]
+
 [node name="CharacterLayer" type="Node2D" parent="."]
 
 [node name="BuildingLayer" type="Node2D" parent="."]

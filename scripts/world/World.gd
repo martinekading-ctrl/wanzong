@@ -12,16 +12,25 @@ const ResourceNodeScript := preload("res://scripts/world/ResourceNode.gd")
 # 建设点脚本，用来显示青云宗的可建设空地。
 const BuildSlotNodeScript := preload("res://scripts/world/BuildSlotNode.gd")
 
+# 世界地图生成器，用来生成 100 x 100 的连续地形数据。
+const WorldGeneratorScript := preload("res://scripts/world/WorldGenerator.gd")
+
+# 森林生成器，用来在草地和河流附近生成自然树群。
+const ForestGeneratorScript := preload("res://scripts/world/ForestGenerator.gd")
+
 # 世界地图尺寸。
 const MAP_SIZE: Vector2 = Vector2(4096, 4096)
+
+# 地图底色，用来兜住地形素材边缘，避免露出灰色背景。
+const MAP_BACKGROUND_COLOR: Color = Color(0.24, 0.38, 0.20)
 
 # 资源点与宗门之间的最小距离，避免图标重叠。
 const RESOURCE_MIN_DISTANCE_TO_SECT: float = 250.0
 
-# 地形贴图缓存，避免每个格子重复读取素材。
-var terrain_textures: Dictionary = {}
+# 当前世界生成数据，森林会复用这里的地形和河流信息。
+var world_data: Dictionary = {}
 
-# 地图层，只放地图绘制节点。
+# 地图层，只放合成后的世界底图。
 @onready var map_layer: Node2D = $MapLayer
 
 # 领地层，只放宗门领地范围。
@@ -35,6 +44,9 @@ var terrain_textures: Dictionary = {}
 
 # 宗门层，只放宗门节点。
 @onready var sect_layer: Node2D = $SectLayer
+
+# 自然层，只放森林、树木等自然覆盖物。
+@onready var nature_layer: Node2D = $NatureLayer
 
 # 角色层，以后放弟子、妖兽、NPC。
 @onready var character_layer: Node2D = $CharacterLayer
@@ -66,70 +78,69 @@ func _ready() -> void:
 	world_camera.map_size = MAP_SIZE
 	world_camera.make_current()
 	WorldDataManager.init_world_data()
+	queue_redraw()
 	_create_map_tiles()
 	_validate_resource_positions()
 	_create_territory_areas()
 	_create_resource_nodes()
 	_create_build_slot_nodes()
 	_create_sect_nodes()
+	_create_forest_nodes()
 	_show_empty_panel()
 
 
-# 使用 Sprite2D 网格铺出基础地形。后续可以整体替换为 TileMapLayer。
+# 绘制地图底色，底图加载失败时也不会露出灰色背景。
+func _draw() -> void:
+	draw_rect(Rect2(Vector2.ZERO, MAP_SIZE), MAP_BACKGROUND_COLOR, true)
+
+
+# 使用 WorldGenerator 生成连续世界底图。
 func _create_map_tiles() -> void:
-	_load_terrain_textures()
+	for child in map_layer.get_children():
+		child.queue_free()
 
-	var tile_size: int = TerrainConfig.TILE_SIZE
-	var columns: int = int(MAP_SIZE.x / tile_size)
-	var rows: int = int(MAP_SIZE.y / tile_size)
+	var world_generator: WorldGenerator = WorldGeneratorScript.new()
+	world_data = world_generator.generate_world()
+	var map_texture: Texture2D = world_generator.create_world_texture(world_data)
+	if map_texture == null:
+		push_error("世界地图生成失败。")
+		return
 
-	for tile_y in range(rows):
-		for tile_x in range(columns):
-			var terrain_type: String = _get_terrain_type_for_tile(tile_x, tile_y)
-			var texture: Texture2D = _get_texture_for_terrain(terrain_type, tile_x, tile_y)
-			if texture == null:
-				continue
-
-			var tile_sprite: Sprite2D = Sprite2D.new()
-			tile_sprite.texture = texture
-			tile_sprite.centered = false
-			tile_sprite.position = Vector2(tile_x * tile_size, tile_y * tile_size)
-			tile_sprite.scale = Vector2(float(tile_size) / float(texture.get_width()), float(tile_size) / float(texture.get_height()))
-			map_layer.add_child(tile_sprite)
+	var map_sprite: Sprite2D = Sprite2D.new()
+	map_sprite.texture = map_texture
+	map_sprite.centered = false
+	map_sprite.position = Vector2.ZERO
+	map_sprite.scale = Vector2(MAP_SIZE.x / map_texture.get_width(), MAP_SIZE.y / map_texture.get_height())
+	map_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	map_layer.add_child(map_sprite)
 
 
-# 读取 TerrainConfig 中登记的地形贴图。
-func _load_terrain_textures() -> void:
-	terrain_textures.clear()
+# 创建地图上的森林树点。森林是覆盖在地形上的自然对象，不是地形类型。
+func _create_forest_nodes() -> void:
+	for child in nature_layer.get_children():
+		child.queue_free()
 
-	for terrain_type in TerrainConfig.get_terrain_types():
-		var textures: Array[Texture2D] = []
-		for texture_path in TerrainConfig.get_texture_paths(terrain_type):
-			var texture: Texture2D = load(texture_path) as Texture2D
-			if texture != null:
-				textures.append(texture)
+	if world_data.is_empty():
+		return
 
-		terrain_textures[terrain_type] = textures
+	var forest_generator: ForestGenerator = ForestGeneratorScript.new()
+	var forest_result: Dictionary = forest_generator.generate_forests(
+		world_data,
+		WorldDataManager.get_all_sects(),
+		WorldDataManager.get_all_build_slots(),
+		WorldDataManager.get_all_resources()
+	)
+	var tree_texture: Texture2D = _create_tree_texture()
+	var tree_list: Array = forest_result.get("trees", []) as Array
 
-
-# 按固定规则生成地形类型，保持每次运行地图一致。
-func _get_terrain_type_for_tile(tile_x: int, tile_y: int) -> String:
-	var region_x: int = int(tile_x / 2)
-	var region_y: int = int(tile_y / 2)
-	var roll: int = abs((region_x * 928371 + region_y * 364479 + 13579) % 100)
-	return TerrainConfig.get_terrain_type_by_roll(roll)
-
-
-# 从某种地形的素材列表中选择一张贴图。
-func _get_texture_for_terrain(terrain_type: String, tile_x: int, tile_y: int) -> Texture2D:
-	var textures: Array = terrain_textures.get(terrain_type, [])
-	if textures.is_empty():
-		textures = terrain_textures.get("grass", [])
-	if textures.is_empty():
-		return null
-
-	var texture_index: int = abs((tile_x * 137 + tile_y * 311) % textures.size())
-	return textures[texture_index] as Texture2D
+	for tree_data in tree_list:
+		var tree_sprite: Sprite2D = Sprite2D.new()
+		tree_sprite.texture = tree_texture
+		tree_sprite.position = tree_data["position"]
+		tree_sprite.scale = _get_tree_scale(int(tree_data["tree_id"]))
+		tree_sprite.modulate = _get_tree_color(int(tree_data["tree_id"]))
+		tree_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+		nature_layer.add_child(tree_sprite)
 
 
 # 创建地图上的宗门据点。
@@ -165,6 +176,40 @@ func _create_build_slot_nodes() -> void:
 		build_slot_node.setup(slot_data)
 		build_slot_node.selected.connect(_on_build_slot_selected)
 		build_slot_layer.add_child(build_slot_node)
+
+
+# 创建树木占位贴图。当前不用正式美术，只用绿色圆点表示树冠。
+func _create_tree_texture() -> Texture2D:
+	var texture_size: int = 24
+	var radius: float = 10.0
+	var center: Vector2 = Vector2(float(texture_size - 1) * 0.5, float(texture_size - 1) * 0.5)
+	var image: Image = Image.create_empty(texture_size, texture_size, false, Image.FORMAT_RGBA8)
+	image.fill(Color(0.0, 0.0, 0.0, 0.0))
+
+	for y in range(texture_size):
+		for x in range(texture_size):
+			var distance: float = Vector2(float(x), float(y)).distance_to(center)
+			if distance > radius:
+				continue
+
+			var color: Color = Color(0.04, 0.26, 0.08, 0.95)
+			if distance < radius * 0.62:
+				color = Color(0.09, 0.42, 0.13, 0.98)
+			image.set_pixel(x, y, color)
+
+	return ImageTexture.create_from_image(image)
+
+
+# 每棵树略微不同大小，避免森林看起来太整齐。
+func _get_tree_scale(tree_id: int) -> Vector2:
+	var scale_value: float = 0.75 + float(tree_id % 6) * 0.07
+	return Vector2.ONE * scale_value
+
+
+# 每棵树略微不同颜色，避免森林像复制粘贴。
+func _get_tree_color(tree_id: int) -> Color:
+	var color_offset: float = float((tree_id * 37) % 100) / 100.0 * 0.12
+	return Color(0.82 + color_offset, 0.95, 0.82 + color_offset, 1.0)
 
 
 # 未选择对象时，信息面板显示地图概况。

@@ -11,6 +11,7 @@ const TERRAIN_TYPES := [
 	"rock",
 	"snow",
 	"dead_ground",
+	"water",
 ]
 
 # 地形类型对应的素材路径。
@@ -46,6 +47,9 @@ const TERRAIN_TEXTURE_PATHS := {
 		"res://assets/terrain/dead_ground/dead_ground_03.png",
 		"res://assets/terrain/dead_ground/dead_ground_04.png",
 		"res://assets/terrain/dead_ground/dead_ground_05.png",
+	],
+	"water": [
+		"res://assets/terrain/water/water_01.png",
 	],
 }
 
