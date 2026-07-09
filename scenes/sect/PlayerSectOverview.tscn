@@ -1,0 +1,120 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/sect/PlayerSectOverview.gd" id="1_player_sect_overview"]
+
+[node name="PlayerSectOverview" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_player_sect_overview")
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 48
+theme_override_constants/margin_top = 40
+theme_override_constants/margin_right = 48
+theme_override_constants/margin_bottom = 40
+
+[node name="RootBox" type="VBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="TopBar" type="HBoxContainer" parent="MarginContainer/RootBox"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="TitleLabel" type="Label" parent="MarginContainer/RootBox/TopBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 30
+text = "玩家宗门详情"
+
+[node name="BackButton" type="Button" parent="MarginContainer/RootBox/TopBar"]
+custom_minimum_size = Vector2(160, 44)
+layout_mode = 2
+text = "返回世界地图"
+
+[node name="SummaryPanel" type="PanelContainer" parent="MarginContainer/RootBox"]
+layout_mode = 2
+
+[node name="SummaryBox" type="VBoxContainer" parent="MarginContainer/RootBox/SummaryPanel"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="SectNameLabel" type="Label" parent="MarginContainer/RootBox/SummaryPanel/SummaryBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "宗门名称：青玄宗"
+
+[node name="MasterLabel" type="Label" parent="MarginContainer/RootBox/SummaryPanel/SummaryBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "宗主：玩家"
+
+[node name="RankLabel" type="Label" parent="MarginContainer/RootBox/SummaryPanel/SummaryBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "宗门品阶：九品"
+
+[node name="DiscipleCountLabel" type="Label" parent="MarginContainer/RootBox/SummaryPanel/SummaryBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "弟子数量：12"
+
+[node name="SpiritStoneLabel" type="Label" parent="MarginContainer/RootBox/SummaryPanel/SummaryBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "灵石：1000"
+
+[node name="ReputationLabel" type="Label" parent="MarginContainer/RootBox/SummaryPanel/SummaryBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "声望：100"
+
+[node name="CombatPowerLabel" type="Label" parent="MarginContainer/RootBox/SummaryPanel/SummaryBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "战力：350"
+
+[node name="DescriptionLabel" type="Label" parent="MarginContainer/RootBox/SummaryPanel/SummaryBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "介绍：初立山门的小型修仙宗门，未来可统御万宗。"
+autowrap_mode = 3
+
+[node name="FunctionPanel" type="PanelContainer" parent="MarginContainer/RootBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="FunctionBox" type="VBoxContainer" parent="MarginContainer/RootBox/FunctionPanel"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="DiscipleButton" type="Button" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox"]
+custom_minimum_size = Vector2(220, 48)
+layout_mode = 2
+text = "弟子"
+
+[node name="BuildingButton" type="Button" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox"]
+custom_minimum_size = Vector2(220, 48)
+layout_mode = 2
+text = "建筑"
+
+[node name="ResourceButton" type="Button" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox"]
+custom_minimum_size = Vector2(220, 48)
+layout_mode = 2
+text = "资源"
+
+[node name="PlaceholderLabel" type="Label" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "请选择一个宗门功能。当前版本只开放宗门概览。"
+autowrap_mode = 3

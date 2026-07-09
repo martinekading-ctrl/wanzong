@@ -46,7 +46,7 @@ anchor_right = 1.0
 offset_left = -360.0
 offset_top = 34.0
 offset_right = -32.0
-offset_bottom = 286.0
+offset_bottom = 338.0
 modulate = Color(1, 1, 1, 0.65)
 
 [node name="InfoBox" type="VBoxContainer" parent="UILayer/InfoPanel"]
@@ -88,6 +88,12 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 13
 text = "点击地图上的宗门查看信息"
 autowrap_mode = 3
+
+[node name="EnterSectButton" type="Button" parent="UILayer/InfoPanel/InfoBox"]
+visible = false
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+text = "进入宗门"
 
 [node name="WorldCamera" type="Camera2D" parent="."]
 position = Vector2(2048, 2048)

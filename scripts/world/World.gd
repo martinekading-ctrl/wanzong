@@ -96,6 +96,7 @@ var current_selected_node: Node = null
 @onready var spirit_stone_label: Label = $UILayer/InfoPanel/InfoBox/SpiritStoneLabel
 @onready var power_label: Label = $UILayer/InfoPanel/InfoBox/PowerLabel
 @onready var tip_label: Label = $UILayer/InfoPanel/InfoBox/TipLabel
+@onready var enter_sect_button: Button = $UILayer/InfoPanel/InfoBox/EnterSectButton
 
 
 # 地图启动时，初始化世界数据，并生成宗门和资源点。
@@ -114,6 +115,7 @@ func _ready() -> void:
 	_create_build_slot_nodes()
 	build_slot_layer.visible = false
 	_create_sect_nodes()
+	enter_sect_button.pressed.connect(_on_enter_sect_button_pressed)
 	_show_empty_panel()
 
 
@@ -122,6 +124,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):
 		_clear_current_selection()
 		build_slot_layer.visible = false
+		_set_enter_sect_button_visible(false)
 		_show_empty_panel()
 		get_viewport().set_input_as_handled()
 
@@ -296,6 +299,7 @@ func _scale_source_position(source_position: Vector2) -> Vector2:
 
 # 未选择对象时，信息面板显示地图概况。
 func _show_empty_panel() -> void:
+	_set_enter_sect_button_visible(false)
 	title_label.text = "地图信息"
 	name_label.text = "宗门名称：未选择"
 	owner_label.text = "资源点：未选择"
@@ -329,6 +333,23 @@ func _set_current_selection(
 
 
 # 点击宗门后，右侧显示宗门信息。
+func _set_enter_sect_button_visible(value: bool) -> void:
+	enter_sect_button.visible = value
+
+
+func _on_enter_sect_button_pressed() -> void:
+	if current_selected_type != "sect":
+		_set_enter_sect_button_visible(false)
+		return
+
+	var sect_data: Dictionary = WorldDataManager.get_sect_by_id(str(current_selected_id))
+	if sect_data.is_empty() or not bool(sect_data.get("is_player", false)):
+		_set_enter_sect_button_visible(false)
+		return
+
+	SceneManager.go_to_player_sect_overview()
+
+
 func _on_sect_selected(node_data: Dictionary, sect_node: SectNode) -> void:
 	var selected_sect_id: String = str(node_data["sect_id"])
 	var sect_data: Dictionary = WorldDataManager.get_sect_by_id(selected_sect_id)
@@ -336,7 +357,9 @@ func _on_sect_selected(node_data: Dictionary, sect_node: SectNode) -> void:
 		push_warning("未找到宗门完整数据，临时使用节点数据：" + selected_sect_id)
 		sect_data = node_data
 	_set_current_selection("sect", selected_sect_id, sect_node)
-	build_slot_layer.visible = bool(sect_data.get("is_player", false))
+	var is_player_sect: bool = bool(sect_data.get("is_player", false))
+	build_slot_layer.visible = is_player_sect
+	_set_enter_sect_button_visible(is_player_sect)
 
 	title_label.text = "宗门信息"
 	name_label.text = "宗门名称：" + str(sect_data["sect_name"])
@@ -366,6 +389,7 @@ func _on_sect_selected(node_data: Dictionary, sect_node: SectNode) -> void:
 func _on_resource_selected(resource_data: Dictionary, resource_node: ResourceNode) -> void:
 	_set_current_selection("resource", int(resource_data["resource_id"]), resource_node)
 	build_slot_layer.visible = false
+	_set_enter_sect_button_visible(false)
 
 	title_label.text = "资源点信息"
 	name_label.text = "名称：" + str(resource_data["resource_name"])
@@ -380,6 +404,7 @@ func _on_resource_selected(resource_data: Dictionary, resource_node: ResourceNod
 func _on_build_slot_selected(slot_data: Dictionary, build_slot_node: BuildSlotNode) -> void:
 	_set_current_selection("build_slot", int(slot_data["slot_id"]), build_slot_node)
 	build_slot_layer.visible = true
+	_set_enter_sect_button_visible(false)
 
 	title_label.text = "建设点信息"
 	name_label.text = "建设点ID：" + str(slot_data["slot_id"])
