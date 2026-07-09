@@ -112,18 +112,18 @@ func init_world_data() -> void:
 	]
 
 	disciples = [
-		_create_disciple_data("disciple_001", "sect_001", "林青", "男", 18, "炼气三层", "木灵根", "上品", 72, 88, 76, "修炼", 165, "正常", "性情沉稳，擅长吐纳行气，是青玄宗年轻弟子中的中坚。"),
-		_create_disciple_data("disciple_002", "sect_001", "许念", "女", 17, "炼气二层", "水灵根", "中品", 81, 84, 82, "采集", 118, "正常", "心思细腻，善于辨认灵草，对宗门事务颇为上心。"),
-		_create_disciple_data("disciple_003", "sect_001", "周衡", "男", 22, "炼气四层", "金灵根", "上品", 66, 79, 68, "巡山", 218, "正常", "剑骨初成，行事果断，是巡守山门的可靠人选。"),
-		_create_disciple_data("disciple_004", "sect_001", "沈月", "女", 19, "炼气三层", "冰灵根", "极品", 89, 91, 74, "闭关", 196, "闭关中", "灵根稀有，悟性出众，正在稳固自身寒气灵机。"),
-		_create_disciple_data("disciple_005", "sect_001", "陆远", "男", 20, "炼气二层", "土灵根", "中品", 58, 82, 70, "空闲", 110, "正常", "根基扎实，做事耐心，适合承担长期细致的宗门任务。"),
-		_create_disciple_data("disciple_006", "sect_001", "白芷", "女", 16, "炼气一层", "木灵根", "上品", 77, 86, 88, "采集", 86, "正常", "熟悉草木药性，入门虽晚但进境平稳。"),
-		_create_disciple_data("disciple_007", "sect_001", "韩石", "男", 24, "炼气三层", "土灵根", "下品", 45, 93, 65, "巡山", 142, "正常", "体魄强健，忠诚可靠，常主动承担苦活。"),
-		_create_disciple_data("disciple_008", "sect_001", "顾云", "男", 18, "炼气五层", "雷灵根", "极品", 84, 73, 60, "修炼", 286, "正常", "天赋锋芒毕露，但心性仍需磨砺。"),
-		_create_disciple_data("disciple_009", "sect_001", "苏灵儿", "女", 15, "炼气一层", "水灵根", "中品", 92, 80, 91, "空闲", 72, "正常", "聪慧活泼，对术法变化极为敏感。"),
-		_create_disciple_data("disciple_010", "sect_001", "赵铁山", "男", 26, "炼气四层", "金灵根", "中品", 52, 96, 71, "巡山", 205, "正常", "性格豪爽，护宗心重，是山门里的硬骨头。"),
-		_create_disciple_data("disciple_011", "sect_001", "江晚", "女", 21, "炼气二层", "火灵根", "上品", 75, 78, 69, "修炼", 128, "受伤", "曾在外出采药时受伤，目前仍坚持温养灵力。"),
-		_create_disciple_data("disciple_012", "sect_001", "叶寒", "男", 17, "凡人", "杂灵根", "下品", 61, 90, 83, "空闲", 35, "正常", "刚入宗不久，灵根驳杂但意志坚韧。"),
+		_create_disciple_data("disciple_001", "sect_001", "林青", "男", 18, "炼气三层", "木灵根", "上品", 72, 88, 76, "修炼", 420, "正常", "性情沉稳，擅长吐纳行气，是青玄宗年轻弟子中的中坚。", {"role": "外门弟子", "appearance_id": "male_disciple_01", "portrait_id": "portrait_male_01", "model_id": "model_male_01", "battle_model_id": "battle_male_01", "color_scheme": "outer_gray", "tags": ["稳重"], "battle_position": "middle", "weapon_type": "剑", "hp": 320, "max_hp": 320, "attack": 72, "defense": 48, "speed": 56, "spiritual_power": 84}),
+		_create_disciple_data("disciple_002", "sect_001", "许念", "女", 17, "炼气二层", "水灵根", "中品", 81, 84, 82, "采集", 300, "正常", "心思细腻，善于辨认灵草，对宗门事务颇为上心。", {"role": "外门弟子", "appearance_id": "female_disciple_01", "portrait_id": "portrait_female_01", "model_id": "model_female_01", "battle_model_id": "battle_female_01", "color_scheme": "inner_green", "tags": ["采集"], "battle_position": "back", "weapon_type": "法器", "hp": 250, "max_hp": 250, "attack": 52, "defense": 38, "speed": 60, "spiritual_power": 76}),
+		_create_disciple_data("disciple_003", "sect_001", "周衡", "男", 22, "炼气四层", "金灵根", "上品", 66, 79, 68, "巡山", 520, "正常", "剑骨初成，行事果断，是巡守山门的可靠人选。", {"role": "内门弟子", "appearance_id": "sword_disciple_01", "portrait_id": "portrait_sword_01", "model_id": "model_sword_01", "battle_model_id": "battle_sword_01", "color_scheme": "sword_blue", "tags": ["剑修", "好战"], "battle_position": "front", "weapon_type": "剑", "hp": 390, "max_hp": 390, "attack": 95, "defense": 60, "speed": 72, "spiritual_power": 88}),
+		_create_disciple_data("disciple_004", "sect_001", "沈月", "女", 19, "炼气三层", "冰灵根", "极品", 89, 91, 74, "闭关", 470, "闭关中", "灵根稀有，悟性出众，正在稳固自身寒气灵机。", {"role": "亲传弟子", "appearance_id": "female_disciple_02", "portrait_id": "portrait_female_01", "model_id": "model_female_01", "battle_model_id": "battle_female_01", "color_scheme": "inner_green", "tags": ["天资高", "稳重"], "battle_position": "back", "weapon_type": "法器", "hp": 300, "max_hp": 300, "attack": 78, "defense": 46, "speed": 58, "spiritual_power": 110}),
+		_create_disciple_data("disciple_005", "sect_001", "陆远", "男", 20, "炼气二层", "土灵根", "中品", 58, 82, 70, "空闲", 280, "正常", "根基扎实，做事耐心，适合承担长期细致的宗门任务。", {"role": "外门弟子", "appearance_id": "male_disciple_02", "portrait_id": "portrait_male_01", "model_id": "model_male_01", "battle_model_id": "battle_male_01", "color_scheme": "outer_gray", "tags": ["稳重"], "battle_position": "front", "weapon_type": "拳掌", "hp": 340, "max_hp": 340, "attack": 46, "defense": 68, "speed": 42, "spiritual_power": 58}),
+		_create_disciple_data("disciple_006", "sect_001", "白芷", "女", 16, "炼气一层", "木灵根", "上品", 77, 86, 88, "采集", 220, "正常", "熟悉草木药性，入门虽晚但进境平稳。", {"role": "外门弟子", "appearance_id": "alchemy_disciple_01", "portrait_id": "portrait_female_01", "model_id": "model_female_01", "battle_model_id": "battle_female_01", "color_scheme": "alchemy_red", "tags": ["丹道", "采集"], "battle_position": "back", "weapon_type": "丹炉", "hp": 210, "max_hp": 210, "attack": 38, "defense": 30, "speed": 52, "spiritual_power": 72}),
+		_create_disciple_data("disciple_007", "sect_001", "韩石", "男", 24, "炼气三层", "土灵根", "下品", 45, 93, 65, "巡山", 360, "正常", "体魄强健，忠诚可靠，常主动承担苦活。", {"role": "执事", "appearance_id": "male_disciple_02", "portrait_id": "portrait_male_01", "model_id": "model_male_01", "battle_model_id": "battle_male_01", "color_scheme": "outer_gray", "tags": ["稳重"], "battle_position": "front", "weapon_type": "刀", "hp": 420, "max_hp": 420, "attack": 64, "defense": 76, "speed": 40, "spiritual_power": 48}),
+		_create_disciple_data("disciple_008", "sect_001", "顾云", "男", 18, "炼气五层", "雷灵根", "极品", 84, 73, 60, "修炼", 680, "正常", "天赋锋芒毕露，但心性仍需磨砺。", {"role": "亲传弟子", "appearance_id": "sword_disciple_01", "portrait_id": "portrait_sword_01", "model_id": "model_sword_01", "battle_model_id": "battle_sword_01", "color_scheme": "sword_blue", "tags": ["剑修", "天资高", "好战"], "battle_position": "middle", "weapon_type": "剑", "hp": 430, "max_hp": 430, "attack": 118, "defense": 64, "speed": 86, "spiritual_power": 126}),
+		_create_disciple_data("disciple_009", "sect_001", "苏灵儿", "女", 15, "炼气一层", "水灵根", "中品", 92, 80, 91, "空闲", 190, "正常", "聪慧活泼，对术法变化极为敏感。", {"role": "外门弟子", "appearance_id": "female_disciple_01", "portrait_id": "portrait_female_01", "model_id": "model_female_01", "battle_model_id": "battle_female_01", "color_scheme": "inner_green", "tags": ["天资高"], "battle_position": "back", "weapon_type": "符箓", "hp": 190, "max_hp": 190, "attack": 35, "defense": 28, "speed": 65, "spiritual_power": 70}),
+		_create_disciple_data("disciple_010", "sect_001", "赵铁山", "男", 26, "炼气四层", "金灵根", "中品", 52, 96, 71, "巡山", 500, "正常", "性格豪爽，护宗心重，是山门里的硬骨头。", {"role": "执事", "appearance_id": "male_disciple_02", "portrait_id": "portrait_male_01", "model_id": "model_male_01", "battle_model_id": "battle_male_01", "color_scheme": "outer_gray", "tags": ["好战", "稳重"], "battle_position": "front", "weapon_type": "刀", "hp": 480, "max_hp": 480, "attack": 88, "defense": 82, "speed": 48, "spiritual_power": 64}),
+		_create_disciple_data("disciple_011", "sect_001", "江晚", "女", 21, "炼气二层", "火灵根", "上品", 75, 78, 69, "修炼", 310, "受伤", "曾在外出采药时受伤，目前仍坚持温养灵力。", {"role": "内门弟子", "appearance_id": "alchemy_disciple_01", "portrait_id": "portrait_female_01", "model_id": "model_female_01", "battle_model_id": "battle_female_01", "color_scheme": "alchemy_red", "tags": ["丹道"], "battle_position": "back", "weapon_type": "丹炉", "hp": 180, "max_hp": 260, "attack": 58, "defense": 34, "speed": 50, "spiritual_power": 82, "battle_status": "受伤"}),
+		_create_disciple_data("disciple_012", "sect_001", "叶寒", "男", 17, "凡人", "杂灵根", "下品", 61, 90, 83, "空闲", 90, "正常", "刚入宗不久，灵根驳杂但意志坚韧。", {"role": "外门弟子", "appearance_id": "male_disciple_01", "portrait_id": "portrait_male_01", "model_id": "model_male_01", "battle_model_id": "battle_male_01", "color_scheme": "outer_gray", "tags": ["稳重"], "battle_position": "middle", "weapon_type": "拳掌", "hp": 160, "max_hp": 160, "attack": 22, "defense": 24, "speed": 44, "spiritual_power": 20}),
 	]
 	update_sect_data("sect_001", "disciple_count", disciples.size())
 
@@ -196,14 +196,18 @@ func _create_disciple_data(
 	assignment: String,
 	combat_power: int,
 	status: String,
-	description: String
+	description: String,
+	extra_data: Dictionary = {}
 ) -> Dictionary:
+	# 普通弟子使用共享外观模板，不为每个弟子单独准备图片。
+	# 世界地图以后显示队伍节点，战斗场景再根据队伍里的 disciple_id 实例化战斗单位。
 	return {
 		"disciple_id": disciple_id,
 		"sect_id": sect_id,
 		"disciple_name": disciple_name,
 		"gender": gender,
 		"age": age,
+		"role": str(extra_data.get("role", "外门弟子")),
 		"realm": realm,
 		"spiritual_root": spiritual_root,
 		"aptitude": aptitude,
@@ -214,6 +218,23 @@ func _create_disciple_data(
 		"combat_power": combat_power,
 		"status": status,
 		"description": description,
+		"appearance_id": str(extra_data.get("appearance_id", "male_disciple_01")),
+		"portrait_id": str(extra_data.get("portrait_id", "portrait_male_01")),
+		"model_id": str(extra_data.get("model_id", "model_male_01")),
+		"battle_model_id": str(extra_data.get("battle_model_id", "battle_male_01")),
+		"color_scheme": str(extra_data.get("color_scheme", "outer_gray")),
+		"tags": extra_data.get("tags", []),
+		"is_deployed": bool(extra_data.get("is_deployed", false)),
+		"team_id": str(extra_data.get("team_id", "")),
+		"battle_position": str(extra_data.get("battle_position", "middle")),
+		"weapon_type": str(extra_data.get("weapon_type", "剑")),
+		"hp": int(extra_data.get("hp", 100)),
+		"max_hp": int(extra_data.get("max_hp", 100)),
+		"attack": int(extra_data.get("attack", 20)),
+		"defense": int(extra_data.get("defense", 20)),
+		"speed": int(extra_data.get("speed", 40)),
+		"spiritual_power": int(extra_data.get("spiritual_power", 20)),
+		"battle_status": str(extra_data.get("battle_status", "正常")),
 	}
 
 

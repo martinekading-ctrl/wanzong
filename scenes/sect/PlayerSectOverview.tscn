@@ -25,7 +25,7 @@ theme_override_constants/margin_bottom = 40
 
 [node name="RootBox" type="VBoxContainer" parent="MarginContainer"]
 layout_mode = 2
-theme_override_constants/separation = 20
+theme_override_constants/separation = 16
 
 [node name="TopBar" type="HBoxContainer" parent="MarginContainer/RootBox"]
 layout_mode = 2
@@ -47,7 +47,7 @@ layout_mode = 2
 
 [node name="SummaryBox" type="VBoxContainer" parent="MarginContainer/RootBox/SummaryPanel"]
 layout_mode = 2
-theme_override_constants/separation = 10
+theme_override_constants/separation = 8
 
 [node name="SectNameLabel" type="Label" parent="MarginContainer/RootBox/SummaryPanel/SummaryBox"]
 layout_mode = 2
@@ -56,37 +56,37 @@ text = "宗门名称：青玄宗"
 
 [node name="MasterLabel" type="Label" parent="MarginContainer/RootBox/SummaryPanel/SummaryBox"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 18
 text = "宗主：玩家"
 
 [node name="RankLabel" type="Label" parent="MarginContainer/RootBox/SummaryPanel/SummaryBox"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 18
 text = "宗门品阶：九品"
 
 [node name="DiscipleCountLabel" type="Label" parent="MarginContainer/RootBox/SummaryPanel/SummaryBox"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 18
 text = "弟子数量：12"
 
 [node name="SpiritStoneLabel" type="Label" parent="MarginContainer/RootBox/SummaryPanel/SummaryBox"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 18
 text = "灵石：1000"
 
 [node name="ReputationLabel" type="Label" parent="MarginContainer/RootBox/SummaryPanel/SummaryBox"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 18
 text = "声望：100"
 
 [node name="CombatPowerLabel" type="Label" parent="MarginContainer/RootBox/SummaryPanel/SummaryBox"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 18
 text = "战力：350"
 
 [node name="DescriptionLabel" type="Label" parent="MarginContainer/RootBox/SummaryPanel/SummaryBox"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 16
 text = "介绍：初立山门的小型修仙宗门，未来可统御万宗。"
 autowrap_mode = 3
 
@@ -96,76 +96,138 @@ size_flags_vertical = 3
 
 [node name="FunctionBox" type="VBoxContainer" parent="MarginContainer/RootBox/FunctionPanel"]
 layout_mode = 2
-theme_override_constants/separation = 14
+theme_override_constants/separation = 12
 
-[node name="DiscipleButton" type="Button" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox"]
-custom_minimum_size = Vector2(220, 48)
+[node name="ButtonBar" type="HBoxContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="DiscipleButton" type="Button" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/ButtonBar"]
+custom_minimum_size = Vector2(160, 44)
 layout_mode = 2
 text = "弟子"
 
-[node name="BuildingButton" type="Button" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox"]
-custom_minimum_size = Vector2(220, 48)
+[node name="BuildingButton" type="Button" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/ButtonBar"]
+custom_minimum_size = Vector2(160, 44)
 layout_mode = 2
 text = "建筑"
 
-[node name="ResourceButton" type="Button" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox"]
-custom_minimum_size = Vector2(220, 48)
+[node name="ResourceButton" type="Button" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/ButtonBar"]
+custom_minimum_size = Vector2(160, 44)
 layout_mode = 2
 text = "资源"
 
 [node name="PlaceholderLabel" type="Label" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
-text = "请选择一个宗门功能。当前版本只开放宗门概览。"
+text = "请选择一个宗门功能。当前版本开放宗门概览与弟子名册。"
 autowrap_mode = 3
 
-[node name="DiscipleContent" type="HBoxContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox"]
+[node name="DiscipleSection" type="VBoxContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox"]
 visible = false
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 10
+
+[node name="DiscipleTopBar" type="HBoxContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleSection"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="DiscipleTitleLabel" type="Label" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleSection/DiscipleTopBar"]
+custom_minimum_size = Vector2(160, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "弟子名册"
+
+[node name="SearchLineEdit" type="LineEdit" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleSection/DiscipleTopBar"]
+custom_minimum_size = Vector2(220, 36)
+layout_mode = 2
+placeholder_text = "按姓名搜索"
+
+[node name="AssignmentFilterOption" type="OptionButton" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleSection/DiscipleTopBar"]
+custom_minimum_size = Vector2(140, 36)
+layout_mode = 2
+
+[node name="SortOption" type="OptionButton" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleSection/DiscipleTopBar"]
+custom_minimum_size = Vector2(140, 36)
+layout_mode = 2
+
+[node name="DiscipleBody" type="HBoxContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleSection"]
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_constants/separation = 16
 
-[node name="DiscipleListPanel" type="PanelContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleContent"]
-custom_minimum_size = Vector2(480, 0)
+[node name="DiscipleListPanel" type="PanelContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleSection/DiscipleBody"]
+custom_minimum_size = Vector2(560, 0)
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="DiscipleListBox" type="VBoxContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleContent/DiscipleListPanel"]
-layout_mode = 2
-theme_override_constants/separation = 8
-
-[node name="DiscipleListTitle" type="Label" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleContent/DiscipleListPanel/DiscipleListBox"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 20
-text = "弟子列表"
-
-[node name="DiscipleScroll" type="ScrollContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleContent/DiscipleListPanel/DiscipleListBox"]
+[node name="DiscipleListScroll" type="ScrollContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleSection/DiscipleBody/DiscipleListPanel"]
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="DiscipleList" type="VBoxContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleContent/DiscipleListPanel/DiscipleListBox/DiscipleScroll"]
+[node name="DiscipleListContainer" type="VBoxContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleSection/DiscipleBody/DiscipleListPanel/DiscipleListScroll"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 6
 
-[node name="DiscipleDetailPanel" type="PanelContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleContent"]
+[node name="DiscipleDetailPanel" type="PanelContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleSection/DiscipleBody"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
-[node name="DiscipleDetailBox" type="VBoxContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleContent/DiscipleDetailPanel"]
+[node name="DiscipleDetailBox" type="VBoxContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleSection/DiscipleBody/DiscipleDetailPanel"]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="DiscipleDetailTitle" type="Label" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleContent/DiscipleDetailPanel/DiscipleDetailBox"]
+[node name="ModelPreviewBox" type="PanelContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleSection/DiscipleBody/DiscipleDetailPanel/DiscipleDetailBox"]
+custom_minimum_size = Vector2(0, 72)
 layout_mode = 2
-theme_override_font_sizes/font_size = 20
-text = "弟子详情"
 
-[node name="DiscipleDetailLabel" type="Label" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleContent/DiscipleDetailPanel/DiscipleDetailBox"]
+[node name="ModelPreviewLabel" type="Label" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleSection/DiscipleBody/DiscipleDetailPanel/DiscipleDetailBox/ModelPreviewBox"]
 layout_mode = 2
-size_flags_vertical = 3
-theme_override_font_sizes/font_size = 17
-text = "请选择左侧弟子查看详情。"
-vertical_alignment = 0
+theme_override_font_sizes/font_size = 16
+text = "人物模型预览\n共享模板后续接入"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="DiscipleNameLabel" type="Label" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleSection/DiscipleBody/DiscipleDetailPanel/DiscipleDetailBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "请选择弟子"
+
+[node name="BasicInfoLabel" type="Label" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleSection/DiscipleBody/DiscipleDetailPanel/DiscipleDetailBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+autowrap_mode = 3
+
+[node name="AttributeInfoLabel" type="Label" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleSection/DiscipleBody/DiscipleDetailPanel/DiscipleDetailBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+autowrap_mode = 3
+
+[node name="BattleInfoLabel" type="Label" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleSection/DiscipleBody/DiscipleDetailPanel/DiscipleDetailBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+autowrap_mode = 3
+
+[node name="AppearanceInfoLabel" type="Label" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleSection/DiscipleBody/DiscipleDetailPanel/DiscipleDetailBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+autowrap_mode = 3
+
+[node name="AssignmentInfoLabel" type="Label" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleSection/DiscipleBody/DiscipleDetailPanel/DiscipleDetailBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+autowrap_mode = 3
+
+[node name="DetailDescriptionLabel" type="Label" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleSection/DiscipleBody/DiscipleDetailPanel/DiscipleDetailBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+autowrap_mode = 3
+
+[node name="DetailHintLabel" type="Label" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleSection/DiscipleBody/DiscipleDetailPanel/DiscipleDetailBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "当前只展示名册与预留数据，不生成独立头像或战斗单位。"
 autowrap_mode = 3
