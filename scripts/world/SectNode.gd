@@ -4,39 +4,51 @@ class_name SectNode
 # 点击宗门时，把宗门数据发给地图场景。
 signal selected(sect_data: Dictionary)
 
-# 宗门显示半径。
-const NODE_RADIUS: float = 34.0
-
 # 当前宗门数据。
 var sect_data: Dictionary = {}
 
 # 名字和战力文本。
 var info_label: Label = null
 
+# 当前宗门图标，存在时不再绘制旧占位图。
+var icon_texture: Texture2D = null
+var icon_size: int = 72
+
 
 # 初始化宗门节点。
-func setup(data: Dictionary) -> void:
+func setup(data: Dictionary, texture: Texture2D = null, display_size: int = 72) -> void:
 	sect_data = data
+	icon_texture = texture
+	icon_size = display_size
 	position = data["position"]
 	input_pickable = true
 	_create_collision_shape()
+	_create_icon()
 	_create_info_label()
 	queue_redraw()
 
 
-# 绘制宗门据点图标，玩家宗门使用绿色，AI 宗门使用蓝色。
+# 绘制 32 x 32 像素山门，玩家宗门使用金绿配色。
 func _draw() -> void:
-	var is_player: bool = bool(sect_data.get("is_player", false))
-	var fill_color: Color = Color(0.20, 0.85, 0.35) if is_player else Color(0.25, 0.55, 0.95)
-	var border_color: Color = Color(0.75, 1.0, 0.78) if is_player else Color(0.70, 0.86, 1.0)
+	if icon_texture != null:
+		return
 
-	draw_circle(Vector2.ZERO, NODE_RADIUS, fill_color)
-	draw_arc(Vector2.ZERO, NODE_RADIUS, 0.0, TAU, 48, border_color, 4.0)
+	var is_player: bool = bool(sect_data.get("is_player", false))
+	var sect_id: int = int(sect_data.get("sect_id", 0))
+	var roof_color: Color = Color("#d9be57") if is_player else (
+		Color("#4f86bd") if sect_id % 2 == 0 else Color("#a95656")
+	)
+	var wall_color: Color = Color("#d8ca9f") if is_player else Color("#b9b4a5")
+
+	draw_rect(Rect2(Vector2(-15, 11), Vector2(30, 5)), Color("#293337"), true)
+	draw_rect(Rect2(Vector2(-11, -2), Vector2(22, 14)), wall_color, true)
+	draw_rect(Rect2(Vector2(-14, -6), Vector2(28, 5)), roof_color.darkened(0.18), true)
+	draw_rect(Rect2(Vector2(-9, -11), Vector2(18, 6)), roof_color, true)
+	draw_rect(Rect2(Vector2(-3, 3), Vector2(6, 9)), Color("#493a2c"), true)
 
 	if is_player:
-		draw_circle(Vector2.ZERO, 12.0, Color(0.78, 1.0, 0.55))
-	else:
-		draw_rect(Rect2(Vector2(-10, -10), Vector2(20, 20)), Color(0.75, 0.90, 1.0), true)
+		draw_rect(Rect2(Vector2(8, -16), Vector2(2, 8)), Color("#eee2a0"), true)
+		draw_rect(Rect2(Vector2(10, -16), Vector2(6, 5)), Color("#62a94f"), true)
 
 
 # 鼠标点击宗门后，通知地图场景显示详情。
@@ -49,20 +61,42 @@ func _input_event(_viewport: Viewport, event: InputEvent, _shape_idx: int) -> vo
 
 # 创建点击碰撞范围。
 func _create_collision_shape() -> void:
-	var circle_shape: CircleShape2D = CircleShape2D.new()
-	circle_shape.radius = NODE_RADIUS + 10.0
+	var rectangle_shape: RectangleShape2D = RectangleShape2D.new()
+	rectangle_shape.size = Vector2(icon_size, icon_size)
 
 	var collision_shape: CollisionShape2D = CollisionShape2D.new()
-	collision_shape.shape = circle_shape
+	collision_shape.position = Vector2(0, -icon_size * 0.5)
+	collision_shape.shape = rectangle_shape
 	add_child(collision_shape)
+
+
+# 创建宗门图片，保持比例并让图片底部中心对齐宗门坐标。
+func _create_icon() -> void:
+	if icon_texture == null:
+		return
+
+	var texture_size: Vector2 = icon_texture.get_size()
+	if texture_size.x <= 0.0 or texture_size.y <= 0.0:
+		return
+
+	var icon: Sprite2D = Sprite2D.new()
+	icon.texture = icon_texture
+	icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	var uniform_scale: float = min(
+		float(icon_size) / texture_size.x,
+		float(icon_size) / texture_size.y
+	)
+	icon.scale = Vector2.ONE * uniform_scale
+	icon.position = Vector2(0, -icon_size * 0.5)
+	add_child(icon)
 
 
 # 创建宗门名字和战力文本。
 func _create_info_label() -> void:
 	info_label = Label.new()
-	info_label.position = Vector2(-90, 42)
-	info_label.custom_minimum_size = Vector2(180, 52)
+	info_label.position = Vector2(-60, 4)
+	info_label.custom_minimum_size = Vector2(120, 24)
 	info_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	info_label.text = str(sect_data["sect_name"]) + "\n战力：" + str(sect_data["power"])
-	info_label.add_theme_font_size_override("font_size", 22)
+	info_label.text = str(sect_data["sect_name"])
+	info_label.add_theme_font_size_override("font_size", 14)
 	add_child(info_label)

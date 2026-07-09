@@ -4,9 +4,6 @@ class_name ResourceNode
 # 点击资源点时，把资源点数据发给世界地图。
 signal selected(resource_data: Dictionary)
 
-# 资源点图标大小。
-const NODE_RADIUS: float = 22.0
-
 # 资源点编号。
 var resource_id: int = 0
 
@@ -49,16 +46,29 @@ func setup(data: Dictionary) -> void:
 	queue_redraw()
 
 
-# 绘制资源点图标，不同资源类型使用不同颜色。
+# 绘制四类修仙像素资源图标。
 func _draw() -> void:
-	var fill_color: Color = _get_resource_color()
-
-	if resource_type == "secret_realm":
-		draw_rect(Rect2(Vector2(-NODE_RADIUS, -NODE_RADIUS), Vector2(NODE_RADIUS * 2.0, NODE_RADIUS * 2.0)), fill_color, true)
-		draw_rect(Rect2(Vector2(-NODE_RADIUS, -NODE_RADIUS), Vector2(NODE_RADIUS * 2.0, NODE_RADIUS * 2.0)), Color(1.0, 0.95, 0.60), false, 3.0)
+	if resource_type == "spirit_mine":
+		var purple := Color("#9a68b8")
+		draw_rect(Rect2(Vector2(-9, 4), Vector2(18, 6)), Color("#493a55"), true)
+		draw_rect(Rect2(Vector2(-4, -9), Vector2(8, 15)), purple, true)
+		draw_rect(Rect2(Vector2(1, -7), Vector2(3, 9)), purple.lightened(0.22), true)
+	elif resource_type == "herb_field":
+		var herb := Color("#72b95c")
+		draw_rect(Rect2(Vector2(-1, -9), Vector2(3, 18)), Color("#315b32"), true)
+		draw_rect(Rect2(Vector2(-10, -6), Vector2(9, 6)), herb, true)
+		draw_rect(Rect2(Vector2(2, -1), Vector2(10, 6)), herb.lightened(0.12), true)
+	elif resource_type == "secret_realm":
+		var gold := Color("#d6b64c")
+		draw_rect(Rect2(Vector2(-9, -11), Vector2(18, 22)), Color("#4f4229"), true)
+		draw_rect(Rect2(Vector2(-6, -8), Vector2(12, 19)), gold, true)
+		draw_rect(Rect2(Vector2(-2, -3), Vector2(4, 14)), Color("#453a27"), true)
 	else:
-		draw_circle(Vector2.ZERO, NODE_RADIUS, fill_color)
-		draw_arc(Vector2.ZERO, NODE_RADIUS, 0.0, TAU, 40, Color(0.85, 0.90, 0.86), 3.0)
+		var spirit_blue := Color("#667fd1")
+		draw_rect(Rect2(Vector2(-7, -7), Vector2(14, 14)), Color("#353f68"), true)
+		draw_rect(Rect2(Vector2(-4, -10), Vector2(8, 20)), spirit_blue, true)
+		draw_rect(Rect2(Vector2(-10, -4), Vector2(20, 8)), spirit_blue.lightened(0.16), true)
+		draw_rect(Rect2(Vector2(-3, -3), Vector2(6, 6)), Color("#b2a0e8"), true)
 
 
 # 鼠标点击资源点后，通知世界地图显示详情。
@@ -72,7 +82,7 @@ func _input_event(_viewport: Viewport, event: InputEvent, _shape_idx: int) -> vo
 # 创建点击范围。
 func _create_collision_shape() -> void:
 	var circle_shape: CircleShape2D = CircleShape2D.new()
-	circle_shape.radius = NODE_RADIUS + 12.0
+	circle_shape.radius = 20.0
 
 	var collision_shape: CollisionShape2D = CollisionShape2D.new()
 	collision_shape.shape = circle_shape
@@ -82,12 +92,7 @@ func _create_collision_shape() -> void:
 # 创建资源点名称和等级文本。
 func _create_info_label() -> void:
 	info_label = Label.new()
-	info_label.position = Vector2(-70, 30)
-	info_label.custom_minimum_size = Vector2(140, 34)
-	info_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	info_label.text = resource_name + " Lv" + str(level)
-	info_label.add_theme_font_size_override("font_size", 18)
-	add_child(info_label)
+	info_label.visible = false
 
 
 # 根据资源类型返回显示颜色。

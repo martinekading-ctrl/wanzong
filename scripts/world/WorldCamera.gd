@@ -3,11 +3,14 @@ extends Camera2D
 # 地图尺寸，由 World 设置。
 var map_size: Vector2 = Vector2(4096, 4096)
 
+# 地图左上角坐标，扩大地图后允许世界范围向原地图四周延伸。
+var map_origin: Vector2 = Vector2.ZERO
+
 # 镜头移动速度。
 var move_speed: float = 900.0
 
-# 镜头最小缩放，数值越小视野越大。
-var min_zoom: float = 0.32
+# 扩大后的像素地图允许进一步缩小查看全局。
+var min_zoom: float = 0.31
 
 # 镜头最大缩放，数值越大视野越近。
 var max_zoom: float = 1.8
@@ -15,8 +18,8 @@ var max_zoom: float = 1.8
 # 每次滚轮缩放幅度。
 var zoom_step: float = 0.12
 
-# 初始缩放，进入地图时先看到完整原型布局。
-var start_zoom: float = 0.36
+# 初始视野拉远，方便观察主大陆与外围岛屿。
+var start_zoom: float = 0.32
 
 # 鼠标是否正在拖动镜头。
 var is_dragging: bool = false
@@ -24,7 +27,8 @@ var is_dragging: bool = false
 
 # 镜头启动时，先放在地图中心。
 func _ready() -> void:
-	position = map_size * 0.5
+	position = map_origin + map_size * 0.5
+	get_viewport().size_changed.connect(_on_viewport_size_changed)
 	zoom = Vector2(start_zoom, start_zoom)
 	_clamp_camera_position()
 
@@ -69,8 +73,23 @@ func _set_zoom(new_zoom: float) -> void:
 	_clamp_camera_position()
 
 
-# 限制镜头不要离开地图太远。
+# 窗口尺寸变化后重新限制镜头位置。
+func _on_viewport_size_changed() -> void:
+	_clamp_camera_position()
+
+
+# 按当前视野大小限制镜头位置，任何缩放下都不会露出地图外。
 func _clamp_camera_position() -> void:
-	var margin: float = 300.0
-	position.x = clampf(position.x, -margin, map_size.x + margin)
-	position.y = clampf(position.y, -margin, map_size.y + margin)
+	var viewport_size: Vector2 = get_viewport_rect().size
+	var half_view_size: Vector2 = viewport_size / (zoom * 2.0)
+	var map_end: Vector2 = map_origin + map_size
+
+	if half_view_size.x * 2.0 >= map_size.x:
+		position.x = map_origin.x + map_size.x * 0.5
+	else:
+		position.x = clampf(position.x, map_origin.x + half_view_size.x, map_end.x - half_view_size.x)
+
+	if half_view_size.y * 2.0 >= map_size.y:
+		position.y = map_origin.y + map_size.y * 0.5
+	else:
+		position.y = clampf(position.y, map_origin.y + half_view_size.y, map_end.y - half_view_size.y)

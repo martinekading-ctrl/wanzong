@@ -1,0 +1,14 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/prototype/PixelWorldPreview.gd" id="1_preview"]
+
+[node name="PixelWorldPreview" type="Node2D"]
+script = ExtResource("1_preview")
+
+[node name="TerrainLayer" type="TileMapLayer" parent="."]
+z_index = -10
+texture_filter = 1
+
+[node name="PreviewCamera" type="Camera2D" parent="."]
+position = Vector2(2048, 2048)
+enabled = true

@@ -1,0 +1,679 @@
+extends Node2D
+
+# 独立修仙像素世界视觉样张，不读取正式 World 数据，也不包含玩法交互。
+
+const WORLD_SIZE: Vector2i = Vector2i(6144, 6144)
+const TILE_SIZE: Vector2i = Vector2i(16, 16)
+const GRID_SIZE: Vector2i = Vector2i(384, 384)
+
+const DEEP_WATER: String = "deep_water"
+const WATER: String = "water"
+const SHALLOW_WATER: String = "shallow_water"
+const SAND: String = "sand"
+const GRASS: String = "grass"
+const FROST_GRASS: String = "frost_grass"
+const FOREST: String = "forest"
+const DIRT: String = "dirt"
+const MOUNTAIN: String = "mountain"
+const SNOW: String = "snow"
+const WASTELAND: String = "wasteland"
+
+const TILE_COLORS: Dictionary = {
+	DEEP_WATER: Color("#1f5f9e"),
+	WATER: Color("#2f7fc0"),
+	SHALLOW_WATER: Color("#65b6d6"),
+	SAND: Color("#e2c16f"),
+	GRASS: Color("#5fa34a"),
+	FROST_GRASS: Color("#759a7c"),
+	FOREST: Color("#2f6b3c"),
+	DIRT: Color("#8b6138"),
+	MOUNTAIN: Color("#777066"),
+	SNOW: Color("#dceff2"),
+	WASTELAND: Color("#9b7a42"),
+}
+
+const TILE_ACCENTS: Dictionary = {
+	DEEP_WATER: Color("#174b80"),
+	WATER: Color("#286da5"),
+	SHALLOW_WATER: Color("#8acde3"),
+	SAND: Color("#c9a95b"),
+	GRASS: Color("#45843d"),
+	FROST_GRASS: Color("#a8bcae"),
+	FOREST: Color("#1f4f31"),
+	DIRT: Color("#704a2c"),
+	MOUNTAIN: Color("#55504a"),
+	SNOW: Color("#a9cfd8"),
+	WASTELAND: Color("#775d31"),
+}
+
+# 五座外围小岛，位置与形状属于《万宗》自己的世界布局。
+const ISLAND_SPECS: Array = [
+	{"center": Vector2(0.060, 0.29), "radius": Vector2(0.050, 0.040)},
+	{"center": Vector2(0.940, 0.27), "radius": Vector2(0.055, 0.042)},
+	{"center": Vector2(0.055, 0.71), "radius": Vector2(0.058, 0.045)},
+	{"center": Vector2(0.945, 0.72), "radius": Vector2(0.060, 0.044)},
+	{"center": Vector2(0.52, 0.94), "radius": Vector2(0.055, 0.036)},
+]
+
+@onready var terrain_layer: TileMapLayer = $TerrainLayer
+@onready var preview_camera: Camera2D = $PreviewCamera
+
+@export var preview_mode: bool = true
+
+var terrain_map: Array = []
+var terrain_sources: Dictionary = {}
+var tree_markers: Array[Dictionary] = []
+var mountain_markers: Array[Vector2i] = []
+var snow_markers: Array[Vector2i] = []
+var wasteland_markers: Array[Vector2i] = []
+var sect_cells: Array[Vector2i] = []
+var resource_cells: Array[Vector2i] = []
+
+var continent_noise := FastNoiseLite.new()
+var biome_noise := FastNoiseLite.new()
+var forest_noise := FastNoiseLite.new()
+var river_noise := FastNoiseLite.new()
+
+var move_speed: float = 900.0
+var min_zoom: float = 0.31
+var max_zoom: float = 2.0
+var zoom_step: float = 0.12
+
+
+func _ready() -> void:
+	_setup_noises()
+	_create_tile_set()
+	_generate_world()
+	_collect_nature_markers()
+	if preview_mode:
+		_place_world_markers()
+		preview_camera.position = Vector2(WORLD_SIZE) * 0.5
+		preview_camera.zoom = Vector2(0.32, 0.32)
+		preview_camera.make_current()
+	else:
+		sect_cells.clear()
+		resource_cells.clear()
+		preview_camera.enabled = false
+	queue_redraw()
+
+
+func _process(delta: float) -> void:
+	if not preview_mode:
+		return
+
+	var direction := Vector2.ZERO
+	if Input.is_key_pressed(KEY_A) or Input.is_action_pressed("ui_left"):
+		direction.x -= 1.0
+	if Input.is_key_pressed(KEY_D) or Input.is_action_pressed("ui_right"):
+		direction.x += 1.0
+	if Input.is_key_pressed(KEY_W) or Input.is_action_pressed("ui_up"):
+		direction.y -= 1.0
+	if Input.is_key_pressed(KEY_S) or Input.is_action_pressed("ui_down"):
+		direction.y += 1.0
+
+	if direction != Vector2.ZERO:
+		preview_camera.position += direction.normalized() * move_speed * delta / preview_camera.zoom.x
+		_clamp_camera()
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if not preview_mode:
+		return
+
+	if event is InputEventMouseButton and event.pressed:
+		if event.button_index == MOUSE_BUTTON_WHEEL_UP:
+			_set_camera_zoom(preview_camera.zoom.x + zoom_step)
+		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+			_set_camera_zoom(preview_camera.zoom.x - zoom_step)
+
+
+# 自然物先绘制，宗门和资源标记最后绘制，保证地图信息清楚。
+func _draw() -> void:
+	for marker in tree_markers:
+		_draw_tree(_cell_center(marker["cell"]) + marker["offset"], int(marker["kind"]))
+
+	for cell in mountain_markers:
+		_draw_mountain(_cell_center(cell), _cell_hash(cell.x, cell.y) % 3)
+
+	for cell in snow_markers:
+		_draw_ice_crystal(_cell_center(cell))
+
+	for cell in wasteland_markers:
+		_draw_wasteland_rock(_cell_center(cell))
+
+	for sect_index in range(sect_cells.size()):
+		_draw_sect(_cell_center(sect_cells[sect_index]), sect_index)
+
+	for resource_index in range(resource_cells.size()):
+		_draw_resource(_cell_center(resource_cells[resource_index]), resource_index % 3)
+
+
+func _setup_noises() -> void:
+	continent_noise.seed = 1902001
+	continent_noise.frequency = 0.012
+	continent_noise.fractal_octaves = 4
+	continent_noise.fractal_gain = 0.52
+
+	biome_noise.seed = 1902002
+	biome_noise.frequency = 0.018
+	biome_noise.fractal_octaves = 3
+
+	forest_noise.seed = 1902003
+	forest_noise.frequency = 0.027
+	forest_noise.fractal_octaves = 3
+
+	river_noise.seed = 1902004
+	river_noise.frequency = 0.016
+	river_noise.fractal_octaves = 3
+
+
+# 每类地形使用八个同色系变体，保持细节但不形成规则纹路。
+func _create_tile_set() -> void:
+	terrain_layer.tile_set = TileSet.new()
+	terrain_layer.tile_set.tile_size = TILE_SIZE
+	terrain_sources.clear()
+
+	for terrain_type in TILE_COLORS.keys():
+		var source_ids: Array[int] = []
+		for variant in range(8):
+			var base_color: Color = TILE_COLORS[terrain_type]
+			if variant % 4 == 1:
+				base_color = base_color.lightened(0.025)
+			elif variant % 4 == 2:
+				base_color = base_color.darkened(0.025)
+
+			var source := TileSetAtlasSource.new()
+			source.texture = _create_tile_texture(
+				terrain_type,
+				base_color,
+				TILE_ACCENTS[terrain_type],
+				variant
+			)
+			source.texture_region_size = TILE_SIZE
+			source.create_tile(Vector2i.ZERO)
+			source_ids.append(terrain_layer.tile_set.add_source(source))
+
+		terrain_sources[terrain_type] = source_ids
+
+
+# 地表 Tile 只画细小像素纹理，大型树木和山峰作为独立对象绘制。
+func _create_tile_texture(
+	terrain_type: String,
+	base_color: Color,
+	accent_color: Color,
+	variant: int
+) -> Texture2D:
+	var image := Image.create_empty(TILE_SIZE.x, TILE_SIZE.y, false, Image.FORMAT_RGBA8)
+	image.fill(base_color)
+
+	if terrain_type == DEEP_WATER or terrain_type == WATER or terrain_type == SHALLOW_WATER:
+		for line_index in range(2):
+			var line_y: int = 4 + line_index * 7 + variant % 2
+			for line_x in range(2, 14):
+				if (line_x + variant + line_index) % 6 < 3:
+					image.set_pixel(line_x, line_y, accent_color)
+	elif terrain_type == SAND:
+		for point_index in range(5):
+			var shore_x: int = 2 + (point_index * 5 + variant * 3) % 12
+			var shore_y: int = 3 + (point_index * 7 + variant * 2) % 10
+			image.set_pixel(shore_x, shore_y, accent_color)
+	elif terrain_type == SNOW:
+		for point_index in range(4):
+			var snow_x: int = 2 + (point_index * 7 + variant) % 12
+			var snow_y: int = 2 + (point_index * 5 + variant * 3) % 12
+			image.set_pixel(snow_x, snow_y, accent_color)
+	else:
+		for point_index in range(5):
+			var point_x: int = 2 + (point_index * 5 + variant * 3 + terrain_type.length()) % 12
+			var point_y: int = 2 + (point_index * 7 + variant * 5) % 12
+			image.set_pixel(point_x, point_y, accent_color)
+			if terrain_type == WASTELAND and point_index < 2:
+				image.set_pixel(point_x, mini(point_y + 1, 15), accent_color)
+
+	return ImageTexture.create_from_image(image)
+
+
+# 先生成修仙大陆，再添加海岸和深浅水过渡。
+func _generate_world() -> void:
+	var raw_map: Array = []
+	for cell_y in range(GRID_SIZE.y):
+		var row: Array[String] = []
+		row.resize(GRID_SIZE.x)
+		for cell_x in range(GRID_SIZE.x):
+			row[cell_x] = _get_raw_terrain(cell_x, cell_y)
+		raw_map.append(row)
+
+	terrain_map.clear()
+	terrain_layer.clear()
+	for cell_y in range(GRID_SIZE.y):
+		var final_row: Array[String] = []
+		final_row.resize(GRID_SIZE.x)
+		for cell_x in range(GRID_SIZE.x):
+			var cell := Vector2i(cell_x, cell_y)
+			var terrain_type: String = str(raw_map[cell_y][cell_x])
+			terrain_type = _apply_biome_transitions(cell, terrain_type, raw_map)
+			final_row[cell_x] = terrain_type
+			_set_terrain_cell(cell, terrain_type)
+		terrain_map.append(final_row)
+
+
+# 大陆轮廓独立生成，内部按修仙地域划分寒域、剑山、荒土和灵州。
+func _get_raw_terrain(cell_x: int, cell_y: int) -> String:
+	var normalized_x: float = float(cell_x) / float(GRID_SIZE.x - 1)
+	var normalized_y: float = float(cell_y) / float(GRID_SIZE.y - 1)
+	var world_position := Vector2(normalized_x, normalized_y)
+	var continent_value: float = continent_noise.get_noise_2d(float(cell_x), float(cell_y))
+
+	if not _is_world_land(world_position, continent_value):
+		return DEEP_WATER
+
+	if _is_spirit_river(cell_y, normalized_x, normalized_y):
+		return SHALLOW_WATER
+	if _is_mirror_lake(cell_x, cell_y, world_position):
+		return SHALLOW_WATER
+
+	var biome_value: float = biome_noise.get_noise_2d(float(cell_x), float(cell_y))
+	if normalized_x < 0.47 + biome_value * 0.05 and normalized_y < 0.27 + biome_value * 0.08:
+		return SNOW
+
+	if normalized_x > 0.80 + biome_value * 0.05:
+		return MOUNTAIN
+
+	if normalized_x < 0.34 + biome_value * 0.05 and normalized_y > 0.70 - biome_value * 0.06:
+		return WASTELAND
+
+	var forest_value: float = forest_noise.get_noise_2d(float(cell_x), float(cell_y))
+	var river_distance: float = absf(normalized_x - _get_spirit_river_center(cell_y, normalized_y))
+	var near_river_forest: bool = river_distance < 0.075 and forest_value > 0.10
+	if (forest_value > 0.27 or near_river_forest) and normalized_y > 0.24 and normalized_x < 0.75:
+		return FOREST
+
+	if biome_value > 0.43 and normalized_y > 0.25:
+		return DIRT
+
+	return GRASS
+
+
+# 中央主大陆之外再生成五座外围小岛。
+func _is_world_land(world_position: Vector2, coast_noise: float) -> bool:
+	var continent_center := Vector2(0.49, 0.52)
+	var continent_offset := Vector2(
+		(world_position.x - continent_center.x) / 0.30,
+		(world_position.y - continent_center.y) / 0.32
+	)
+	var continent_distance: float = continent_offset.length()
+	var continent_angle: float = atan2(continent_offset.y, continent_offset.x)
+	var continent_edge: float = (
+		1.0
+		+ coast_noise * 0.28
+		+ sin(continent_angle * 3.0 + 0.7) * 0.07
+		+ sin(continent_angle * 7.0 - 0.4) * 0.035
+	)
+	if continent_distance <= continent_edge:
+		return true
+
+	for island_index in range(ISLAND_SPECS.size()):
+		var island_data: Dictionary = ISLAND_SPECS[island_index]
+		var island_center: Vector2 = island_data["center"]
+		var island_radius: Vector2 = island_data["radius"]
+		var island_offset := Vector2(
+			(world_position.x - island_center.x) / island_radius.x,
+			(world_position.y - island_center.y) / island_radius.y
+		)
+		var island_distance: float = island_offset.length()
+		var island_angle: float = atan2(island_offset.y, island_offset.x)
+		var island_edge: float = (
+			1.0
+			+ coast_noise * 0.34
+			+ sin(island_angle * float(3 + island_index % 3) + float(island_index)) * 0.16
+			+ sin(island_angle * float(6 + island_index % 2) - 0.8) * 0.08
+		)
+		if island_distance <= island_edge:
+			return true
+
+	return false
+
+
+# 灵河由北部寒域发源，穿过中央灵州后流向南海。
+func _is_spirit_river(cell_y: int, normalized_x: float, normalized_y: float) -> bool:
+	var river_center: float = _get_spirit_river_center(cell_y, normalized_y)
+	var river_width: float = 0.008 + (sin(normalized_y * TAU * 2.2) + 1.0) * 0.003
+	return absf(normalized_x - river_center) <= river_width
+
+
+func _get_spirit_river_center(cell_y: int, normalized_y: float) -> float:
+	var curve: float = sin(normalized_y * TAU * 1.55) * 0.075
+	curve += sin(normalized_y * TAU * 3.4 + 0.8) * 0.018
+	var natural_offset: float = river_noise.get_noise_1d(float(cell_y)) * 0.04
+	return 0.48 + curve + natural_offset
+
+
+func _is_mirror_lake(cell_x: int, cell_y: int, world_position: Vector2) -> bool:
+	var lake_center := Vector2(0.60, 0.36)
+	var lake_noise: float = continent_noise.get_noise_2d(float(cell_x) * 1.8, float(cell_y) * 1.8)
+	return world_position.distance_to(lake_center) < 0.055 + lake_noise * 0.014
+
+
+# 水边生成浅水和沙岸，雪地边缘生成一圈霜草过渡。
+func _apply_biome_transitions(cell: Vector2i, terrain_type: String, raw_map: Array) -> String:
+	var is_water: bool = _is_water(terrain_type)
+
+	if is_water:
+		var distance_to_land: int = _get_nearest_opposite_distance(raw_map, cell, true, 6)
+		if distance_to_land <= 2:
+			return SHALLOW_WATER
+		if distance_to_land <= 5:
+			return WATER
+		return DEEP_WATER
+
+	var distance_to_water: int = _get_nearest_opposite_distance(raw_map, cell, false, 3)
+	var uneven_sand_edge: bool = distance_to_water == 2 and _cell_hash(cell.x, cell.y) % 4 == 0
+	if distance_to_water <= 1 or uneven_sand_edge:
+		return SAND
+
+	if _has_raw_neighbor(raw_map, cell, SNOW, 2) and (
+		terrain_type == GRASS or terrain_type == FOREST or terrain_type == DIRT
+	):
+		return FROST_GRASS
+
+	if _has_raw_neighbor(raw_map, cell, MOUNTAIN, 2) and (
+		terrain_type == GRASS or terrain_type == FOREST
+	) and _cell_hash(cell.x, cell.y) % 3 != 0:
+		return DIRT
+
+	return terrain_type
+
+
+# 查找距离最近的陆地或水域，用于构造稳定的五层海岸。
+func _get_nearest_opposite_distance(
+	raw_map: Array,
+	cell: Vector2i,
+	seek_land: bool,
+	max_distance: int
+) -> int:
+	for radius in range(1, max_distance + 1):
+		for offset_y in range(-radius, radius + 1):
+			for offset_x in range(-radius, radius + 1):
+				if abs(offset_x) != radius and abs(offset_y) != radius:
+					continue
+				var terrain_type: String = _raw_at(raw_map, cell + Vector2i(offset_x, offset_y))
+				var matches: bool = not _is_water(terrain_type) if seek_land else _is_water(terrain_type)
+				if matches:
+					return radius
+	return max_distance + 1
+
+
+func _has_raw_neighbor(
+	raw_map: Array,
+	cell: Vector2i,
+	target_terrain: String,
+	radius: int
+) -> bool:
+	for offset_y in range(-radius, radius + 1):
+		for offset_x in range(-radius, radius + 1):
+			if _raw_at(raw_map, cell + Vector2i(offset_x, offset_y)) == target_terrain:
+				return true
+	return false
+
+
+func _set_terrain_cell(cell: Vector2i, terrain_type: String) -> void:
+	var variants: Array = terrain_sources[terrain_type]
+	var variant_index: int = _cell_hash(cell.x, cell.y) % variants.size()
+	terrain_layer.set_cell(cell, int(variants[variant_index]), Vector2i.ZERO)
+
+
+# 根据地形收集稀疏自然物，避免把每一格都塞满图标。
+func _collect_nature_markers() -> void:
+	tree_markers.clear()
+	mountain_markers.clear()
+	snow_markers.clear()
+	wasteland_markers.clear()
+
+	for cell_y in range(2, GRID_SIZE.y - 2):
+		for cell_x in range(2, GRID_SIZE.x - 2):
+			var cell := Vector2i(cell_x, cell_y)
+			var terrain_type: String = _terrain_at(cell)
+			var hash_value: int = _cell_hash(cell_x, cell_y)
+
+			if terrain_type == FOREST and hash_value % 100 < 14:
+				var tree_kind: int = 0
+				if cell_y > 150 and cell_x > 80 and cell_x < 170:
+					tree_kind = 1
+				elif cell_y < 78:
+					tree_kind = 2
+				if hash_value % 997 < 7:
+					tree_kind = 3
+				tree_markers.append({
+					"cell": cell,
+					"kind": tree_kind,
+					"offset": Vector2(
+						float((hash_value / 7) % 13) - 6.0,
+						float((hash_value / 17) % 13) - 6.0
+					),
+				})
+			elif terrain_type == GRASS and hash_value % 1000 < 7:
+				tree_markers.append({
+					"cell": cell,
+					"kind": 0,
+					"offset": Vector2.ZERO,
+				})
+			elif terrain_type == MOUNTAIN and hash_value % 100 < 9:
+				mountain_markers.append(cell)
+			elif terrain_type == SNOW:
+				if hash_value % 100 < 3:
+					tree_markers.append({
+						"cell": cell,
+						"kind": 2,
+						"offset": Vector2(
+							float((hash_value / 7) % 9) - 4.0,
+							float((hash_value / 17) % 9) - 4.0
+						),
+					})
+				elif hash_value % 100 < 7:
+					snow_markers.append(cell)
+			elif terrain_type == WASTELAND and hash_value % 100 < 4:
+				wasteland_markers.append(cell)
+
+
+func _place_world_markers() -> void:
+	var requested_sects: Array[Vector2i] = [
+		Vector2i(192, 198), # 青云宗，中央灵州。
+		Vector2i(93, 87), Vector2i(155, 72), Vector2i(270, 86),
+		Vector2i(318, 129), Vector2i(299, 204), Vector2i(314, 291),
+		Vector2i(227, 311), Vector2i(114, 305), Vector2i(72, 207),
+	]
+	sect_cells.clear()
+	for requested_cell in requested_sects:
+		sect_cells.append(_find_marker_land(requested_cell))
+
+	resource_cells.clear()
+	for resource_index in range(20):
+		var requested_cell := Vector2i(
+			24 + (resource_index * 71 + 29) % 336,
+			24 + (resource_index * 107 + 53) % 336
+		)
+		resource_cells.append(_find_marker_land(requested_cell))
+
+
+func _find_marker_land(start_cell: Vector2i) -> Vector2i:
+	if _can_place_marker(_terrain_at(start_cell)):
+		return start_cell
+
+	for radius in range(1, 65):
+		for offset_y in range(-radius, radius + 1):
+			for offset_x in range(-radius, radius + 1):
+				if abs(offset_x) != radius and abs(offset_y) != radius:
+					continue
+				var candidate := start_cell + Vector2i(offset_x, offset_y)
+				if _can_place_marker(_terrain_at(candidate)):
+					return candidate
+	return start_cell
+
+
+func _can_place_marker(terrain_type: String) -> bool:
+	return _is_safe_marker_terrain(terrain_type)
+
+
+func _draw_tree(position: Vector2, kind: int) -> void:
+	var trunk := Color("#5c4631")
+	var dark := Color("#244d2d")
+	var light := Color("#4d8b43")
+
+	if kind == 1:
+		# 南部竹林。
+		draw_rect(Rect2(position + Vector2(-1, -10), Vector2(2, 16)), Color("#537d36"))
+		draw_rect(Rect2(position + Vector2(-6, -7), Vector2(5, 3)), Color("#72a84c"))
+		draw_rect(Rect2(position + Vector2(1, -2), Vector2(6, 3)), Color("#72a84c"))
+		return
+
+	if kind == 2:
+		# 寒域雪松。
+		dark = Color("#28584d")
+		light = Color("#4f8270")
+	elif kind == 3:
+		# 稀有灵木。
+		dark = Color("#2f6b66")
+		light = Color("#65b69b")
+
+	draw_rect(Rect2(position + Vector2(-1, 1), Vector2(3, 6)), trunk)
+	draw_rect(Rect2(position + Vector2(-6, -7), Vector2(12, 7)), dark)
+	draw_rect(Rect2(position + Vector2(-4, -11), Vector2(8, 6)), light)
+	draw_rect(Rect2(position + Vector2(-2, -14), Vector2(4, 4)), light.lightened(0.08))
+	if kind == 2:
+		draw_rect(Rect2(position + Vector2(-4, -12), Vector2(4, 2)), Color("#d8e8ec"))
+
+
+func _draw_mountain(position: Vector2, variant: int) -> void:
+	var dark := Color("#3f4950")
+	var body := Color("#69737a")
+	var light := Color("#90989b")
+	var height: int = 18 + variant * 2
+
+	for row in range(height):
+		var half_width: int = int(float(row) * 0.65)
+		draw_rect(
+			Rect2(
+				position + Vector2(-half_width, row - height),
+				Vector2(half_width * 2 + 1, 1)
+			),
+			body if row % 4 != 0 else dark
+		)
+	draw_rect(Rect2(position + Vector2(-2, -height), Vector2(5, 5)), light)
+
+
+func _draw_ice_crystal(position: Vector2) -> void:
+	var ice := Color("#9fd2dc")
+	draw_rect(Rect2(position + Vector2(-1, -6), Vector2(2, 12)), ice)
+	draw_rect(Rect2(position + Vector2(-6, -1), Vector2(12, 2)), ice)
+	draw_rect(Rect2(position + Vector2(-3, -3), Vector2(6, 6)), Color("#d8f0f2"))
+
+
+func _draw_wasteland_rock(position: Vector2) -> void:
+	draw_rect(Rect2(position + Vector2(-6, -3), Vector2(12, 7)), Color("#5e4a32"))
+	draw_rect(Rect2(position + Vector2(-3, -6), Vector2(8, 7)), Color("#806342"))
+
+
+# 宗门使用像素山门建筑，玩家青云宗为金绿配色。
+func _draw_sect(position: Vector2, sect_index: int) -> void:
+	var player: bool = sect_index == 0
+	var roof: Color = Color("#d8bc55") if player else (Color("#4d83b6") if sect_index % 2 == 0 else Color("#a65353"))
+	var wall: Color = Color("#d5c69d") if player else Color("#b8b1a0")
+	var origin := position - Vector2(12, 12)
+
+	draw_rect(Rect2(origin + Vector2(2, 18), Vector2(20, 5)), Color("#30383a"))
+	draw_rect(Rect2(origin + Vector2(5, 10), Vector2(14, 10)), wall)
+	draw_rect(Rect2(origin + Vector2(3, 7), Vector2(18, 4)), roof.darkened(0.18))
+	draw_rect(Rect2(origin + Vector2(6, 4), Vector2(12, 4)), roof)
+	draw_rect(Rect2(origin + Vector2(10, 13), Vector2(4, 7)), Color("#4b3a2d"))
+	if player:
+		draw_rect(Rect2(origin + Vector2(11, 1), Vector2(2, 5)), Color("#f1dd79"))
+
+
+# 灵矿、灵草和秘境入口使用修仙主题像素符号。
+func _draw_resource(position: Vector2, resource_type: int) -> void:
+	var origin := position.floor()
+	if resource_type == 0:
+		var purple := Color("#9a68b8")
+		draw_rect(Rect2(origin + Vector2(-5, -3), Vector2(10, 7)), Color("#493a55"))
+		draw_rect(Rect2(origin + Vector2(-2, -8), Vector2(5, 12)), purple)
+		draw_rect(Rect2(origin + Vector2(1, -6), Vector2(2, 7)), purple.lightened(0.22))
+	elif resource_type == 1:
+		var herb := Color("#72b95c")
+		draw_rect(Rect2(origin + Vector2(-1, -7), Vector2(2, 13)), Color("#315b32"))
+		draw_rect(Rect2(origin + Vector2(-7, -4), Vector2(6, 4)), herb)
+		draw_rect(Rect2(origin + Vector2(1, -1), Vector2(7, 4)), herb.lightened(0.12))
+	else:
+		var gold := Color("#d6b64c")
+		draw_rect(Rect2(origin + Vector2(-6, -8), Vector2(12, 16)), Color("#4f4229"))
+		draw_rect(Rect2(origin + Vector2(-4, -6), Vector2(8, 14)), gold)
+		draw_rect(Rect2(origin + Vector2(-1, -2), Vector2(2, 10)), Color("#453a27"))
+
+
+func _raw_at(raw_map: Array, cell: Vector2i) -> String:
+	if cell.x < 0 or cell.y < 0 or cell.x >= GRID_SIZE.x or cell.y >= GRID_SIZE.y:
+		return DEEP_WATER
+	return str(raw_map[cell.y][cell.x])
+
+
+func _terrain_at(cell: Vector2i) -> String:
+	if cell.x < 0 or cell.y < 0 or cell.x >= GRID_SIZE.x or cell.y >= GRID_SIZE.y:
+		return DEEP_WATER
+	return str(terrain_map[cell.y][cell.x])
+
+
+# 为正式宗门和资源点寻找最近的安全陆地显示位置。
+func find_nearest_land_world_position(world_position: Vector2) -> Vector2:
+	var start_cell := Vector2i(
+		clampi(int(world_position.x / TILE_SIZE.x), 0, GRID_SIZE.x - 1),
+		clampi(int(world_position.y / TILE_SIZE.y), 0, GRID_SIZE.y - 1)
+	)
+	if _is_safe_marker_terrain(_terrain_at(start_cell)):
+		return _cell_center(start_cell)
+
+	for radius in range(1, 129):
+		for offset_y in range(-radius, radius + 1):
+			for offset_x in range(-radius, radius + 1):
+				if abs(offset_x) != radius and abs(offset_y) != radius:
+					continue
+				var candidate := start_cell + Vector2i(offset_x, offset_y)
+				if _is_safe_marker_terrain(_terrain_at(candidate)):
+					return _cell_center(candidate)
+	return world_position
+
+
+func _is_safe_marker_terrain(terrain_type: String) -> bool:
+	return (
+		not _is_water(terrain_type)
+		and terrain_type != MOUNTAIN
+		and terrain_type != SAND
+	)
+
+
+func _is_water(terrain_type: String) -> bool:
+	return terrain_type == DEEP_WATER or terrain_type == WATER or terrain_type == SHALLOW_WATER
+
+
+func _cell_center(cell: Vector2i) -> Vector2:
+	return Vector2(cell * TILE_SIZE) + Vector2(TILE_SIZE) * 0.5
+
+
+func _cell_hash(cell_x: int, cell_y: int) -> int:
+	return abs(
+		cell_x * 928371
+		+ cell_y * 364479
+		+ cell_x * cell_y * 97
+		+ 1902
+	)
+
+
+func _set_camera_zoom(new_zoom: float) -> void:
+	var zoom_value: float = clampf(new_zoom, min_zoom, max_zoom)
+	preview_camera.zoom = Vector2(zoom_value, zoom_value)
+	_clamp_camera()
+
+
+func _clamp_camera() -> void:
+	var viewport_size: Vector2 = get_viewport_rect().size
+	var half_view: Vector2 = viewport_size / (preview_camera.zoom * 2.0)
+	preview_camera.position.x = clampf(preview_camera.position.x, half_view.x, WORLD_SIZE.x - half_view.x)
+	preview_camera.position.y = clampf(preview_camera.position.y, half_view.y, WORLD_SIZE.y - half_view.y)

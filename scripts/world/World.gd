@@ -12,26 +12,28 @@ const ResourceNodeScript := preload("res://scripts/world/ResourceNode.gd")
 # 建设点脚本，用来显示青云宗的可建设空地。
 const BuildSlotNodeScript := preload("res://scripts/world/BuildSlotNode.gd")
 
-# 世界地图生成器，用来生成 100 x 100 的连续地形数据。
-const WorldGeneratorScript := preload("res://scripts/world/WorldGenerator.gd")
+# 像素世界扩大为 6144 x 6144，旧世界坐标按比例映射显示。
+const MAP_SIZE: Vector2 = Vector2(6144, 6144)
+const MAP_ORIGIN: Vector2 = Vector2.ZERO
+const SOURCE_MAP_SIZE: float = 4096.0
+const MAP_POSITION_SCALE: float = MAP_SIZE.x / SOURCE_MAP_SIZE
 
-# 森林生成器，用来在草地和河流附近生成自然树群。
-const ForestGeneratorScript := preload("res://scripts/world/ForestGenerator.gd")
-
-# 世界地图尺寸。
-const MAP_SIZE: Vector2 = Vector2(4096, 4096)
-
-# 地图底色，用来兜住地形素材边缘，避免露出灰色背景。
-const MAP_BACKGROUND_COLOR: Color = Color(0.24, 0.38, 0.20)
+# 宗门图标统一配置，后续只需要修改这里即可调整显示大小。
+const SECT_ICON_DIRECTORY: String = "res://assets/pixel/sects"
+const PLAYER_SECT_ICON_NAME: String = "sect_01_player_qingxuan.png"
+const SECT_ICON_SIZE: int = 72
 
 # 资源点与宗门之间的最小距离，避免图标重叠。
 const RESOURCE_MIN_DISTANCE_TO_SECT: float = 250.0
 
-# 当前世界生成数据，森林会复用这里的地形和河流信息。
-var world_data: Dictionary = {}
+# 启动时自动扫描到的宗门图标路径，按文件名排序。
+var sect_icon_paths: Array[String] = []
 
-# 地图层，只放合成后的世界底图。
+# 地图层，只放已经通过的修仙像素世界实例。
 @onready var map_layer: Node2D = $MapLayer
+
+# 正式地图复用的像素世界生成器。
+@onready var pixel_world: Node2D = $MapLayer/PixelWorldMap
 
 # 领地层，只放宗门领地范围。
 @onready var territory_layer: Node2D = $TerritoryLayer
@@ -76,80 +78,76 @@ var world_data: Dictionary = {}
 # 地图启动时，初始化世界数据，并生成宗门和资源点。
 func _ready() -> void:
 	world_camera.map_size = MAP_SIZE
+	world_camera.map_origin = MAP_ORIGIN
+	world_camera.position = MAP_ORIGIN + MAP_SIZE * 0.5
 	world_camera.make_current()
 	WorldDataManager.init_world_data()
-	queue_redraw()
-	_create_map_tiles()
+	_load_sect_icon_paths()
 	_validate_resource_positions()
-	_create_territory_areas()
+	# Task-0014：暂时隐藏领地圈，后续改成护山大阵视觉。
+	# _create_territory_areas()
 	_create_resource_nodes()
 	_create_build_slot_nodes()
 	_create_sect_nodes()
-	_create_forest_nodes()
 	_show_empty_panel()
-
-
-# 绘制地图底色，底图加载失败时也不会露出灰色背景。
-func _draw() -> void:
-	draw_rect(Rect2(Vector2.ZERO, MAP_SIZE), MAP_BACKGROUND_COLOR, true)
-
-
-# 使用 WorldGenerator 生成连续世界底图。
-func _create_map_tiles() -> void:
-	for child in map_layer.get_children():
-		child.queue_free()
-
-	var world_generator: WorldGenerator = WorldGeneratorScript.new()
-	world_data = world_generator.generate_world()
-	var map_texture: Texture2D = world_generator.create_world_texture(world_data)
-	if map_texture == null:
-		push_error("世界地图生成失败。")
-		return
-
-	var map_sprite: Sprite2D = Sprite2D.new()
-	map_sprite.texture = map_texture
-	map_sprite.centered = false
-	map_sprite.position = Vector2.ZERO
-	map_sprite.scale = Vector2(MAP_SIZE.x / map_texture.get_width(), MAP_SIZE.y / map_texture.get_height())
-	map_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
-	map_layer.add_child(map_sprite)
-
-
-# 创建地图上的森林树点。森林是覆盖在地形上的自然对象，不是地形类型。
-func _create_forest_nodes() -> void:
-	for child in nature_layer.get_children():
-		child.queue_free()
-
-	if world_data.is_empty():
-		return
-
-	var forest_generator: ForestGenerator = ForestGeneratorScript.new()
-	var forest_result: Dictionary = forest_generator.generate_forests(
-		world_data,
-		WorldDataManager.get_all_sects(),
-		WorldDataManager.get_all_build_slots(),
-		WorldDataManager.get_all_resources()
-	)
-	var tree_texture: Texture2D = _create_tree_texture()
-	var tree_list: Array = forest_result.get("trees", []) as Array
-
-	for tree_data in tree_list:
-		var tree_sprite: Sprite2D = Sprite2D.new()
-		tree_sprite.texture = tree_texture
-		tree_sprite.position = tree_data["position"]
-		tree_sprite.scale = _get_tree_scale(int(tree_data["tree_id"]))
-		tree_sprite.modulate = _get_tree_color(int(tree_data["tree_id"]))
-		tree_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
-		nature_layer.add_child(tree_sprite)
-
 
 # 创建地图上的宗门据点。
 func _create_sect_nodes() -> void:
-	for sect_data in WorldDataManager.get_all_sects():
+	var all_sects: Array = WorldDataManager.get_all_sects()
+	for sect_index in range(all_sects.size()):
+		var sect_data: Dictionary = all_sects[sect_index]
+		var display_data: Dictionary = sect_data.duplicate(true)
+		display_data["position"] = pixel_world.call(
+			"find_nearest_land_world_position",
+			_scale_source_position(sect_data["position"])
+		)
 		var sect_node: SectNode = SectNodeScript.new()
-		sect_node.setup(sect_data)
+		var icon_texture: Texture2D = _get_sect_icon_texture(
+			sect_index,
+			bool(display_data.get("is_player", false))
+		)
+		sect_node.setup(display_data, icon_texture, SECT_ICON_SIZE)
 		sect_node.selected.connect(_on_sect_selected)
 		sect_layer.add_child(sect_node)
+
+
+# 自动扫描宗门图标目录，只读取 PNG，并按文件名排序。
+func _load_sect_icon_paths() -> void:
+	sect_icon_paths.clear()
+	var directory: DirAccess = DirAccess.open(SECT_ICON_DIRECTORY)
+	if directory == null:
+		push_warning("宗门图标目录不存在：" + SECT_ICON_DIRECTORY)
+		return
+
+	for file_name in directory.get_files():
+		if file_name.get_extension().to_lower() == "png":
+			sect_icon_paths.append(SECT_ICON_DIRECTORY.path_join(file_name))
+
+	sect_icon_paths.sort()
+	if sect_icon_paths.is_empty():
+		push_warning("宗门图标目录中没有 PNG：" + SECT_ICON_DIRECTORY)
+
+
+# 玩家优先使用青玄图标，AI 使用其余图标并在数量不足时循环。
+func _get_sect_icon_texture(sect_index: int, is_player: bool) -> Texture2D:
+	if sect_icon_paths.is_empty():
+		return null
+
+	var player_icon_path: String = sect_icon_paths[0]
+	var preferred_player_path: String = SECT_ICON_DIRECTORY.path_join(PLAYER_SECT_ICON_NAME)
+	if preferred_player_path in sect_icon_paths:
+		player_icon_path = preferred_player_path
+
+	var selected_path: String = player_icon_path
+	if not is_player:
+		var ai_icon_paths: Array[String] = []
+		for icon_path in sect_icon_paths:
+			if icon_path != player_icon_path:
+				ai_icon_paths.append(icon_path)
+		if not ai_icon_paths.is_empty():
+			selected_path = ai_icon_paths[(sect_index - 1) % ai_icon_paths.size()]
+
+	return load(selected_path) as Texture2D
 
 
 # 创建宗门领地范围，先生成它们，保证显示在图标和文字下方。
@@ -163,8 +161,13 @@ func _create_territory_areas() -> void:
 # 创建地图上的资源点。
 func _create_resource_nodes() -> void:
 	for resource_data in WorldDataManager.get_all_resources():
+		var display_data: Dictionary = resource_data.duplicate(true)
+		display_data["position"] = pixel_world.call(
+			"find_nearest_land_world_position",
+			_scale_source_position(resource_data["position"])
+		)
 		var resource_node: ResourceNode = ResourceNodeScript.new()
-		resource_node.setup(resource_data)
+		resource_node.setup(display_data)
 		resource_node.selected.connect(_on_resource_selected)
 		resource_layer.add_child(resource_node)
 
@@ -172,44 +175,17 @@ func _create_resource_nodes() -> void:
 # 创建玩家宗门建设点。
 func _create_build_slot_nodes() -> void:
 	for slot_data in WorldDataManager.get_build_slots_by_sect_id(1):
+		var display_data: Dictionary = slot_data.duplicate(true)
+		display_data["position"] = _scale_source_position(slot_data["position"])
 		var build_slot_node: BuildSlotNode = BuildSlotNodeScript.new()
-		build_slot_node.setup(slot_data)
+		build_slot_node.setup(display_data)
 		build_slot_node.selected.connect(_on_build_slot_selected)
 		build_slot_layer.add_child(build_slot_node)
 
 
-# 创建树木占位贴图。当前不用正式美术，只用绿色圆点表示树冠。
-func _create_tree_texture() -> Texture2D:
-	var texture_size: int = 24
-	var radius: float = 10.0
-	var center: Vector2 = Vector2(float(texture_size - 1) * 0.5, float(texture_size - 1) * 0.5)
-	var image: Image = Image.create_empty(texture_size, texture_size, false, Image.FORMAT_RGBA8)
-	image.fill(Color(0.0, 0.0, 0.0, 0.0))
-
-	for y in range(texture_size):
-		for x in range(texture_size):
-			var distance: float = Vector2(float(x), float(y)).distance_to(center)
-			if distance > radius:
-				continue
-
-			var color: Color = Color(0.04, 0.26, 0.08, 0.95)
-			if distance < radius * 0.62:
-				color = Color(0.09, 0.42, 0.13, 0.98)
-			image.set_pixel(x, y, color)
-
-	return ImageTexture.create_from_image(image)
-
-
-# 每棵树略微不同大小，避免森林看起来太整齐。
-func _get_tree_scale(tree_id: int) -> Vector2:
-	var scale_value: float = 0.75 + float(tree_id % 6) * 0.07
-	return Vector2.ONE * scale_value
-
-
-# 每棵树略微不同颜色，避免森林像复制粘贴。
-func _get_tree_color(tree_id: int) -> Color:
-	var color_offset: float = float((tree_id * 37) % 100) / 100.0 * 0.12
-	return Color(0.82 + color_offset, 0.95, 0.82 + color_offset, 1.0)
+# 旧数据仍使用 4096 坐标，只在正式地图显示时映射到新尺寸。
+func _scale_source_position(source_position: Vector2) -> Vector2:
+	return source_position * MAP_POSITION_SCALE
 
 
 # 未选择对象时，信息面板显示地图概况。
