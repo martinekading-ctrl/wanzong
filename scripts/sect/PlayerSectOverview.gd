@@ -14,6 +14,9 @@ extends Control
 @onready var building_button: Button = $MarginContainer/RootBox/FunctionPanel/FunctionBox/BuildingButton
 @onready var resource_button: Button = $MarginContainer/RootBox/FunctionPanel/FunctionBox/ResourceButton
 @onready var placeholder_label: Label = $MarginContainer/RootBox/FunctionPanel/FunctionBox/PlaceholderLabel
+@onready var disciple_content: HBoxContainer = $MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleContent
+@onready var disciple_list: VBoxContainer = $MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleContent/DiscipleListPanel/DiscipleListBox/DiscipleScroll/DiscipleList
+@onready var disciple_detail_label: Label = $MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleContent/DiscipleDetailPanel/DiscipleDetailBox/DiscipleDetailLabel
 
 
 func _ready() -> void:
@@ -58,12 +61,84 @@ func _on_back_button_pressed() -> void:
 
 
 func _on_disciple_button_pressed() -> void:
-	placeholder_label.text = "弟子系统后续开放"
+	_show_disciple_panel()
 
 
 func _on_building_button_pressed() -> void:
-	placeholder_label.text = "建筑系统后续开放"
+	_show_placeholder("建筑系统后续开放")
 
 
 func _on_resource_button_pressed() -> void:
-	placeholder_label.text = "资源系统后续开放"
+	_show_placeholder("资源系统后续开放")
+
+
+func _show_placeholder(message: String) -> void:
+	placeholder_label.visible = true
+	placeholder_label.text = message
+	disciple_content.visible = false
+
+
+func _show_disciple_panel() -> void:
+	placeholder_label.visible = false
+	disciple_content.visible = true
+	_clear_disciple_list()
+
+	var player_disciples: Array = WorldDataManager.get_player_disciples()
+	if player_disciples.is_empty():
+		disciple_detail_label.text = "当前玩家宗门没有弟子数据。"
+		return
+
+	for disciple_data in player_disciples:
+		var disciple_button_item := Button.new()
+		disciple_button_item.text = _get_disciple_list_text(disciple_data)
+		disciple_button_item.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		disciple_button_item.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		disciple_button_item.pressed.connect(
+			_on_disciple_selected.bind(str(disciple_data["disciple_id"]))
+		)
+		disciple_list.add_child(disciple_button_item)
+
+	_show_disciple_detail(player_disciples[0])
+
+
+func _clear_disciple_list() -> void:
+	for child in disciple_list.get_children():
+		child.queue_free()
+
+
+func _get_disciple_list_text(disciple_data: Dictionary) -> String:
+	return "%s｜%s｜%s｜%s｜忠诚 %s｜%s" % [
+		str(disciple_data["disciple_name"]),
+		str(disciple_data["realm"]),
+		str(disciple_data["spiritual_root"]),
+		str(disciple_data["aptitude"]),
+		str(disciple_data["loyalty"]),
+		str(disciple_data["assignment"]),
+	]
+
+
+func _on_disciple_selected(disciple_id: String) -> void:
+	var disciple_data: Dictionary = WorldDataManager.get_disciple_by_id(disciple_id)
+	if disciple_data.is_empty():
+		disciple_detail_label.text = "没有找到这个弟子。"
+		return
+
+	_show_disciple_detail(disciple_data)
+
+
+func _show_disciple_detail(disciple_data: Dictionary) -> void:
+	disciple_detail_label.text = "\n".join(PackedStringArray([
+		"姓名：" + str(disciple_data["disciple_name"]),
+		"性别：" + str(disciple_data["gender"]),
+		"年龄：" + str(disciple_data["age"]),
+		"修为：" + str(disciple_data["realm"]),
+		"灵根：" + str(disciple_data["spiritual_root"]),
+		"资质：" + str(disciple_data["aptitude"]),
+		"悟性：" + str(disciple_data["comprehension"]),
+		"忠诚：" + str(disciple_data["loyalty"]),
+		"心情：" + str(disciple_data["mood"]),
+		"当前安排：" + str(disciple_data["assignment"]),
+		"战力：" + str(disciple_data["combat_power"]),
+		"状态：" + str(disciple_data["status"]),
+		"介绍：" + str(disciple_data["description"]),
+	]))

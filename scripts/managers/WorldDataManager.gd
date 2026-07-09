@@ -9,6 +9,8 @@ var resources: Array = []
 # 玩家宗门可建设点数据。
 var build_slots: Array = []
 
+var disciples: Array = []
+
 var is_initialized: bool = false
 
 
@@ -109,6 +111,22 @@ func init_world_data() -> void:
 		{"slot_id": 6, "owner_sect_id": "sect_001", "position": Vector2(2268, 2148), "is_empty": true},
 	]
 
+	disciples = [
+		_create_disciple_data("disciple_001", "sect_001", "林青", "男", 18, "炼气三层", "木灵根", "上品", 72, 88, 76, "修炼", 165, "正常", "性情沉稳，擅长吐纳行气，是青玄宗年轻弟子中的中坚。"),
+		_create_disciple_data("disciple_002", "sect_001", "许念", "女", 17, "炼气二层", "水灵根", "中品", 81, 84, 82, "采集", 118, "正常", "心思细腻，善于辨认灵草，对宗门事务颇为上心。"),
+		_create_disciple_data("disciple_003", "sect_001", "周衡", "男", 22, "炼气四层", "金灵根", "上品", 66, 79, 68, "巡山", 218, "正常", "剑骨初成，行事果断，是巡守山门的可靠人选。"),
+		_create_disciple_data("disciple_004", "sect_001", "沈月", "女", 19, "炼气三层", "冰灵根", "极品", 89, 91, 74, "闭关", 196, "闭关中", "灵根稀有，悟性出众，正在稳固自身寒气灵机。"),
+		_create_disciple_data("disciple_005", "sect_001", "陆远", "男", 20, "炼气二层", "土灵根", "中品", 58, 82, 70, "空闲", 110, "正常", "根基扎实，做事耐心，适合承担长期细致的宗门任务。"),
+		_create_disciple_data("disciple_006", "sect_001", "白芷", "女", 16, "炼气一层", "木灵根", "上品", 77, 86, 88, "采集", 86, "正常", "熟悉草木药性，入门虽晚但进境平稳。"),
+		_create_disciple_data("disciple_007", "sect_001", "韩石", "男", 24, "炼气三层", "土灵根", "下品", 45, 93, 65, "巡山", 142, "正常", "体魄强健，忠诚可靠，常主动承担苦活。"),
+		_create_disciple_data("disciple_008", "sect_001", "顾云", "男", 18, "炼气五层", "雷灵根", "极品", 84, 73, 60, "修炼", 286, "正常", "天赋锋芒毕露，但心性仍需磨砺。"),
+		_create_disciple_data("disciple_009", "sect_001", "苏灵儿", "女", 15, "炼气一层", "水灵根", "中品", 92, 80, 91, "空闲", 72, "正常", "聪慧活泼，对术法变化极为敏感。"),
+		_create_disciple_data("disciple_010", "sect_001", "赵铁山", "男", 26, "炼气四层", "金灵根", "中品", 52, 96, 71, "巡山", 205, "正常", "性格豪爽，护宗心重，是山门里的硬骨头。"),
+		_create_disciple_data("disciple_011", "sect_001", "江晚", "女", 21, "炼气二层", "火灵根", "上品", 75, 78, 69, "修炼", 128, "受伤", "曾在外出采药时受伤，目前仍坚持温养灵力。"),
+		_create_disciple_data("disciple_012", "sect_001", "叶寒", "男", 17, "凡人", "杂灵根", "下品", 61, 90, 83, "空闲", 35, "正常", "刚入宗不久，灵根驳杂但意志坚韧。"),
+	]
+	update_sect_data("sect_001", "disciple_count", disciples.size())
+
 	is_initialized = true
 
 
@@ -117,6 +135,7 @@ func reset_world_data() -> void:
 	sects.clear()
 	resources.clear()
 	build_slots.clear()
+	disciples.clear()
 	init_world_data()
 
 
@@ -162,6 +181,42 @@ func _create_sect_data(
 	}
 
 
+func _create_disciple_data(
+	disciple_id: String,
+	sect_id: String,
+	disciple_name: String,
+	gender: String,
+	age: int,
+	realm: String,
+	spiritual_root: String,
+	aptitude: String,
+	comprehension: int,
+	loyalty: int,
+	mood: int,
+	assignment: String,
+	combat_power: int,
+	status: String,
+	description: String
+) -> Dictionary:
+	return {
+		"disciple_id": disciple_id,
+		"sect_id": sect_id,
+		"disciple_name": disciple_name,
+		"gender": gender,
+		"age": age,
+		"realm": realm,
+		"spiritual_root": spiritual_root,
+		"aptitude": aptitude,
+		"comprehension": comprehension,
+		"loyalty": loyalty,
+		"mood": mood,
+		"assignment": assignment,
+		"combat_power": combat_power,
+		"status": status,
+		"description": description,
+	}
+
+
 # 获取全部宗门数据。
 func get_all_sects() -> Array:
 	return sects
@@ -175,6 +230,10 @@ func get_all_resources() -> Array:
 # 获取全部建设点数据。
 func get_all_build_slots() -> Array:
 	return build_slots
+
+
+func get_all_disciples() -> Array:
+	return disciples
 
 
 # 根据字符串宗门 ID 查找宗门数据。
@@ -220,6 +279,42 @@ func get_ai_sects() -> Array:
 		if not bool(sect_data.get("is_player", false)):
 			ai_sects.append(sect_data)
 	return ai_sects
+
+
+func get_disciples_by_sect_id(sect_id: String) -> Array:
+	var result: Array = []
+	for disciple_data in disciples:
+		if str(disciple_data["sect_id"]) == sect_id:
+			result.append(disciple_data)
+	return result
+
+
+func get_player_disciples() -> Array:
+	var player_sect: Dictionary = get_player_sect()
+	if player_sect.is_empty():
+		return []
+	return get_disciples_by_sect_id(str(player_sect["sect_id"]))
+
+
+func get_disciple_by_id(disciple_id: String) -> Dictionary:
+	for disciple_data in disciples:
+		if str(disciple_data["disciple_id"]) == disciple_id:
+			return disciple_data
+	return {}
+
+
+func update_disciple_data(disciple_id: String, key: String, value: Variant) -> bool:
+	for disciple_index in range(disciples.size()):
+		var disciple_data: Dictionary = disciples[disciple_index]
+		if str(disciple_data["disciple_id"]) != disciple_id:
+			continue
+
+		disciple_data[key] = value
+		disciples[disciple_index] = disciple_data
+		return true
+
+	push_warning("更新弟子数据失败，未找到弟子：" + disciple_id)
+	return false
 
 
 # 根据资源点编号查找资源点数据。

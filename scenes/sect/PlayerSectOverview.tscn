@@ -118,3 +118,54 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "请选择一个宗门功能。当前版本只开放宗门概览。"
 autowrap_mode = 3
+
+[node name="DiscipleContent" type="HBoxContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox"]
+visible = false
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 16
+
+[node name="DiscipleListPanel" type="PanelContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleContent"]
+custom_minimum_size = Vector2(480, 0)
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="DiscipleListBox" type="VBoxContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleContent/DiscipleListPanel"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="DiscipleListTitle" type="Label" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleContent/DiscipleListPanel/DiscipleListBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "弟子列表"
+
+[node name="DiscipleScroll" type="ScrollContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleContent/DiscipleListPanel/DiscipleListBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="DiscipleList" type="VBoxContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleContent/DiscipleListPanel/DiscipleListBox/DiscipleScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
+
+[node name="DiscipleDetailPanel" type="PanelContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleContent"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="DiscipleDetailBox" type="VBoxContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleContent/DiscipleDetailPanel"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="DiscipleDetailTitle" type="Label" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleContent/DiscipleDetailPanel/DiscipleDetailBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "弟子详情"
+
+[node name="DiscipleDetailLabel" type="Label" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleContent/DiscipleDetailPanel/DiscipleDetailBox"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_font_sizes/font_size = 17
+text = "请选择左侧弟子查看详情。"
+vertical_alignment = 0
+autowrap_mode = 3
