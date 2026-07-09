@@ -6,6 +6,16 @@ const WORLD_SIZE: Vector2i = Vector2i(6144, 6144)
 const TILE_SIZE: Vector2i = Vector2i(16, 16)
 const GRID_SIZE: Vector2i = Vector2i(384, 384)
 
+const WORLD_OBJECT_DIRECTORY: String = "res://assets/pixel/world_objects/processed"
+const TREE_ICON_SIZE: int = 28
+const PINE_ICON_SIZE: int = 30
+const BAMBOO_ICON_SIZE: int = 28
+const ROCK_ICON_SIZE: int = 24
+const HILL_ICON_SIZE: int = 34
+const MOUNTAIN_ICON_SIZE: int = 38
+const SNOW_MOUNTAIN_ICON_SIZE: int = 42
+const SPECIAL_TREE_ICON_SIZE: int = 34
+
 const DEEP_WATER: String = "deep_water"
 const WATER: String = "water"
 const SHALLOW_WATER: String = "shallow_water"
@@ -66,8 +76,20 @@ var tree_markers: Array[Dictionary] = []
 var mountain_markers: Array[Vector2i] = []
 var snow_markers: Array[Vector2i] = []
 var wasteland_markers: Array[Vector2i] = []
+var rock_markers: Array[Vector2i] = []
+var hill_markers: Array[Vector2i] = []
 var sect_cells: Array[Vector2i] = []
 var resource_cells: Array[Vector2i] = []
+
+var tree_green_textures: Array[Texture2D] = []
+var tree_pine_textures: Array[Texture2D] = []
+var bamboo_textures: Array[Texture2D] = []
+var dead_tree_textures: Array[Texture2D] = []
+var spirit_tree_textures: Array[Texture2D] = []
+var rock_textures: Array[Texture2D] = []
+var hill_textures: Array[Texture2D] = []
+var mountain_rock_textures: Array[Texture2D] = []
+var mountain_snow_textures: Array[Texture2D] = []
 
 var continent_noise := FastNoiseLite.new()
 var biome_noise := FastNoiseLite.new()
@@ -82,6 +104,7 @@ var zoom_step: float = 0.12
 
 func _ready() -> void:
 	_setup_noises()
+	_load_world_object_textures()
 	_create_tile_set()
 	_generate_world()
 	_collect_nature_markers()
@@ -130,22 +153,87 @@ func _unhandled_input(event: InputEvent) -> void:
 # 自然物先绘制，宗门和资源标记最后绘制，保证地图信息清楚。
 func _draw() -> void:
 	for marker in tree_markers:
-		_draw_tree(_cell_center(marker["cell"]) + marker["offset"], int(marker["kind"]))
+		_draw_tree_object(
+			_cell_center(marker["cell"]) + marker["offset"],
+			str(marker["kind"]),
+			int(marker["variant"])
+		)
 
 	for cell in mountain_markers:
-		_draw_mountain(_cell_center(cell), _cell_hash(cell.x, cell.y) % 3)
+		_draw_texture_variant(
+			mountain_rock_textures,
+			_cell_center(cell),
+			MOUNTAIN_ICON_SIZE,
+			_cell_hash(cell.x, cell.y)
+		)
 
 	for cell in snow_markers:
-		_draw_ice_crystal(_cell_center(cell))
+		_draw_texture_variant(
+			mountain_snow_textures,
+			_cell_center(cell),
+			SNOW_MOUNTAIN_ICON_SIZE,
+			_cell_hash(cell.x, cell.y)
+		)
 
 	for cell in wasteland_markers:
-		_draw_wasteland_rock(_cell_center(cell))
+		_draw_tree_object(_cell_center(cell), "dead", _cell_hash(cell.x, cell.y))
+
+	for cell in rock_markers:
+		_draw_texture_variant(
+			rock_textures,
+			_cell_center(cell),
+			ROCK_ICON_SIZE,
+			_cell_hash(cell.x, cell.y)
+		)
+
+	for cell in hill_markers:
+		_draw_texture_variant(
+			hill_textures,
+			_cell_center(cell),
+			HILL_ICON_SIZE,
+			_cell_hash(cell.x, cell.y)
+		)
 
 	for sect_index in range(sect_cells.size()):
 		_draw_sect(_cell_center(sect_cells[sect_index]), sect_index)
 
 	for resource_index in range(resource_cells.size()):
 		_draw_resource(_cell_center(resource_cells[resource_index]), resource_index % 3)
+
+
+func _load_world_object_textures() -> void:
+	tree_green_textures = _load_texture_series("trees", "tree_green", 5)
+	tree_pine_textures = _load_texture_series("trees", "tree_pine", 2)
+	bamboo_textures = _load_texture_series("bamboo", "bamboo", 3)
+	dead_tree_textures = _load_texture_series("special", "tree_dead", 2)
+	spirit_tree_textures = _load_named_textures(
+		["special/resource_spirit_tree_01.png"]
+	)
+	rock_textures = _load_texture_series("rocks", "rock", 8)
+	hill_textures = _load_texture_series("hills", "hill_grass", 4)
+	mountain_rock_textures = _load_texture_series("mountains", "mountain_rock", 6)
+	mountain_snow_textures = _load_texture_series("mountains", "mountain_snow", 4)
+
+
+func _load_texture_series(category: String, prefix: String, count: int) -> Array[Texture2D]:
+	var relative_paths: Array[String] = []
+	for texture_index in range(1, count + 1):
+		relative_paths.append(
+			category.path_join("%s_%02d.png" % [prefix, texture_index])
+		)
+	return _load_named_textures(relative_paths)
+
+
+func _load_named_textures(relative_paths: Array[String]) -> Array[Texture2D]:
+	var textures: Array[Texture2D] = []
+	for relative_path in relative_paths:
+		var texture_path: String = WORLD_OBJECT_DIRECTORY.path_join(relative_path)
+		var texture: Texture2D = load(texture_path) as Texture2D
+		if texture == null:
+			push_warning("World object texture could not be loaded: " + texture_path)
+			continue
+		textures.append(texture)
+	return textures
 
 
 func _setup_noises() -> void:
@@ -428,6 +516,8 @@ func _collect_nature_markers() -> void:
 	mountain_markers.clear()
 	snow_markers.clear()
 	wasteland_markers.clear()
+	rock_markers.clear()
+	hill_markers.clear()
 
 	for cell_y in range(2, GRID_SIZE.y - 2):
 		for cell_x in range(2, GRID_SIZE.x - 2):
@@ -435,44 +525,62 @@ func _collect_nature_markers() -> void:
 			var terrain_type: String = _terrain_at(cell)
 			var hash_value: int = _cell_hash(cell_x, cell_y)
 
-			if terrain_type == FOREST and hash_value % 100 < 14:
-				var tree_kind: int = 0
-				if cell_y > 150 and cell_x > 80 and cell_x < 170:
-					tree_kind = 1
-				elif cell_y < 78:
-					tree_kind = 2
-				if hash_value % 997 < 7:
-					tree_kind = 3
-				tree_markers.append({
-					"cell": cell,
-					"kind": tree_kind,
-					"offset": Vector2(
-						float((hash_value / 7) % 13) - 6.0,
-						float((hash_value / 17) % 13) - 6.0
-					),
-				})
-			elif terrain_type == GRASS and hash_value % 1000 < 7:
-				tree_markers.append({
-					"cell": cell,
-					"kind": 0,
-					"offset": Vector2.ZERO,
-				})
-			elif terrain_type == MOUNTAIN and hash_value % 100 < 9:
-				mountain_markers.append(cell)
+			if terrain_type == FOREST:
+				if hash_value % 5000 < 2:
+					_add_tree_marker(cell, "spirit", hash_value)
+				elif _is_near_water(cell, 3) and hash_value % 100 < 3:
+					_add_tree_marker(cell, "bamboo", hash_value)
+				elif hash_value % 100 < 10:
+					_add_tree_marker(cell, "green", hash_value)
+			elif terrain_type == GRASS:
+				if _is_near_water(cell, 2) and hash_value % 1000 < 3:
+					_add_tree_marker(cell, "bamboo", hash_value)
+				elif hash_value % 1000 < 6:
+					hill_markers.append(cell)
+				elif hash_value % 1000 < 9:
+					_add_tree_marker(cell, "green", hash_value)
+			elif terrain_type == MOUNTAIN:
+				if hash_value % 100 < 7:
+					mountain_markers.append(cell)
+				elif _is_mountain_edge(cell) and hash_value % 100 < 11:
+					rock_markers.append(cell)
 			elif terrain_type == SNOW:
 				if hash_value % 100 < 3:
-					tree_markers.append({
-						"cell": cell,
-						"kind": 2,
-						"offset": Vector2(
-							float((hash_value / 7) % 9) - 4.0,
-							float((hash_value / 17) % 9) - 4.0
-						),
-					})
-				elif hash_value % 100 < 7:
+					_add_tree_marker(cell, "pine", hash_value)
+				elif hash_value % 100 < 4:
 					snow_markers.append(cell)
-			elif terrain_type == WASTELAND and hash_value % 100 < 4:
-				wasteland_markers.append(cell)
+			elif terrain_type == WASTELAND:
+				if hash_value % 100 < 2:
+					wasteland_markers.append(cell)
+				elif hash_value % 100 < 5:
+					rock_markers.append(cell)
+
+
+func _add_tree_marker(cell: Vector2i, kind: String, hash_value: int) -> void:
+	tree_markers.append({
+		"cell": cell,
+		"kind": kind,
+		"variant": hash_value,
+		"offset": Vector2(
+			float((hash_value / 7) % 13) - 6.0,
+			float((hash_value / 17) % 13) - 6.0
+		),
+	})
+
+
+func _is_near_water(cell: Vector2i, radius: int) -> bool:
+	for offset_y in range(-radius, radius + 1):
+		for offset_x in range(-radius, radius + 1):
+			if _is_water(_terrain_at(cell + Vector2i(offset_x, offset_y))):
+				return true
+	return false
+
+
+func _is_mountain_edge(cell: Vector2i) -> bool:
+	for offset in [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]:
+		if _terrain_at(cell + offset) != MOUNTAIN:
+			return true
+	return false
 
 
 func _place_world_markers() -> void:
@@ -514,63 +622,38 @@ func _can_place_marker(terrain_type: String) -> bool:
 	return _is_safe_marker_terrain(terrain_type)
 
 
-func _draw_tree(position: Vector2, kind: int) -> void:
-	var trunk := Color("#5c4631")
-	var dark := Color("#244d2d")
-	var light := Color("#4d8b43")
+func _draw_tree_object(position: Vector2, kind: String, variant: int) -> void:
+	if kind == "pine":
+		_draw_texture_variant(tree_pine_textures, position, PINE_ICON_SIZE, variant)
+	elif kind == "bamboo":
+		_draw_texture_variant(bamboo_textures, position, BAMBOO_ICON_SIZE, variant)
+	elif kind == "dead":
+		_draw_texture_variant(dead_tree_textures, position, SPECIAL_TREE_ICON_SIZE, variant)
+	elif kind == "spirit":
+		_draw_texture_variant(spirit_tree_textures, position, SPECIAL_TREE_ICON_SIZE, variant)
+	else:
+		_draw_texture_variant(tree_green_textures, position, TREE_ICON_SIZE, variant)
 
-	if kind == 1:
-		# 南部竹林。
-		draw_rect(Rect2(position + Vector2(-1, -10), Vector2(2, 16)), Color("#537d36"))
-		draw_rect(Rect2(position + Vector2(-6, -7), Vector2(5, 3)), Color("#72a84c"))
-		draw_rect(Rect2(position + Vector2(1, -2), Vector2(6, 3)), Color("#72a84c"))
+
+func _draw_texture_variant(
+	textures: Array[Texture2D],
+	position: Vector2,
+	icon_size: int,
+	variant: int
+) -> void:
+	if textures.is_empty():
 		return
-
-	if kind == 2:
-		# 寒域雪松。
-		dark = Color("#28584d")
-		light = Color("#4f8270")
-	elif kind == 3:
-		# 稀有灵木。
-		dark = Color("#2f6b66")
-		light = Color("#65b69b")
-
-	draw_rect(Rect2(position + Vector2(-1, 1), Vector2(3, 6)), trunk)
-	draw_rect(Rect2(position + Vector2(-6, -7), Vector2(12, 7)), dark)
-	draw_rect(Rect2(position + Vector2(-4, -11), Vector2(8, 6)), light)
-	draw_rect(Rect2(position + Vector2(-2, -14), Vector2(4, 4)), light.lightened(0.08))
-	if kind == 2:
-		draw_rect(Rect2(position + Vector2(-4, -12), Vector2(4, 2)), Color("#d8e8ec"))
-
-
-func _draw_mountain(position: Vector2, variant: int) -> void:
-	var dark := Color("#3f4950")
-	var body := Color("#69737a")
-	var light := Color("#90989b")
-	var height: int = 18 + variant * 2
-
-	for row in range(height):
-		var half_width: int = int(float(row) * 0.65)
-		draw_rect(
-			Rect2(
-				position + Vector2(-half_width, row - height),
-				Vector2(half_width * 2 + 1, 1)
-			),
-			body if row % 4 != 0 else dark
-		)
-	draw_rect(Rect2(position + Vector2(-2, -height), Vector2(5, 5)), light)
-
-
-func _draw_ice_crystal(position: Vector2) -> void:
-	var ice := Color("#9fd2dc")
-	draw_rect(Rect2(position + Vector2(-1, -6), Vector2(2, 12)), ice)
-	draw_rect(Rect2(position + Vector2(-6, -1), Vector2(12, 2)), ice)
-	draw_rect(Rect2(position + Vector2(-3, -3), Vector2(6, 6)), Color("#d8f0f2"))
-
-
-func _draw_wasteland_rock(position: Vector2) -> void:
-	draw_rect(Rect2(position + Vector2(-6, -3), Vector2(12, 7)), Color("#5e4a32"))
-	draw_rect(Rect2(position + Vector2(-3, -6), Vector2(8, 7)), Color("#806342"))
+	var texture: Texture2D = textures[abs(variant) % textures.size()]
+	var source_size: Vector2 = texture.get_size()
+	if source_size.x <= 0.0 or source_size.y <= 0.0:
+		return
+	var scale_factor: float = float(icon_size) / maxf(source_size.x, source_size.y)
+	var draw_size: Vector2 = (source_size * scale_factor).round()
+	var draw_position := Vector2(
+		roundf(position.x - draw_size.x * 0.5),
+		roundf(position.y - draw_size.y)
+	)
+	draw_texture_rect(texture, Rect2(draw_position, draw_size), false)
 
 
 # 宗门使用像素山门建筑，玩家青云宗为金绿配色。

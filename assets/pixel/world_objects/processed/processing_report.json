@@ -1,0 +1,844 @@
+{
+  "processed": [
+    {
+      "source": ".task0026_source\\美术重置版\\普通阔叶树\\截图20260709174115.png",
+      "output": "assets\\pixel\\world_objects\\processed\\trees\\tree_green_01.png",
+      "source_size": [
+        650,
+        665
+      ],
+      "output_size": [
+        512,
+        512
+      ],
+      "method": "checkerboard neutral-color and exterior removal",
+      "checker_colors": [
+        [
+          212,
+          212,
+          212
+        ],
+        [
+          176,
+          179,
+          180
+        ]
+      ],
+      "removed_pixels": 195356,
+      "removed_distant_components": 0
+    },
+    {
+      "source": ".task0026_source\\美术重置版\\普通阔叶树\\截图20260709174138.png",
+      "output": "assets\\pixel\\world_objects\\processed\\trees\\tree_green_02.png",
+      "source_size": [
+        646,
+        710
+      ],
+      "output_size": [
+        512,
+        498
+      ],
+      "method": "checkerboard neutral-color and exterior removal",
+      "checker_colors": [
+        [
+          212,
+          212,
+          212
+        ],
+        [
+          176,
+          179,
+          180
+        ]
+      ],
+      "removed_pixels": 236092,
+      "removed_distant_components": 0
+    },
+    {
+      "source": ".task0026_source\\美术重置版\\普通阔叶树\\截图20260709174200.png",
+      "output": "assets\\pixel\\world_objects\\processed\\trees\\tree_green_03.png",
+      "source_size": [
+        640,
+        633
+      ],
+      "output_size": [
+        512,
+        506
+      ],
+      "method": "checkerboard neutral-color and exterior removal",
+      "checker_colors": [
+        [
+          212,
+          212,
+          212
+        ],
+        [
+          176,
+          179,
+          180
+        ]
+      ],
+      "removed_pixels": 176834,
+      "removed_distant_components": 0
+    },
+    {
+      "source": ".task0026_source\\美术重置版\\普通阔叶树\\截图20260709174220.png",
+      "output": "assets\\pixel\\world_objects\\processed\\trees\\tree_green_04.png",
+      "source_size": [
+        669,
+        719
+      ],
+      "output_size": [
+        512,
+        492
+      ],
+      "method": "checkerboard neutral-color and exterior removal",
+      "checker_colors": [
+        [
+          212,
+          212,
+          212
+        ],
+        [
+          176,
+          179,
+          180
+        ]
+      ],
+      "removed_pixels": 253631,
+      "removed_distant_components": 0
+    },
+    {
+      "source": ".task0026_source\\美术重置版\\普通阔叶树\\截图20260709174918.png",
+      "output": "assets\\pixel\\world_objects\\processed\\trees\\tree_green_05.png",
+      "source_size": [
+        691,
+        629
+      ],
+      "output_size": [
+        512,
+        434
+      ],
+      "method": "checkerboard neutral-color and exterior removal",
+      "checker_colors": [
+        [
+          212,
+          212,
+          212
+        ],
+        [
+          176,
+          179,
+          180
+        ]
+      ],
+      "removed_pixels": 239654,
+      "removed_distant_components": 0
+    },
+    {
+      "source": ".task0026_source\\美术重置版\\松树  针叶树\\jimeng-2026-07-09-6021-512x512 px，像素风，中国仙侠世界地图物件素材，俯视角 _ 高角度顶视角... (1).png",
+      "output": "assets\\pixel\\world_objects\\processed\\trees\\tree_pine_01.png",
+      "source_size": [
+        2048,
+        2048
+      ],
+      "output_size": [
+        372,
+        512
+      ],
+      "method": "alpha and near-white checker removal",
+      "removed_pixels": 3181411,
+      "removed_distant_components": 0
+    },
+    {
+      "source": ".task0026_source\\美术重置版\\松树  针叶树\\jimeng-2026-07-09-7549-512x512 px，像素风，中国仙侠世界地图物件素材，俯视角 _ 高角度顶视角... (1).png",
+      "output": "assets\\pixel\\world_objects\\processed\\trees\\tree_pine_02.png",
+      "source_size": [
+        2048,
+        2048
+      ],
+      "output_size": [
+        371,
+        512
+      ],
+      "method": "alpha and near-white checker removal",
+      "removed_pixels": 3174426,
+      "removed_distant_components": 0
+    },
+    {
+      "source": ".task0026_source\\美术重置版\\竹林\\截图20260709174826.png",
+      "output": "assets\\pixel\\world_objects\\processed\\bamboo\\bamboo_01.png",
+      "source_size": [
+        675,
+        579
+      ],
+      "output_size": [
+        393,
+        512
+      ],
+      "method": "checkerboard neutral-color and exterior removal",
+      "checker_colors": [
+        [
+          212,
+          212,
+          212
+        ],
+        [
+          176,
+          179,
+          180
+        ]
+      ],
+      "removed_pixels": 250576,
+      "removed_distant_components": 2
+    },
+    {
+      "source": ".task0026_source\\美术重置版\\竹林\\截图20260709174842.png",
+      "output": "assets\\pixel\\world_objects\\processed\\bamboo\\bamboo_02.png",
+      "source_size": [
+        751,
+        639
+      ],
+      "output_size": [
+        512,
+        418
+      ],
+      "method": "checkerboard neutral-color and exterior removal",
+      "checker_colors": [
+        [
+          212,
+          212,
+          212
+        ],
+        [
+          176,
+          179,
+          180
+        ]
+      ],
+      "removed_pixels": 278056,
+      "removed_distant_components": 0
+    },
+    {
+      "source": ".task0026_source\\美术重置版\\竹林\\截图20260709174901.png",
+      "output": "assets\\pixel\\world_objects\\processed\\bamboo\\bamboo_03.png",
+      "source_size": [
+        646,
+        582
+      ],
+      "output_size": [
+        512,
+        463
+      ],
+      "method": "checkerboard neutral-color and exterior removal",
+      "checker_colors": [
+        [
+          212,
+          212,
+          212
+        ],
+        [
+          176,
+          179,
+          180
+        ]
+      ],
+      "removed_pixels": 198052,
+      "removed_distant_components": 0
+    },
+    {
+      "source": ".task0026_source\\美术重置版\\枯树  灵木  特殊树\\jimeng-2026-07-09-1927-512x512 px，像素风，中国仙侠世界地图物件素材，俯视角 _ 高角度顶视角... (1).png",
+      "output": "assets\\pixel\\world_objects\\processed\\special\\tree_dead_01.png",
+      "source_size": [
+        2048,
+        2048
+      ],
+      "output_size": [
+        344,
+        512
+      ],
+      "method": "preserved source alpha",
+      "removed_pixels": 0,
+      "removed_distant_components": 0
+    },
+    {
+      "source": ".task0026_source\\美术重置版\\枯树  灵木  特殊树\\jimeng-2026-07-09-2398-512x512 px，像素风，中国仙侠世界地图物件素材，俯视角 _ 高角度顶视角... (1).png",
+      "output": "assets\\pixel\\world_objects\\processed\\special\\tree_dead_02.png",
+      "source_size": [
+        2048,
+        2048
+      ],
+      "output_size": [
+        395,
+        512
+      ],
+      "method": "preserved source alpha",
+      "removed_pixels": 0,
+      "removed_distant_components": 0
+    },
+    {
+      "source": ".task0026_source\\美术重置版\\枯树  灵木  特殊树\\jimeng-2026-07-09-7923-512x512 px，像素风，中国仙侠世界地图物件素材，俯视角 _ 高角度顶视角... (1).png",
+      "output": "assets\\pixel\\world_objects\\processed\\special\\resource_spirit_tree_01.png",
+      "source_size": [
+        2048,
+        2048
+      ],
+      "output_size": [
+        410,
+        512
+      ],
+      "method": "preserved source alpha",
+      "removed_pixels": 0,
+      "removed_distant_components": 0
+    },
+    {
+      "source": ".task0026_source\\美术重置版\\小石头  岩石\\截图20260709175505.png",
+      "output": "assets\\pixel\\world_objects\\processed\\rocks\\rock_01.png",
+      "source_size": [
+        564,
+        472
+      ],
+      "output_size": [
+        512,
+        365
+      ],
+      "method": "checkerboard exterior flood removal",
+      "checker_colors": [
+        [
+          176,
+          179,
+          180
+        ],
+        [
+          212,
+          212,
+          212
+        ]
+      ],
+      "removed_pixels": 126935,
+      "removed_distant_components": 0
+    },
+    {
+      "source": ".task0026_source\\美术重置版\\小石头  岩石\\截图20260709175522.png",
+      "output": "assets\\pixel\\world_objects\\processed\\rocks\\rock_02.png",
+      "source_size": [
+        617,
+        585
+      ],
+      "output_size": [
+        512,
+        487
+      ],
+      "method": "checkerboard exterior flood removal",
+      "checker_colors": [
+        [
+          212,
+          212,
+          212
+        ],
+        [
+          176,
+          179,
+          180
+        ]
+      ],
+      "removed_pixels": 169284,
+      "removed_distant_components": 0
+    },
+    {
+      "source": ".task0026_source\\美术重置版\\小石头  岩石\\截图20260709175535.png",
+      "output": "assets\\pixel\\world_objects\\processed\\rocks\\rock_03.png",
+      "source_size": [
+        685,
+        594
+      ],
+      "output_size": [
+        512,
+        427
+      ],
+      "method": "checkerboard exterior flood removal",
+      "checker_colors": [
+        [
+          212,
+          212,
+          212
+        ],
+        [
+          176,
+          179,
+          180
+        ]
+      ],
+      "removed_pixels": 222719,
+      "removed_distant_components": 0
+    },
+    {
+      "source": ".task0026_source\\美术重置版\\小石头  岩石\\截图20260709175551.png",
+      "output": "assets\\pixel\\world_objects\\processed\\rocks\\rock_04.png",
+      "source_size": [
+        580,
+        614
+      ],
+      "output_size": [
+        512,
+        511
+      ],
+      "method": "checkerboard exterior flood removal",
+      "checker_colors": [
+        [
+          212,
+          212,
+          212
+        ],
+        [
+          176,
+          179,
+          180
+        ]
+      ],
+      "removed_pixels": 139719,
+      "removed_distant_components": 0
+    },
+    {
+      "source": ".task0026_source\\美术重置版\\小石头  岩石\\截图20260709175623.png",
+      "output": "assets\\pixel\\world_objects\\processed\\rocks\\rock_05.png",
+      "source_size": [
+        551,
+        433
+      ],
+      "output_size": [
+        505,
+        362
+      ],
+      "method": "checkerboard exterior flood removal",
+      "checker_colors": [
+        [
+          176,
+          179,
+          180
+        ],
+        [
+          212,
+          212,
+          212
+        ]
+      ],
+      "removed_pixels": 121558,
+      "removed_distant_components": 0
+    },
+    {
+      "source": ".task0026_source\\美术重置版\\小石头  岩石\\截图20260709175636.png",
+      "output": "assets\\pixel\\world_objects\\processed\\rocks\\rock_06.png",
+      "source_size": [
+        561,
+        527
+      ],
+      "output_size": [
+        488,
+        458
+      ],
+      "method": "checkerboard exterior flood removal",
+      "checker_colors": [
+        [
+          212,
+          212,
+          212
+        ],
+        [
+          176,
+          179,
+          180
+        ]
+      ],
+      "removed_pixels": 147308,
+      "removed_distant_components": 0
+    },
+    {
+      "source": ".task0026_source\\美术重置版\\小石头  岩石\\截图20260709175650.png",
+      "output": "assets\\pixel\\world_objects\\processed\\rocks\\rock_07.png",
+      "source_size": [
+        556,
+        489
+      ],
+      "output_size": [
+        512,
+        405
+      ],
+      "method": "checkerboard exterior flood removal",
+      "checker_colors": [
+        [
+          212,
+          212,
+          212
+        ],
+        [
+          176,
+          179,
+          180
+        ]
+      ],
+      "removed_pixels": 132381,
+      "removed_distant_components": 0
+    },
+    {
+      "source": ".task0026_source\\美术重置版\\小石头  岩石\\截图20260709175707.png",
+      "output": "assets\\pixel\\world_objects\\processed\\rocks\\rock_08.png",
+      "source_size": [
+        560,
+        512
+      ],
+      "output_size": [
+        512,
+        410
+      ],
+      "method": "checkerboard exterior flood removal",
+      "checker_colors": [
+        [
+          176,
+          179,
+          180
+        ],
+        [
+          212,
+          212,
+          212
+        ]
+      ],
+      "removed_pixels": 136794,
+      "removed_distant_components": 0
+    },
+    {
+      "source": ".task0026_source\\美术重置版\\山丘\\截图20260709175904.png",
+      "output": "assets\\pixel\\world_objects\\processed\\hills\\hill_grass_01.png",
+      "source_size": [
+        642,
+        621
+      ],
+      "output_size": [
+        512,
+        447
+      ],
+      "method": "checkerboard neutral-color and exterior removal",
+      "checker_colors": [
+        [
+          176,
+          179,
+          180
+        ],
+        [
+          212,
+          212,
+          212
+        ]
+      ],
+      "removed_pixels": 212309,
+      "removed_distant_components": 0
+    },
+    {
+      "source": ".task0026_source\\美术重置版\\山丘\\截图20260709175920.png",
+      "output": "assets\\pixel\\world_objects\\processed\\hills\\hill_grass_02.png",
+      "source_size": [
+        715,
+        524
+      ],
+      "output_size": [
+        512,
+        368
+      ],
+      "method": "checkerboard neutral-color and exterior removal",
+      "checker_colors": [
+        [
+          176,
+          179,
+          180
+        ],
+        [
+          212,
+          212,
+          212
+        ]
+      ],
+      "removed_pixels": 194791,
+      "removed_distant_components": 0
+    },
+    {
+      "source": ".task0026_source\\美术重置版\\山丘\\截图20260709175935.png",
+      "output": "assets\\pixel\\world_objects\\processed\\hills\\hill_grass_03.png",
+      "source_size": [
+        625,
+        608
+      ],
+      "output_size": [
+        512,
+        433
+      ],
+      "method": "checkerboard neutral-color and exterior removal",
+      "checker_colors": [
+        [
+          212,
+          212,
+          212
+        ],
+        [
+          176,
+          179,
+          180
+        ]
+      ],
+      "removed_pixels": 187728,
+      "removed_distant_components": 0
+    },
+    {
+      "source": ".task0026_source\\美术重置版\\山丘\\截图20260709175954.png",
+      "output": "assets\\pixel\\world_objects\\processed\\hills\\hill_grass_04.png",
+      "source_size": [
+        631,
+        561
+      ],
+      "output_size": [
+        512,
+        407
+      ],
+      "method": "checkerboard neutral-color and exterior removal",
+      "checker_colors": [
+        [
+          176,
+          179,
+          180
+        ],
+        [
+          212,
+          212,
+          212
+        ]
+      ],
+      "removed_pixels": 155368,
+      "removed_distant_components": 0
+    },
+    {
+      "source": ".task0026_source\\美术重置版\\灰岩山峰\\截图20260709180214.png",
+      "output": "assets\\pixel\\world_objects\\processed\\mountains\\mountain_rock_01.png",
+      "source_size": [
+        584,
+        580
+      ],
+      "output_size": [
+        512,
+        486
+      ],
+      "method": "checkerboard exterior flood removal",
+      "checker_colors": [
+        [
+          212,
+          212,
+          212
+        ],
+        [
+          176,
+          179,
+          180
+        ]
+      ],
+      "removed_pixels": 160652,
+      "removed_distant_components": 0
+    },
+    {
+      "source": ".task0026_source\\美术重置版\\灰岩山峰\\截图20260709180231.png",
+      "output": "assets\\pixel\\world_objects\\processed\\mountains\\mountain_rock_02.png",
+      "source_size": [
+        568,
+        557
+      ],
+      "output_size": [
+        512,
+        492
+      ],
+      "method": "checkerboard exterior flood removal",
+      "checker_colors": [
+        [
+          176,
+          179,
+          180
+        ],
+        [
+          212,
+          212,
+          212
+        ]
+      ],
+      "removed_pixels": 151534,
+      "removed_distant_components": 0
+    },
+    {
+      "source": ".task0026_source\\美术重置版\\灰岩山峰\\截图20260709180244.png",
+      "output": "assets\\pixel\\world_objects\\processed\\mountains\\mountain_rock_03.png",
+      "source_size": [
+        613,
+        597
+      ],
+      "output_size": [
+        512,
+        494
+      ],
+      "method": "checkerboard exterior flood removal",
+      "checker_colors": [
+        [
+          212,
+          212,
+          212
+        ],
+        [
+          176,
+          179,
+          180
+        ]
+      ],
+      "removed_pixels": 175877,
+      "removed_distant_components": 0
+    },
+    {
+      "source": ".task0026_source\\美术重置版\\灰岩山峰\\截图20260709180257.png",
+      "output": "assets\\pixel\\world_objects\\processed\\mountains\\mountain_rock_04.png",
+      "source_size": [
+        649,
+        524
+      ],
+      "output_size": [
+        512,
+        401
+      ],
+      "method": "checkerboard exterior flood removal",
+      "checker_colors": [
+        [
+          176,
+          179,
+          180
+        ],
+        [
+          212,
+          212,
+          212
+        ]
+      ],
+      "removed_pixels": 173357,
+      "removed_distant_components": 0
+    },
+    {
+      "source": ".task0026_source\\美术重置版\\灰岩山峰\\截图20260709180322.png",
+      "output": "assets\\pixel\\world_objects\\processed\\mountains\\mountain_rock_05.png",
+      "source_size": [
+        572,
+        520
+      ],
+      "output_size": [
+        512,
+        445
+      ],
+      "method": "checkerboard exterior flood removal",
+      "checker_colors": [
+        [
+          212,
+          212,
+          212
+        ],
+        [
+          176,
+          179,
+          180
+        ]
+      ],
+      "removed_pixels": 148300,
+      "removed_distant_components": 0
+    },
+    {
+      "source": ".task0026_source\\美术重置版\\灰岩山峰\\截图20260709180337.png",
+      "output": "assets\\pixel\\world_objects\\processed\\mountains\\mountain_rock_06.png",
+      "source_size": [
+        632,
+        514
+      ],
+      "output_size": [
+        512,
+        387
+      ],
+      "method": "checkerboard exterior flood removal",
+      "checker_colors": [
+        [
+          176,
+          179,
+          180
+        ],
+        [
+          212,
+          212,
+          212
+        ]
+      ],
+      "removed_pixels": 183294,
+      "removed_distant_components": 0
+    },
+    {
+      "source": ".task0026_source\\美术重置版\\雪山峰\\截图20260709180705.png",
+      "output": "assets\\pixel\\world_objects\\processed\\mountains\\mountain_snow_01.png",
+      "source_size": [
+        693,
+        550
+      ],
+      "output_size": [
+        512,
+        328
+      ],
+      "method": "snow mountain silhouette reconstruction",
+      "removed_pixels": 219336,
+      "removed_distant_components": 0
+    },
+    {
+      "source": ".task0026_source\\美术重置版\\雪山峰\\截图20260709180726.png",
+      "output": "assets\\pixel\\world_objects\\processed\\mountains\\mountain_snow_02.png",
+      "source_size": [
+        646,
+        451
+      ],
+      "output_size": [
+        512,
+        327
+      ],
+      "method": "snow mountain silhouette reconstruction",
+      "removed_pixels": 150809,
+      "removed_distant_components": 0
+    },
+    {
+      "source": ".task0026_source\\美术重置版\\雪山峰\\截图20260709180742.png",
+      "output": "assets\\pixel\\world_objects\\processed\\mountains\\mountain_snow_03.png",
+      "source_size": [
+        719,
+        449
+      ],
+      "output_size": [
+        512,
+        303
+      ],
+      "method": "snow mountain silhouette reconstruction",
+      "removed_pixels": 189216,
+      "removed_distant_components": 0
+    },
+    {
+      "source": ".task0026_source\\美术重置版\\雪山峰\\截图20260709180758.png",
+      "output": "assets\\pixel\\world_objects\\processed\\mountains\\mountain_snow_04.png",
+      "source_size": [
+        777,
+        462
+      ],
+      "output_size": [
+        512,
+        274
+      ],
+      "method": "snow mountain silhouette reconstruction",
+      "removed_pixels": 220575,
+      "removed_distant_components": 0
+    }
+  ],
+  "skipped": [],
+  "processed_count": 35,
+  "skipped_count": 0
+}
