@@ -28,9 +28,12 @@ var resource_data: Dictionary = {}
 # 名称和等级文本。
 var info_label: Label = null
 
+# 可选的资源点美术图标；为空时继续使用 _draw() 的旧代码绘制。
+var resource_sprite: Sprite2D = null
+
 
 # 初始化资源点节点。
-func setup(data: Dictionary) -> void:
+func setup(data: Dictionary, texture: Texture2D = null, display_size: float = 36.0) -> void:
 	resource_data = data
 	resource_id = int(data["resource_id"])
 	resource_name = str(data["resource_name"])
@@ -41,13 +44,42 @@ func setup(data: Dictionary) -> void:
 	level = int(data["level"])
 
 	input_pickable = true
-	_create_collision_shape()
+	_create_collision_shape(display_size)
 	_create_info_label()
+	set_resource_texture(texture, display_size)
+	queue_redraw()
+
+
+# 设置资源点美术图标，按最长边等比缩放并使用最近邻过滤。
+func set_resource_texture(texture: Texture2D, display_size: float) -> void:
+	if resource_sprite != null:
+		resource_sprite.queue_free()
+		resource_sprite = null
+
+	if texture == null:
+		queue_redraw()
+		return
+
+	var texture_size: Vector2 = texture.get_size()
+	if texture_size.x <= 0.0 or texture_size.y <= 0.0:
+		push_warning("资源点图片尺寸无效：" + resource_name)
+		queue_redraw()
+		return
+
+	resource_sprite = Sprite2D.new()
+	resource_sprite.texture = texture
+	resource_sprite.centered = true
+	resource_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	resource_sprite.scale = Vector2.ONE * (display_size / maxf(texture_size.x, texture_size.y))
+	add_child(resource_sprite)
 	queue_redraw()
 
 
 # 绘制四类修仙像素资源图标。
 func _draw() -> void:
+	if resource_sprite != null:
+		return
+
 	if resource_type == "spirit_mine":
 		var purple := Color("#9a68b8")
 		draw_rect(Rect2(Vector2(-9, 4), Vector2(18, 6)), Color("#493a55"), true)
@@ -80,9 +112,9 @@ func _input_event(_viewport: Viewport, event: InputEvent, _shape_idx: int) -> vo
 
 
 # 创建点击范围。
-func _create_collision_shape() -> void:
+func _create_collision_shape(display_size: float) -> void:
 	var circle_shape: CircleShape2D = CircleShape2D.new()
-	circle_shape.radius = 20.0
+	circle_shape.radius = maxf(20.0, display_size * 0.5)
 
 	var collision_shape: CollisionShape2D = CollisionShape2D.new()
 	collision_shape.shape = circle_shape

@@ -23,11 +23,27 @@ const SECT_ICON_DIRECTORY: String = "res://assets/pixel/sects"
 const PLAYER_SECT_ICON_NAME: String = "sect_01_player_qingxuan.png"
 const SECT_ICON_SIZE: int = 72
 
+# 资源点图标统一配置，四类资源分别扫描自己的处理后目录。
+const RESOURCE_ICON_DIRECTORY: String = "res://assets/pixel/resources/processed"
+const RESOURCE_ICON_SIZE: float = 36.0
+const SECRET_REALM_ICON_SIZE: float = 48.0
+const RESOURCE_ICON_RANDOM_SEED: int = 20260709
+const RESOURCE_TYPE_DIRECTORIES: Dictionary = {
+	"spirit_mine": "spirit_mine",
+	"herb_field": "herb_field",
+	"spirit_vein": "spirit_vein",
+	"secret_realm": "secret_realm",
+}
+
 # 资源点与宗门之间的最小距离，避免图标重叠。
 const RESOURCE_MIN_DISTANCE_TO_SECT: float = 250.0
 
 # 启动时自动扫描到的宗门图标路径，按文件名排序。
 var sect_icon_paths: Array[String] = []
+
+# 按资源类型保存扫描到的图片路径；缺失类型会回退到 ResourceNode 的代码绘制。
+var resource_icon_paths_by_type: Dictionary = {}
+var resource_icon_rng: RandomNumberGenerator = RandomNumberGenerator.new()
 
 # 地图层，只放已经通过的修仙像素世界实例。
 @onready var map_layer: Node2D = $MapLayer
@@ -83,6 +99,7 @@ func _ready() -> void:
 	world_camera.make_current()
 	WorldDataManager.init_world_data()
 	_load_sect_icon_paths()
+	_load_resource_icon_paths()
 	_validate_resource_positions()
 	# Task-0014：暂时隐藏领地圈，后续改成护山大阵视觉。
 	# _create_territory_areas()
@@ -150,6 +167,61 @@ func _get_sect_icon_texture(sect_index: int, is_player: bool) -> Texture2D:
 	return load(selected_path) as Texture2D
 
 
+# 启动时扫描四类资源点图片；目录缺失或为空时只发出 warning。
+func _load_resource_icon_paths() -> void:
+	resource_icon_paths_by_type.clear()
+	resource_icon_rng.seed = RESOURCE_ICON_RANDOM_SEED
+
+	for resource_type in RESOURCE_TYPE_DIRECTORIES:
+		var category_directory: String = str(RESOURCE_TYPE_DIRECTORIES[resource_type])
+		var directory_path: String = RESOURCE_ICON_DIRECTORY.path_join(category_directory)
+		var icon_paths: Array[String] = _scan_resource_icon_directory(directory_path)
+		resource_icon_paths_by_type[str(resource_type)] = icon_paths
+		if icon_paths.is_empty():
+			push_warning(
+				"资源点图片缺失，将使用代码绘制 fallback："
+				+ str(resource_type)
+				+ " / "
+				+ directory_path
+			)
+
+
+# 扫描指定资源类型目录中的 PNG，并按英文文件名排序。
+func _scan_resource_icon_directory(directory_path: String) -> Array[String]:
+	var icon_paths: Array[String] = []
+	var directory: DirAccess = DirAccess.open(directory_path)
+	if directory == null:
+		return icon_paths
+
+	for file_name in directory.get_files():
+		if file_name.get_extension().to_lower() == "png":
+			icon_paths.append(directory_path.path_join(file_name))
+
+	icon_paths.sort()
+	return icon_paths
+
+
+# 从对应资源类型中随机选一张；加载失败时返回 null 触发 fallback。
+func _get_resource_icon_texture(resource_type: String) -> Texture2D:
+	var icon_paths: Array = resource_icon_paths_by_type.get(resource_type, [])
+	if icon_paths.is_empty():
+		return null
+
+	var selected_index: int = resource_icon_rng.randi_range(0, icon_paths.size() - 1)
+	var selected_path: String = str(icon_paths[selected_index])
+	var texture: Texture2D = load(selected_path) as Texture2D
+	if texture == null:
+		push_warning("资源点图片加载失败，将使用代码绘制 fallback：" + selected_path)
+	return texture
+
+
+# 秘境入口尺寸更大，其余三类资源点使用统一尺寸。
+func _get_resource_icon_size(resource_type: String) -> float:
+	if resource_type == "secret_realm":
+		return SECRET_REALM_ICON_SIZE
+	return RESOURCE_ICON_SIZE
+
+
 # 创建宗门领地范围，先生成它们，保证显示在图标和文字下方。
 func _create_territory_areas() -> void:
 	for sect_data in WorldDataManager.get_all_sects():
@@ -167,7 +239,13 @@ func _create_resource_nodes() -> void:
 			_scale_source_position(resource_data["position"])
 		)
 		var resource_node: ResourceNode = ResourceNodeScript.new()
-		resource_node.setup(display_data)
+		var resource_type: String = str(display_data["resource_type"])
+		var icon_texture: Texture2D = _get_resource_icon_texture(resource_type)
+		resource_node.setup(
+			display_data,
+			icon_texture,
+			_get_resource_icon_size(resource_type)
+		)
 		resource_node.selected.connect(_on_resource_selected)
 		resource_layer.add_child(resource_node)
 
