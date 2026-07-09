@@ -19,7 +19,8 @@ const SOURCE_MAP_SIZE: float = 4096.0
 const MAP_POSITION_SCALE: float = MAP_SIZE.x / SOURCE_MAP_SIZE
 
 # 宗门图标统一配置，后续只需要修改这里即可调整显示大小。
-const SECT_ICON_DIRECTORY: String = "res://assets/pixel/sects"
+const SECT_ICON_DIRECTORY: String = "res://assets/pixel/sects/processed"
+const SECT_ICON_FALLBACK_DIRECTORY: String = "res://assets/pixel/sects"
 const PLAYER_SECT_ICON_NAME: String = "sect_01_player_qingxuan.png"
 const SECT_ICON_SIZE: int = 72
 
@@ -40,10 +41,16 @@ const RESOURCE_MIN_DISTANCE_TO_SECT: float = 250.0
 
 # 启动时自动扫描到的宗门图标路径，按文件名排序。
 var sect_icon_paths: Array[String] = []
+var active_sect_icon_directory: String = SECT_ICON_DIRECTORY
 
 # 按资源类型保存扫描到的图片路径；缺失类型会回退到 ResourceNode 的代码绘制。
 var resource_icon_paths_by_type: Dictionary = {}
 var resource_icon_rng: RandomNumberGenerator = RandomNumberGenerator.new()
+
+# 当前地图对象选中状态，由 World 统一管理。
+var current_selected_type: String = "none"
+var current_selected_id: Variant = null
+var current_selected_node: Node = null
 
 # 地图层，只放已经通过的修仙像素世界实例。
 @onready var map_layer: Node2D = $MapLayer
@@ -105,8 +112,19 @@ func _ready() -> void:
 	# _create_territory_areas()
 	_create_resource_nodes()
 	_create_build_slot_nodes()
+	build_slot_layer.visible = false
 	_create_sect_nodes()
 	_show_empty_panel()
+
+
+# ESC 取消当前选择、隐藏建设点并恢复地图概况。
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("ui_cancel"):
+		_clear_current_selection()
+		build_slot_layer.visible = false
+		_show_empty_panel()
+		get_viewport().set_input_as_handled()
+
 
 # 创建地图上的宗门据点。
 func _create_sect_nodes() -> void:
@@ -116,7 +134,7 @@ func _create_sect_nodes() -> void:
 		var display_data: Dictionary = sect_data.duplicate(true)
 		display_data["position"] = pixel_world.call(
 			"find_nearest_land_world_position",
-			_scale_source_position(sect_data["position"])
+			_scale_source_position(sect_data["location"])
 		)
 		var sect_node: SectNode = SectNodeScript.new()
 		var icon_texture: Texture2D = _get_sect_icon_texture(
@@ -124,25 +142,35 @@ func _create_sect_nodes() -> void:
 			bool(display_data.get("is_player", false))
 		)
 		sect_node.setup(display_data, icon_texture, SECT_ICON_SIZE)
-		sect_node.selected.connect(_on_sect_selected)
+		sect_node.selected.connect(_on_sect_selected.bind(sect_node))
 		sect_layer.add_child(sect_node)
 
 
-# 自动扫描宗门图标目录，只读取 PNG，并按文件名排序。
+# 优先扫描处理后的小图；目录为空时回退到原图目录。
 func _load_sect_icon_paths() -> void:
-	sect_icon_paths.clear()
-	var directory: DirAccess = DirAccess.open(SECT_ICON_DIRECTORY)
+	sect_icon_paths = _scan_sect_icon_directory(SECT_ICON_DIRECTORY)
+	active_sect_icon_directory = SECT_ICON_DIRECTORY
+	if sect_icon_paths.is_empty():
+		sect_icon_paths = _scan_sect_icon_directory(SECT_ICON_FALLBACK_DIRECTORY)
+		active_sect_icon_directory = SECT_ICON_FALLBACK_DIRECTORY
+
+	if sect_icon_paths.is_empty():
+		push_warning("宗门图标目录中没有 PNG。")
+
+
+# 扫描指定目录中的 PNG，并按文件名排序。
+func _scan_sect_icon_directory(directory_path: String) -> Array[String]:
+	var icon_paths: Array[String] = []
+	var directory: DirAccess = DirAccess.open(directory_path)
 	if directory == null:
-		push_warning("宗门图标目录不存在：" + SECT_ICON_DIRECTORY)
-		return
+		return icon_paths
 
 	for file_name in directory.get_files():
 		if file_name.get_extension().to_lower() == "png":
-			sect_icon_paths.append(SECT_ICON_DIRECTORY.path_join(file_name))
+			icon_paths.append(directory_path.path_join(file_name))
 
-	sect_icon_paths.sort()
-	if sect_icon_paths.is_empty():
-		push_warning("宗门图标目录中没有 PNG：" + SECT_ICON_DIRECTORY)
+	icon_paths.sort()
+	return icon_paths
 
 
 # 玩家优先使用青玄图标，AI 使用其余图标并在数量不足时循环。
@@ -151,7 +179,7 @@ func _get_sect_icon_texture(sect_index: int, is_player: bool) -> Texture2D:
 		return null
 
 	var player_icon_path: String = sect_icon_paths[0]
-	var preferred_player_path: String = SECT_ICON_DIRECTORY.path_join(PLAYER_SECT_ICON_NAME)
+	var preferred_player_path: String = active_sect_icon_directory.path_join(PLAYER_SECT_ICON_NAME)
 	if preferred_player_path in sect_icon_paths:
 		player_icon_path = preferred_player_path
 
@@ -246,18 +274,18 @@ func _create_resource_nodes() -> void:
 			icon_texture,
 			_get_resource_icon_size(resource_type)
 		)
-		resource_node.selected.connect(_on_resource_selected)
+		resource_node.selected.connect(_on_resource_selected.bind(resource_node))
 		resource_layer.add_child(resource_node)
 
 
 # 创建玩家宗门建设点。
 func _create_build_slot_nodes() -> void:
-	for slot_data in WorldDataManager.get_build_slots_by_sect_id(1):
+	for slot_data in WorldDataManager.get_build_slots_by_sect_id("sect_001"):
 		var display_data: Dictionary = slot_data.duplicate(true)
 		display_data["position"] = _scale_source_position(slot_data["position"])
 		var build_slot_node: BuildSlotNode = BuildSlotNodeScript.new()
 		build_slot_node.setup(display_data)
-		build_slot_node.selected.connect(_on_build_slot_selected)
+		build_slot_node.selected.connect(_on_build_slot_selected.bind(build_slot_node))
 		build_slot_layer.add_child(build_slot_node)
 
 
@@ -277,33 +305,85 @@ func _show_empty_panel() -> void:
 	tip_label.text = "点击宗门或资源点查看信息。"
 
 
+# 取消旧对象的视觉选中状态，并重置当前选择记录。
+func _clear_current_selection() -> void:
+	if is_instance_valid(current_selected_node) and current_selected_node.has_method("set_selected"):
+		current_selected_node.call("set_selected", false)
+	current_selected_type = "none"
+	current_selected_id = null
+	current_selected_node = null
+
+
+# 切换到新对象；支持 set_selected 的节点会自动收到视觉状态更新。
+func _set_current_selection(
+	selection_type: String,
+	selection_id: Variant,
+	selection_node: Node
+) -> void:
+	_clear_current_selection()
+	current_selected_type = selection_type
+	current_selected_id = selection_id
+	current_selected_node = selection_node
+	if is_instance_valid(current_selected_node) and current_selected_node.has_method("set_selected"):
+		current_selected_node.call("set_selected", true)
+
+
 # 点击宗门后，右侧显示宗门信息。
-func _on_sect_selected(sect_data: Dictionary) -> void:
+func _on_sect_selected(node_data: Dictionary, sect_node: SectNode) -> void:
+	var selected_sect_id: String = str(node_data["sect_id"])
+	var sect_data: Dictionary = WorldDataManager.get_sect_by_id(selected_sect_id)
+	if sect_data.is_empty():
+		push_warning("未找到宗门完整数据，临时使用节点数据：" + selected_sect_id)
+		sect_data = node_data
+	_set_current_selection("sect", selected_sect_id, sect_node)
+	build_slot_layer.visible = bool(sect_data.get("is_player", false))
+
 	title_label.text = "宗门信息"
 	name_label.text = "宗门名称：" + str(sect_data["sect_name"])
-	owner_label.text = "是否玩家宗门：" + ("是" if bool(sect_data["is_player"]) else "否")
-	disciple_count_label.text = "弟子数量：" + str(sect_data["disciples_count"])
-	spirit_stone_label.text = "灵石：" + str(sect_data["spirit_stones"])
-	power_label.text = "战力：" + str(sect_data["power"])
-	tip_label.text = "sect_id：" + str(sect_data["sect_id"])
+	owner_label.text = (
+		"宗门类型：" + _get_sect_type_name(str(sect_data["sect_type"]))
+		+ "\n是否玩家宗门：" + ("是" if bool(sect_data["is_player"]) else "否")
+	)
+	disciple_count_label.text = (
+		"宗主：" + str(sect_data["master_name"])
+		+ "\n宗门品阶：" + str(sect_data["realm_rank"])
+	)
+	spirit_stone_label.text = (
+		"弟子数量：" + str(sect_data["disciple_count"])
+		+ "\n灵石：" + str(sect_data["spirit_stone"])
+	)
+	power_label.text = (
+		"声望：" + str(sect_data["reputation"])
+		+ "\n战力：" + str(sect_data["combat_power"])
+	)
+	tip_label.text = (
+		"关系：" + str(sect_data["relation_to_player"])
+		+ "\n介绍：" + str(sect_data["description"])
+	)
 
 
 # 点击资源点后，右侧显示资源点信息。
-func _on_resource_selected(resource_data: Dictionary) -> void:
+func _on_resource_selected(resource_data: Dictionary, resource_node: ResourceNode) -> void:
+	_set_current_selection("resource", int(resource_data["resource_id"]), resource_node)
+	build_slot_layer.visible = false
+
 	title_label.text = "资源点信息"
 	name_label.text = "名称：" + str(resource_data["resource_name"])
 	owner_label.text = "类型：" + _get_resource_type_name(str(resource_data["resource_type"]))
 	disciple_count_label.text = "等级：Lv" + str(resource_data["level"])
 	spirit_stone_label.text = "储量：" + str(resource_data["amount"])
-	power_label.text = "当前归属：" + _get_resource_owner_name(int(resource_data["owner_sect_id"]))
+	power_label.text = "当前归属：" + _get_resource_owner_name(resource_data["owner_sect_id"])
 	tip_label.text = "resource_id：" + str(resource_data["resource_id"])
 
 
 # 点击建设点后，右侧显示建设点信息。
-func _on_build_slot_selected(slot_data: Dictionary) -> void:
+func _on_build_slot_selected(slot_data: Dictionary, build_slot_node: BuildSlotNode) -> void:
+	_set_current_selection("build_slot", int(slot_data["slot_id"]), build_slot_node)
+	build_slot_layer.visible = true
+
 	title_label.text = "建设点信息"
 	name_label.text = "建设点ID：" + str(slot_data["slot_id"])
-	owner_label.text = "所属宗门：" + _get_sect_name_by_id(int(slot_data["owner_sect_id"]))
+	owner_label.text = "所属宗门：" + _get_sect_name_by_id(str(slot_data["owner_sect_id"]))
 	disciple_count_label.text = "状态：" + ("空地" if bool(slot_data["is_empty"]) else "已占用")
 	spirit_stone_label.text = "类型：可建设区域"
 	power_label.text = "说明：这里以后可以建造宗门建筑"
@@ -315,7 +395,7 @@ func _validate_resource_positions() -> void:
 	for resource_data in WorldDataManager.get_all_resources():
 		var resource_position: Vector2 = resource_data["position"]
 		for sect_data in WorldDataManager.get_all_sects():
-			var sect_position: Vector2 = sect_data["position"]
+			var sect_position: Vector2 = sect_data["location"]
 			if resource_position.distance_to(sect_position) < RESOURCE_MIN_DISTANCE_TO_SECT:
 				push_error("资源点距离宗门过近：" + str(resource_data["resource_name"]) + " / " + str(sect_data["sect_name"]))
 
@@ -334,12 +414,28 @@ func _get_resource_type_name(resource_type: String) -> String:
 	return "未知资源"
 
 
+# 获取宗门类型中文名。
+func _get_sect_type_name(sect_type: String) -> String:
+	var type_names: Dictionary = {
+		"orthodox": "正道",
+		"sword": "剑修",
+		"alchemy": "丹修",
+		"demonic": "魔宗",
+		"buddhist": "佛修",
+		"snow": "冰雪宗门",
+		"desert": "荒漠宗门",
+		"ocean": "海岛宗门",
+	}
+	return str(type_names.get(sect_type, "未知"))
+
+
 # 获取资源归属宗门名称。
-func _get_resource_owner_name(owner_sect_id: int) -> String:
-	if owner_sect_id == 0:
+func _get_resource_owner_name(owner_sect_id: Variant) -> String:
+	var normalized_id: String = str(owner_sect_id)
+	if normalized_id == "" or normalized_id == "0":
 		return "无主资源点"
 
-	var sect_data: Dictionary = WorldDataManager.get_sect_by_id(owner_sect_id)
+	var sect_data: Dictionary = WorldDataManager.get_sect_by_id(normalized_id)
 	if sect_data.is_empty():
 		return "未知宗门"
 
@@ -347,7 +443,7 @@ func _get_resource_owner_name(owner_sect_id: int) -> String:
 
 
 # 根据宗门编号获取宗门名称。
-func _get_sect_name_by_id(sect_id: int) -> String:
+func _get_sect_name_by_id(sect_id: String) -> String:
 	var sect_data: Dictionary = WorldDataManager.get_sect_by_id(sect_id)
 	if sect_data.is_empty():
 		return "未知宗门"

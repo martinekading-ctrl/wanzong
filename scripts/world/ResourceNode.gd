@@ -30,6 +30,15 @@ var info_label: Label = null
 
 # 可选的资源点美术图标；为空时继续使用 _draw() 的旧代码绘制。
 var resource_sprite: Sprite2D = null
+var base_sprite_scale: Vector2 = Vector2.ONE
+var icon_display_size: float = 36.0
+
+# 悬停和选中状态只改变视觉，不影响资源数据与点击信号。
+var is_hovered: bool = false
+var is_selected: bool = false
+
+const HOVER_SCALE: float = 1.12
+const SELECT_RING_COLOR: Color = Color(0.36, 0.72, 1.0, 0.62)
 
 
 # 初始化资源点节点。
@@ -42,11 +51,14 @@ func setup(data: Dictionary, texture: Texture2D = null, display_size: float = 36
 	owner_sect_id = int(data["owner_sect_id"])
 	position = data["position"]
 	level = int(data["level"])
+	icon_display_size = display_size
 
 	input_pickable = true
 	_create_collision_shape(display_size)
 	_create_info_label()
 	set_resource_texture(texture, display_size)
+	mouse_entered.connect(_on_mouse_entered)
+	mouse_exited.connect(_on_mouse_exited)
 	queue_redraw()
 
 
@@ -70,16 +82,31 @@ func set_resource_texture(texture: Texture2D, display_size: float) -> void:
 	resource_sprite.texture = texture
 	resource_sprite.centered = true
 	resource_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	resource_sprite.scale = Vector2.ONE * (display_size / maxf(texture_size.x, texture_size.y))
+	base_sprite_scale = Vector2.ONE * (display_size / maxf(texture_size.x, texture_size.y))
+	resource_sprite.scale = base_sprite_scale
 	add_child(resource_sprite)
-	queue_redraw()
+	_update_visual_state()
 
 
 # 绘制四类修仙像素资源图标。
 func _draw() -> void:
+	if is_selected:
+		draw_arc(
+			Vector2.ZERO,
+			icon_display_size * 0.58,
+			0.0,
+			TAU,
+			28,
+			SELECT_RING_COLOR,
+			2.0,
+			true
+		)
+
 	if resource_sprite != null:
 		return
 
+	var visual_scale: float = HOVER_SCALE if is_hovered else 1.0
+	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE * visual_scale)
 	if resource_type == "spirit_mine":
 		var purple := Color("#9a68b8")
 		draw_rect(Rect2(Vector2(-9, 4), Vector2(18, 6)), Color("#493a55"), true)
@@ -101,6 +128,7 @@ func _draw() -> void:
 		draw_rect(Rect2(Vector2(-4, -10), Vector2(8, 20)), spirit_blue, true)
 		draw_rect(Rect2(Vector2(-10, -4), Vector2(20, 8)), spirit_blue.lightened(0.16), true)
 		draw_rect(Rect2(Vector2(-3, -3), Vector2(6, 6)), Color("#b2a0e8"), true)
+	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
 
 # 鼠标点击资源点后，通知世界地图显示详情。
@@ -124,7 +152,47 @@ func _create_collision_shape(display_size: float) -> void:
 # 创建资源点名称和等级文本。
 func _create_info_label() -> void:
 	info_label = Label.new()
+	info_label.position = Vector2(-80, icon_display_size * 0.55 + 4.0)
+	info_label.custom_minimum_size = Vector2(160, 22)
+	info_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	info_label.text = resource_name + " Lv" + str(level)
+	info_label.add_theme_font_size_override("font_size", 13)
+	info_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	info_label.visible = false
+	add_child(info_label)
+
+
+# 鼠标进入时显示名称与等级，并轻微放大资源图标。
+func _on_mouse_entered() -> void:
+	set_hovered(true)
+
+
+# 鼠标移开后恢复；已选中资源点继续显示名称。
+func _on_mouse_exited() -> void:
+	set_hovered(false)
+
+
+func set_hovered(value: bool) -> void:
+	is_hovered = value
+	_update_visual_state()
+
+
+# 由 World 统一设置选中状态。
+func set_selected(value: bool) -> void:
+	is_selected = value
+	_update_visual_state()
+
+
+func _update_visual_state() -> void:
+	_update_label_visible()
+	if resource_sprite != null:
+		resource_sprite.scale = base_sprite_scale * (HOVER_SCALE if is_hovered else 1.0)
+	queue_redraw()
+
+
+func _update_label_visible() -> void:
+	if info_label != null:
+		info_label.visible = is_hovered or is_selected
 
 
 # 根据资源类型返回显示颜色。

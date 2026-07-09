@@ -11,7 +11,7 @@ const SLOT_SIZE: Vector2 = Vector2(14, 14)
 var slot_id: int = 0
 
 # 所属宗门编号。
-var owner_sect_id: int = 0
+var owner_sect_id: String = ""
 
 # 是否为空地。
 var is_empty: bool = true
@@ -22,12 +22,17 @@ var slot_data: Dictionary = {}
 # 空地文本。
 var info_label: Label = null
 
+# 建设点仅在玩家宗门上下文中显示，选中时提供轻微高亮。
+var is_selected: bool = false
+
+const SELECT_COLOR: Color = Color(1.0, 0.92, 0.48, 0.85)
+
 
 # 初始化建设点。
 func setup(data: Dictionary) -> void:
 	slot_data = data
 	slot_id = int(data["slot_id"])
-	owner_sect_id = int(data["owner_sect_id"])
+	owner_sect_id = str(data["owner_sect_id"])
 	position = data["position"]
 	is_empty = bool(data["is_empty"])
 
@@ -42,6 +47,8 @@ func _draw() -> void:
 	var rect := Rect2(SLOT_SIZE * -0.5, SLOT_SIZE)
 	draw_rect(rect, Color(0.30, 0.24, 0.08), true)
 	draw_rect(rect.grow(-2.0), Color(1.0, 0.86, 0.30), true)
+	if is_selected:
+		draw_rect(rect.grow(3.0), SELECT_COLOR, false, 2.0)
 
 
 # 鼠标点击建设点后，通知世界地图显示详情。
@@ -66,3 +73,9 @@ func _create_collision_shape() -> void:
 func _create_info_label() -> void:
 	info_label = Label.new()
 	info_label.visible = false
+
+
+# 由 World 统一设置选中状态。
+func set_selected(value: bool) -> void:
+	is_selected = value
+	queue_redraw()

@@ -13,16 +13,57 @@ var build_slots: Array = []
 # 初始化世界数据。当前是固定原型数据，后续可以替换为存档或随机生成。
 func init_world_data() -> void:
 	sects = [
-		{"sect_id": 1, "sect_name": "青云宗", "is_player": true, "position": Vector2(2048, 2048), "disciples_count": 20, "spirit_stones": 1000, "power": 5000, "territory_radius": 450, "territory_level": 1},
-		{"sect_id": 2, "sect_name": "玄天宗", "is_player": false, "position": Vector2(720, 900), "disciples_count": 16, "spirit_stones": 800, "power": 4200, "territory_radius": 350, "territory_level": 1},
-		{"sect_id": 3, "sect_name": "万剑宗", "is_player": false, "position": Vector2(1500, 780), "disciples_count": 28, "spirit_stones": 1300, "power": 6800, "territory_radius": 350, "territory_level": 1},
-		{"sect_id": 4, "sect_name": "赤阳宗", "is_player": false, "position": Vector2(3050, 900), "disciples_count": 24, "spirit_stones": 960, "power": 5900, "territory_radius": 350, "territory_level": 1},
-		{"sect_id": 5, "sect_name": "寒月宗", "is_player": false, "position": Vector2(3500, 1700), "disciples_count": 18, "spirit_stones": 740, "power": 4700, "territory_radius": 350, "territory_level": 1},
-		{"sect_id": 6, "sect_name": "天机宗", "is_player": false, "position": Vector2(2840, 2700), "disciples_count": 30, "spirit_stones": 1500, "power": 7300, "territory_radius": 350, "territory_level": 1},
-		{"sect_id": 7, "sect_name": "魔罗宗", "is_player": false, "position": Vector2(3400, 3300), "disciples_count": 36, "spirit_stones": 2100, "power": 8800, "territory_radius": 350, "territory_level": 1},
-		{"sect_id": 8, "sect_name": "灵兽宗", "is_player": false, "position": Vector2(1900, 3250), "disciples_count": 22, "spirit_stones": 900, "power": 5200, "territory_radius": 350, "territory_level": 1},
-		{"sect_id": 9, "sect_name": "丹霞宗", "is_player": false, "position": Vector2(760, 3050), "disciples_count": 14, "spirit_stones": 620, "power": 3900, "territory_radius": 350, "territory_level": 1},
-		{"sect_id": 10, "sect_name": "归墟宗", "is_player": false, "position": Vector2(520, 1900), "disciples_count": 32, "spirit_stones": 1700, "power": 7600, "territory_radius": 350, "territory_level": 1},
+		_create_sect_data(
+			"sect_001", "青玄宗", true, "orthodox", "玩家", "九品",
+			12, 1000, 100, 350, Vector2(2048, 2048), "self",
+			[], [1, 2, 3, 4, 5, 6],
+			"初立山门的小型修仙宗门，未来可统御万宗。", 450
+		),
+		_create_sect_data(
+			"sect_002", "凌霄剑派", false, "sword", "陆长风", "八品",
+			86, 5600, 430, 2100, Vector2(720, 900), "neutral",
+			[], [], "以剑修闻名的山门，门人擅长攻伐。"
+		),
+		_create_sect_data(
+			"sect_003", "赤炉丹阁", false, "alchemy", "沈丹霞", "八品",
+			64, 7200, 510, 1680, Vector2(1500, 780), "friendly",
+			[], [], "精研丹火与药理，以灵丹妙药广结善缘。"
+		),
+		_create_sect_data(
+			"sect_004", "血煞魔门", false, "demonic", "厉无咎", "七品",
+			132, 9800, -260, 4200, Vector2(3050, 900), "hostile",
+			[], [], "盘踞荒野的魔道宗门，行事狠厉且崇尚强者。"
+		),
+		_create_sect_data(
+			"sect_005", "金莲寺", false, "buddhist", "慧明禅师", "七品",
+			118, 8400, 760, 3150, Vector2(3500, 1700), "friendly",
+			[], [], "以金莲佛法护佑一方，门人善守亦善度化。"
+		),
+		_create_sect_data(
+			"sect_006", "寒月宫", false, "snow", "宫主苏寒月", "七品",
+			97, 7600, 580, 3380, Vector2(2840, 2700), "neutral",
+			[], [], "坐落北境雪原，传承寒月一脉的冰系术法。"
+		),
+		_create_sect_data(
+			"sect_007", "黄沙门", false, "desert", "拓跋烈", "八品",
+			73, 4900, 280, 2260, Vector2(3400, 3300), "neutral",
+			[], [], "扎根大漠商道，擅长御沙与追踪之术。"
+		),
+		_create_sect_data(
+			"sect_008", "沧海阁", false, "ocean", "洛沧澜", "七品",
+			105, 9100, 690, 3520, Vector2(1900, 3250), "friendly",
+			[], [], "立于东海群岛，门下修士精通水法与舟阵。"
+		),
+		_create_sect_data(
+			"sect_009", "玄雷宗", false, "orthodox", "雷震岳", "六品",
+			168, 12800, 820, 5860, Vector2(760, 3050), "neutral",
+			[], [], "以玄雷淬体立宗，功法刚猛，声势显赫。"
+		),
+		_create_sect_data(
+			"sect_010", "万兽山", false, "orthodox", "岳千峰", "五品",
+			236, 18600, 960, 7450, Vector2(520, 1900), "hostile",
+			[], [], "雄踞群山并与灵兽共修，是实力深厚的古老宗门。"
+		),
 	]
 
 	resources = [
@@ -55,13 +96,55 @@ func init_world_data() -> void:
 	]
 
 	build_slots = [
-		{"slot_id": 1, "owner_sect_id": 1, "position": Vector2(1868, 1928), "is_empty": true},
-		{"slot_id": 2, "owner_sect_id": 1, "position": Vector2(2048, 1868), "is_empty": true},
-		{"slot_id": 3, "owner_sect_id": 1, "position": Vector2(2228, 1938), "is_empty": true},
-		{"slot_id": 4, "owner_sect_id": 1, "position": Vector2(1848, 2168), "is_empty": true},
-		{"slot_id": 5, "owner_sect_id": 1, "position": Vector2(2068, 2198), "is_empty": true},
-		{"slot_id": 6, "owner_sect_id": 1, "position": Vector2(2268, 2148), "is_empty": true},
+		{"slot_id": 1, "owner_sect_id": "sect_001", "position": Vector2(1868, 1928), "is_empty": true},
+		{"slot_id": 2, "owner_sect_id": "sect_001", "position": Vector2(2048, 1868), "is_empty": true},
+		{"slot_id": 3, "owner_sect_id": "sect_001", "position": Vector2(2228, 1938), "is_empty": true},
+		{"slot_id": 4, "owner_sect_id": "sect_001", "position": Vector2(1848, 2168), "is_empty": true},
+		{"slot_id": 5, "owner_sect_id": "sect_001", "position": Vector2(2068, 2198), "is_empty": true},
+		{"slot_id": 6, "owner_sect_id": "sect_001", "position": Vector2(2268, 2148), "is_empty": true},
 	]
+
+
+# 统一创建宗门数据，确保十个宗门拥有完全一致的字段结构。
+func _create_sect_data(
+	sect_id: String,
+	sect_name: String,
+	is_player: bool,
+	sect_type: String,
+	master_name: String,
+	realm_rank: String,
+	disciple_count: int,
+	spirit_stone: int,
+	reputation: int,
+	combat_power: int,
+	location: Vector2,
+	relation_to_player: String,
+	owned_resource_ids: Array,
+	build_slot_ids: Array,
+	description: String,
+	territory_radius: float = 350.0
+) -> Dictionary:
+	return {
+		"sect_id": sect_id,
+		"sect_name": sect_name,
+		"is_player": is_player,
+		"sect_type": sect_type,
+		"master_name": master_name,
+		"realm_rank": realm_rank,
+		"disciple_count": disciple_count,
+		"spirit_stone": spirit_stone,
+		"reputation": reputation,
+		"combat_power": combat_power,
+		"location": location,
+		# 保留 position 别名，兼容现有地图节点和领地显示。
+		"position": location,
+		"relation_to_player": relation_to_player,
+		"owned_resource_ids": owned_resource_ids,
+		"build_slot_ids": build_slot_ids,
+		"description": description,
+		"territory_radius": territory_radius,
+		"territory_level": 1,
+	}
 
 
 # 获取全部宗门数据。
@@ -79,13 +162,49 @@ func get_all_build_slots() -> Array:
 	return build_slots
 
 
-# 根据宗门编号查找宗门数据。
-func get_sect_by_id(sect_id: int) -> Dictionary:
+# 根据字符串宗门 ID 查找宗门数据。
+func get_sect_by_id(sect_id: String) -> Dictionary:
 	for sect_data in sects:
-		if int(sect_data["sect_id"]) == sect_id:
+		if str(sect_data["sect_id"]) == sect_id:
 			return sect_data
 
 	return {}
+
+
+# 更新单个宗门字段；位置字段会同步兼容用的 position/location 别名。
+func update_sect_data(sect_id: String, key: String, value: Variant) -> bool:
+	for sect_index in range(sects.size()):
+		var sect_data: Dictionary = sects[sect_index]
+		if str(sect_data["sect_id"]) != sect_id:
+			continue
+
+		sect_data[key] = value
+		if key == "location":
+			sect_data["position"] = value
+		elif key == "position":
+			sect_data["location"] = value
+		sects[sect_index] = sect_data
+		return true
+
+	push_warning("更新宗门数据失败，未找到宗门：" + sect_id)
+	return false
+
+
+# 获取玩家宗门。
+func get_player_sect() -> Dictionary:
+	for sect_data in sects:
+		if bool(sect_data.get("is_player", false)):
+			return sect_data
+	return {}
+
+
+# 获取全部 AI 宗门。
+func get_ai_sects() -> Array:
+	var ai_sects: Array = []
+	for sect_data in sects:
+		if not bool(sect_data.get("is_player", false)):
+			ai_sects.append(sect_data)
+	return ai_sects
 
 
 # 根据资源点编号查找资源点数据。
@@ -97,12 +216,12 @@ func get_resource_by_id(resource_id: int) -> Dictionary:
 	return {}
 
 
-# 根据宗门编号获取建设点数据。
-func get_build_slots_by_sect_id(sect_id: int) -> Array:
+# 根据宗门 ID 获取建设点数据。
+func get_build_slots_by_sect_id(sect_id: String) -> Array:
 	var result: Array = []
 
 	for slot_data in build_slots:
-		if int(slot_data["owner_sect_id"]) == sect_id:
+		if str(slot_data["owner_sect_id"]) == sect_id:
 			result.append(slot_data)
 
 	return result
