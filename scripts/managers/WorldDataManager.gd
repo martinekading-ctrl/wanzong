@@ -9,9 +9,14 @@ var resources: Array = []
 # 玩家宗门可建设点数据。
 var build_slots: Array = []
 
+var is_initialized: bool = false
+
 
 # 初始化世界数据。当前是固定原型数据，后续可以替换为存档或随机生成。
 func init_world_data() -> void:
+	if is_initialized:
+		return
+
 	sects = [
 		_create_sect_data(
 			"sect_001", "青玄宗", true, "orthodox", "玩家", "九品",
@@ -103,6 +108,16 @@ func init_world_data() -> void:
 		{"slot_id": 5, "owner_sect_id": "sect_001", "position": Vector2(2068, 2198), "is_empty": true},
 		{"slot_id": 6, "owner_sect_id": "sect_001", "position": Vector2(2268, 2148), "is_empty": true},
 	]
+
+	is_initialized = true
+
+
+func reset_world_data() -> void:
+	is_initialized = false
+	sects.clear()
+	resources.clear()
+	build_slots.clear()
+	init_world_data()
 
 
 # 统一创建宗门数据，确保十个宗门拥有完全一致的字段结构。
