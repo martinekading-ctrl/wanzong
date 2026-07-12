@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="RealmDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/data/RealmDefinition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "qi_08"
+display_name = "炼气八层"
+order = 8
+cultivation_required = 320
+breakthrough_base_rate = 0.5
+costs = {"spirit_stone": 130}
+stat_multipliers = {"health": 1.55, "combat_power": 1.78}
+next_realm_id = "qi_09"

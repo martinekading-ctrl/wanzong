@@ -61,8 +61,9 @@ func remove_disciple(disciple_id: String) -> bool:
 
 func cultivate_all(amount: int = 10) -> void:
 	for disciple in disciples:
-		disciple.cultivate(amount)
-		WorldDataManager.update_disciple_data(disciple.id, "cultivation", disciple.cultivation)
+		var definition: RealmDefinition = RealmRegistry.get_by_id(disciple.realm_id)
+		disciple.cultivate(amount, definition)
+		_sync_disciple_progress(disciple)
 
 
 func update_assignment(disciple_id: String, assignment: String) -> bool:
@@ -114,9 +115,18 @@ func prepare_daily_actions(sect_id: String) -> Array[Dictionary]:
 				action["health_change"] = IDLE_HEALTH_RECOVERY
 				action["message"] = "休息恢复健康。"
 			ASSIGNMENT_CULTIVATE:
-				action["cultivation_gain"] = CULTIVATION_BASE_GAIN + int(disciple.talent / 25.0)
-				action["cost"]["spirit_stone"] = EconomyManager.DAILY_CULTIVATION_COST_PER_DISCIPLE
-				action["message"] = "等待分配修炼灵石。"
+				var definition: RealmDefinition = RealmRegistry.get_by_id(disciple.realm_id)
+				if definition == null:
+					action["success"] = false
+					action["message"] = "境界配置缺失，无法修炼。"
+				elif disciple.at_bottleneck:
+					action["success"] = false
+					action["at_bottleneck"] = true
+					action["message"] = "已达修炼瓶颈，等待突破。"
+				else:
+					action["cultivation_gain"] = CULTIVATION_BASE_GAIN + int(disciple.talent / 25.0)
+					action["cost"]["spirit_stone"] = EconomyManager.DAILY_CULTIVATION_COST_PER_DISCIPLE
+					action["message"] = "等待分配修炼灵石。"
 			ASSIGNMENT_FARM:
 				_set_production(action, "food", 8 + int(disciple.talent / 20.0) + _get_daily_variation(-1, 2))
 			ASSIGNMENT_LOGGING:
@@ -136,10 +146,24 @@ func apply_daily_results(results: Array[Dictionary]) -> void:
 		var disciple: DiscipleData = get_disciple_by_id(disciple_id)
 		if disciple == null:
 			continue
-		disciple.cultivate(int(result.get("cultivation_gain", 0)))
+		var definition: RealmDefinition = RealmRegistry.get_by_id(disciple.realm_id)
+		var requested_gain: int = int(result.get("cultivation_gain", 0))
+		var cultivation_before: int = disciple.cultivation
+		var was_at_bottleneck: bool = disciple.at_bottleneck
+		var actual_gain: int = disciple.cultivate(requested_gain, definition)
+		result["cultivation_requested"] = requested_gain
+		result["cultivation_gain"] = actual_gain
+		result["cultivation_before"] = cultivation_before
+		result["cultivation_after"] = disciple.cultivation
+		result["cultivation_required"] = definition.cultivation_required if definition != null else 0
+		result["at_bottleneck"] = disciple.at_bottleneck
+		result["reached_bottleneck"] = disciple.at_bottleneck and not was_at_bottleneck
+		result["realm_id"] = disciple.realm_id
+		result["realm"] = disciple.realm
+		if actual_gain < requested_gain and disciple.at_bottleneck:
+			result["message"] = "修为达到上限，已进入突破瓶颈。"
 		disciple.health = clampi(disciple.health + int(result.get("health_change", 0)), 0, 100)
-		WorldDataManager.update_disciple_data(disciple_id, "cultivation", disciple.cultivation)
-		WorldDataManager.update_disciple_data(disciple_id, "spiritual_power", disciple.cultivation)
+		_sync_disciple_progress(disciple)
 		WorldDataManager.update_disciple_data(disciple_id, "health", disciple.health)
 		WorldDataManager.update_disciple_data(
 			disciple_id,
@@ -157,8 +181,24 @@ func load_from_world_data() -> void:
 		disciple.name = str(world_disciple.get("disciple_name", "未命名弟子"))
 		disciple.age = int(world_disciple.get("age", 16))
 		disciple.gender = str(world_disciple.get("gender", "男"))
-		disciple.realm = str(world_disciple.get("realm", "凡人"))
-		disciple.cultivation = int(world_disciple.get("cultivation", 0))
+		var legacy_realm: String = str(world_disciple.get("realm", "凡人"))
+		disciple.realm_id = str(world_disciple.get(
+			"realm_id",
+			RealmRegistry.get_id_by_display_name(legacy_realm)
+		))
+		var definition: RealmDefinition = RealmRegistry.get_by_id(disciple.realm_id)
+		if definition == null:
+			disciple.realm_id = "mortal"
+			definition = RealmRegistry.get_by_id(disciple.realm_id)
+		disciple.realm = definition.display_name if definition != null else legacy_realm
+		var stored_cultivation: int = int(world_disciple.get(
+			"cultivation",
+			world_disciple.get("spiritual_power", 0)
+		))
+		disciple.cultivation = clampi(stored_cultivation, 0, definition.cultivation_required) if definition != null else maxi(0, stored_cultivation)
+		disciple.at_bottleneck = bool(world_disciple.get("at_bottleneck", false)) or (
+			definition != null and disciple.cultivation >= definition.cultivation_required
+		)
 		disciple.talent = int(world_disciple.get("talent", world_disciple.get("comprehension", 50)))
 		disciple.potential = int(world_disciple.get("potential", 50))
 		disciple.personality = str(world_disciple.get("personality", "沉稳"))
@@ -166,6 +206,7 @@ func load_from_world_data() -> void:
 		disciple.loyalty = int(world_disciple.get("loyalty", 50))
 		disciple.assignment = str(world_disciple.get("assignment", ASSIGNMENT_IDLE))
 		disciples.append(disciple)
+		_sync_disciple_progress(disciple)
 	_update_next_disciple_number()
 
 
@@ -188,6 +229,7 @@ func _update_next_disciple_number() -> void:
 
 
 func _create_base_daily_result(disciple: DiscipleData, assignment: String) -> Dictionary:
+	var definition: RealmDefinition = RealmRegistry.get_by_id(disciple.realm_id)
 	return {
 		"disciple_id": disciple.id,
 		"disciple_name": disciple.name,
@@ -195,6 +237,13 @@ func _create_base_daily_result(disciple: DiscipleData, assignment: String) -> Di
 		"resource_type": "",
 		"resource_amount": 0,
 		"cultivation_gain": 0,
+		"cultivation_before": disciple.cultivation,
+		"cultivation_after": disciple.cultivation,
+		"cultivation_required": definition.cultivation_required if definition != null else 0,
+		"realm_id": disciple.realm_id,
+		"realm": disciple.realm,
+		"at_bottleneck": disciple.at_bottleneck,
+		"reached_bottleneck": false,
 		"health_change": 0,
 		"cost": {
 			"spirit_stone": 0,
@@ -226,3 +275,11 @@ func _normalize_assignment(assignment: String) -> String:
 
 func _get_daily_variation(min_value: int, max_value: int) -> int:
 	return randi_range(min_value, max_value)
+
+
+func _sync_disciple_progress(disciple: DiscipleData) -> void:
+	WorldDataManager.update_disciple_data(disciple.id, "realm_id", disciple.realm_id)
+	WorldDataManager.update_disciple_data(disciple.id, "realm", disciple.realm)
+	WorldDataManager.update_disciple_data(disciple.id, "cultivation", disciple.cultivation)
+	WorldDataManager.update_disciple_data(disciple.id, "spiritual_power", disciple.cultivation)
+	WorldDataManager.update_disciple_data(disciple.id, "at_bottleneck", disciple.at_bottleneck)

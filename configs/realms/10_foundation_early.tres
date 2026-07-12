@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="RealmDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/data/RealmDefinition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "foundation_early"
+display_name = "筑基初期"
+order = 10
+cultivation_required = 600
+breakthrough_base_rate = 0.4
+costs = {"spirit_stone": 260, "spirit_grass": 15}
+stat_multipliers = {"health": 2.0, "combat_power": 2.3}
+next_realm_id = "foundation_middle"

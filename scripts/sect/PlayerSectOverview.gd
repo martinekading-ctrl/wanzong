@@ -2,15 +2,6 @@ extends Control
 
 const LEGACY_ASSIGNMENT_FILTERS: Array[String] = ["巡山", "采集", "闭关"]
 const SORT_OPTIONS: Array[String] = ["默认", "境界", "战力", "忠诚", "年龄"]
-const REALM_ORDER: Dictionary = {
-	"凡人": 0,
-	"炼气一层": 1,
-	"炼气二层": 2,
-	"炼气三层": 3,
-	"炼气四层": 4,
-	"炼气五层": 5,
-}
-
 @onready var title_label: Label = $MarginContainer/RootBox/TopBar/TitleLabel
 @onready var date_label: Label = $MarginContainer/RootBox/TopBar/DateLabel
 @onready var next_day_button: Button = $MarginContainer/RootBox/TopBar/NextDayButton
@@ -182,9 +173,14 @@ func _refresh_daily_report(report: Dictionary) -> void:
 	var shortages: Dictionary = report.get("shortages", {})
 	var cultivation_success: int = 0
 	var cultivation_failed: int = 0
+	var cultivation_gain: int = 0
+	var bottleneck_count: int = 0
 	for result in report.get("disciple_results", []):
 		if str(result.get("assignment", "")) != DiscipleManager.ASSIGNMENT_CULTIVATE:
 			continue
+		cultivation_gain += int(result.get("cultivation_gain", 0))
+		if bool(result.get("at_bottleneck", false)):
+			bottleneck_count += 1
 		if bool(result.get("success", false)):
 			cultivation_success += 1
 		else:
@@ -203,6 +199,7 @@ func _refresh_daily_report(report: Dictionary) -> void:
 		"今日食物消耗：%d" % int(food.get("paid", 0)),
 		"资源缺口：灵石%d，食物%d" % [int(shortages.get("spirit_stone", 0)), int(shortages.get("food", 0))],
 		"修炼成功：%d人；修炼失败：%d人" % [cultivation_success, cultivation_failed],
+		"修为增长：%d；瓶颈弟子：%d人" % [cultivation_gain, bottleneck_count],
 		"警告：" + warning_text,
 	]))
 
@@ -354,7 +351,10 @@ func _sort_disciples(disciples: Array) -> void:
 
 
 func _get_realm_rank(realm: String) -> int:
-	return int(REALM_ORDER.get(realm, -1))
+	var definition: RealmDefinition = RealmRegistry.get_by_id(
+		RealmRegistry.get_id_by_display_name(realm)
+	)
+	return definition.order if definition != null else -1
 
 
 func _clear_disciple_list() -> void:
@@ -364,10 +364,13 @@ func _clear_disciple_list() -> void:
 
 
 func _get_disciple_row_text(disciple_data: Dictionary) -> String:
+	var realm_text: String = str(disciple_data["realm"])
+	if bool(disciple_data.get("at_bottleneck", false)):
+		realm_text += "（瓶颈）"
 	return "%s｜%s｜%s｜%s｜%s｜%s｜战力 %s｜%s" % [
 		str(disciple_data["disciple_name"]),
 		str(disciple_data["role"]),
-		str(disciple_data["realm"]),
+		realm_text,
 		str(disciple_data["spiritual_root"]),
 		str(disciple_data["aptitude"]),
 		str(disciple_data["assignment"]),
@@ -403,6 +406,14 @@ func _clear_disciple_detail() -> void:
 
 
 func _show_disciple_detail(disciple_data: Dictionary) -> void:
+	var realm_id: String = str(disciple_data.get(
+		"realm_id",
+		RealmRegistry.get_id_by_display_name(str(disciple_data.get("realm", "凡人")))
+	))
+	var definition: RealmDefinition = RealmRegistry.get_by_id(realm_id)
+	var cultivation_required: int = definition.cultivation_required if definition != null else 0
+	var cultivation_value: int = int(disciple_data.get("cultivation", 0))
+	var bottleneck_text: String = "瓶颈，等待突破" if bool(disciple_data.get("at_bottleneck", false)) else "修炼中"
 	assignment_box.visible = true
 	assignment_result_label.text = ""
 	_select_assignment_option(str(disciple_data["assignment"]))
@@ -414,6 +425,8 @@ func _show_disciple_detail(disciple_data: Dictionary) -> void:
 		"年龄：" + str(disciple_data["age"]),
 		"职位：" + str(disciple_data["role"]),
 		"修为：" + str(disciple_data["realm"]),
+		"修为进度：%d / %d" % [cultivation_value, cultivation_required],
+		"修炼状态：" + bottleneck_text,
 		"灵根：" + str(disciple_data["spiritual_root"]),
 		"资质：" + str(disciple_data["aptitude"]),
 		"状态：" + str(disciple_data["status"]),

@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="RealmDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/data/RealmDefinition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "qi_09"
+display_name = "炼气九层"
+order = 9
+cultivation_required = 400
+breakthrough_base_rate = 0.45
+costs = {"spirit_stone": 180, "spirit_grass": 10}
+stat_multipliers = {"health": 1.7, "combat_power": 1.95}
+next_realm_id = "foundation_early"

@@ -92,6 +92,10 @@ func _settle_cultivation(
 	for action in daily_actions:
 		if str(action.get("assignment", "")) != DiscipleManager.ASSIGNMENT_CULTIVATE:
 			continue
+		# 瓶颈或配置错误的行动在弟子系统中已标记失败，不应继续收费。
+		if not bool(action.get("success", true)) or int(action.get("cultivation_gain", 0)) <= 0:
+			action["cost"]["spirit_stone"] = 0
+			continue
 		cultivation_count += 1
 		if sect.resources.has_enough("spirit_stone", DAILY_CULTIVATION_COST_PER_DISCIPLE):
 			sect.consume_resource("spirit_stone", DAILY_CULTIVATION_COST_PER_DISCIPLE)

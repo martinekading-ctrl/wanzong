@@ -1,15 +1,15 @@
 class_name DiscipleData
 extends RefCounted
 
-const BREAKTHROUGH_REQUIREMENT: int = 100
-
 var id: String = ""
 var sect_id: String = ""
 var name: String = ""
 var age: int = 16
 var gender: String = "男"
+var realm_id: String = "mortal"
 var realm: String = "凡人"
 var cultivation: int = 0
+var at_bottleneck: bool = false
 var talent: int = 50
 var potential: int = 50
 var personality: String = "沉稳"
@@ -18,16 +18,18 @@ var loyalty: int = 50
 var assignment: String = "空闲"
 
 
-func cultivate(amount: int = 10) -> void:
-	cultivation = maxi(0, cultivation + amount)
+func cultivate(amount: int, definition: RealmDefinition) -> int:
+	if definition == null or amount <= 0 or at_bottleneck:
+		return 0
+	var before: int = cultivation
+	cultivation = clampi(cultivation + amount, 0, definition.cultivation_required)
+	at_bottleneck = cultivation >= definition.cultivation_required
+	return cultivation - before
 
 
 func breakthrough() -> bool:
-	if cultivation < BREAKTHROUGH_REQUIREMENT:
-		return false
-	cultivation -= BREAKTHROUGH_REQUIREMENT
-	realm = "炼气一层" if realm == "凡人" else realm
-	return true
+	push_warning("突破必须通过Task-0038的统一突破流程执行。")
+	return false
 
 
 func to_world_dictionary() -> Dictionary:
@@ -38,7 +40,9 @@ func to_world_dictionary() -> Dictionary:
 		"gender": gender,
 		"age": age,
 		"role": "外门弟子",
+		"realm_id": realm_id,
 		"realm": realm,
+		"at_bottleneck": at_bottleneck,
 		"spiritual_root": "杂灵根",
 		"aptitude": _get_aptitude_name(),
 		"comprehension": talent,
