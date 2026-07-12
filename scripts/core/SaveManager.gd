@@ -9,6 +9,74 @@ const CURRENT_SAVE_VERSION: int = 1
 const MINIMUM_SAVE_VERSION: int = 0
 const SAVE_DIRECTORY := "user://saves"
 const BINARY_MAGIC := "WZSV"
+const MANUAL_SLOT_COUNT: int = 3
+const QUICK_SAVE_PATH := SAVE_DIRECTORY + "/quick.save"
+const AUTOSAVE_PATH := SAVE_DIRECTORY + "/autosave.save"
+
+
+func get_manual_slot_path(slot_index: int) -> String:
+	if slot_index < 1 or slot_index > MANUAL_SLOT_COUNT:
+		return ""
+	return SAVE_DIRECTORY + "/manual_%d.save" % slot_index
+
+
+func save_manual_slot(slot_index: int) -> Dictionary:
+	var path: String = get_manual_slot_path(slot_index)
+	if path == "":
+		return _save_error(path, "手动存档槽编号无效。")
+	return save_to_path(path)
+
+
+func load_manual_slot(slot_index: int) -> Dictionary:
+	var path: String = get_manual_slot_path(slot_index)
+	if path == "":
+		return _load_error(path, "手动存档槽编号无效。")
+	return load_from_path(path)
+
+
+func quick_save() -> Dictionary:
+	return save_to_path(QUICK_SAVE_PATH)
+
+
+func quick_load() -> Dictionary:
+	return load_from_path(QUICK_SAVE_PATH)
+
+
+func autosave() -> Dictionary:
+	return save_to_path(AUTOSAVE_PATH)
+
+
+func load_autosave() -> Dictionary:
+	return load_from_path(AUTOSAVE_PATH)
+
+
+func get_slot_summaries() -> Array[Dictionary]:
+	var summaries: Array[Dictionary] = []
+	for slot_index in range(1, MANUAL_SLOT_COUNT + 1):
+		summaries.append(_build_slot_summary("manual_%d" % slot_index, get_manual_slot_path(slot_index)))
+	summaries.append(_build_slot_summary("quick", QUICK_SAVE_PATH))
+	summaries.append(_build_slot_summary("autosave", AUTOSAVE_PATH))
+	return summaries
+
+
+func get_latest_save_path() -> String:
+	var latest_path: String = ""
+	var latest_timestamp: int = -1
+	for summary in get_slot_summaries():
+		if not bool(summary.get("exists", false)):
+			continue
+		var timestamp: int = int(summary.get("modified_time", 0))
+		if timestamp >= latest_timestamp:
+			latest_timestamp = timestamp
+			latest_path = str(summary.get("path", ""))
+	return latest_path
+
+
+func load_latest_save() -> Dictionary:
+	var path: String = get_latest_save_path()
+	if path == "":
+		return _load_error(path, "没有可继续的存档。")
+	return load_from_path(path)
 
 
 func create_snapshot() -> Dictionary:
@@ -88,6 +156,7 @@ func save_to_path(path: String) -> Dictionary:
 		return _save_error(path, "无法写入临时存档：%s" % error_string(FileAccess.get_open_error()))
 	file.store_buffer(BINARY_MAGIC.to_ascii_buffer())
 	file.store_32(CURRENT_SAVE_VERSION)
+	file.store_var(_create_file_header(snapshot), false)
 	file.store_var(snapshot, false)
 	file.flush()
 	file.close()
@@ -165,6 +234,24 @@ func get_save_metadata(path: String) -> Dictionary:
 	var file := FileAccess.open(path, FileAccess.READ)
 	if file == null:
 		return {}
+	if file.get_length() >= 8 and file.get_buffer(4).get_string_from_ascii() == BINARY_MAGIC:
+		file.get_32()
+		var first_value: Variant = file.get_var(false)
+		file.close()
+		if first_value is Dictionary and bool(first_value.get("header_format", false)):
+			return {
+				"save_version": int(first_value.get("save_version", 0)),
+				"metadata": first_value.get("metadata", {}),
+				"game_state": first_value.get("game_state", {}),
+			}
+		if first_value is Dictionary:
+			return {
+				"save_version": int(first_value.get("save_version", 0)),
+				"metadata": first_value.get("metadata", {}),
+				"game_state": first_value.get("game_state", {}),
+			}
+		return {}
+	file.seek(0)
 	var decoded: Variant = _read_snapshot_from_file(file)
 	file.close()
 	if not (decoded is Dictionary):
@@ -173,6 +260,34 @@ func get_save_metadata(path: String) -> Dictionary:
 		"save_version": int(decoded.get("save_version", 0)),
 		"metadata": decoded.get("metadata", {}),
 		"game_state": decoded.get("game_state", {}),
+	}
+
+
+func _create_file_header(snapshot: Dictionary) -> Dictionary:
+	var state: Dictionary = snapshot.get("game_state", {})
+	return {
+		"header_format": true,
+		"save_version": int(snapshot.get("save_version", CURRENT_SAVE_VERSION)),
+		"metadata": snapshot.get("metadata", {}).duplicate(true),
+		"game_state": {
+			"year": int(state.get("year", 1)),
+			"month": int(state.get("month", 1)),
+			"day": int(state.get("day", 1)),
+			"player_sect_id": str(state.get("player_sect_id", "sect_001")),
+		},
+	}
+
+
+func _build_slot_summary(slot_id: String, path: String) -> Dictionary:
+	var exists: bool = FileAccess.file_exists(path)
+	var metadata: Dictionary = get_save_metadata(path) if exists else {}
+	return {
+		"slot_id": slot_id,
+		"path": path,
+		"exists": exists,
+		"modified_time": FileAccess.get_modified_time(path) if exists else 0,
+		"metadata": metadata.get("metadata", {}),
+		"game_state": metadata.get("game_state", {}),
 	}
 
 
@@ -186,7 +301,10 @@ func _read_snapshot_from_file(file: FileAccess) -> Variant:
 		var header_version: int = file.get_32()
 		if header_version > CURRENT_SAVE_VERSION:
 			return null
-		return file.get_var(false)
+		var first_value: Variant = file.get_var(false)
+		if first_value is Dictionary and bool(first_value.get("header_format", false)):
+			return file.get_var(false)
+		return first_value
 	# 兼容早期可能存在的JSON原型存档。
 	file.seek(0)
 	var parser := JSON.new()

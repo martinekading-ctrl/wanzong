@@ -28,6 +28,7 @@ const SORT_OPTIONS: Array[String] = ["默认", "境界", "战力", "忠诚", "�
 @onready var building_button: Button = $MarginContainer/RootBox/FunctionPanel/FunctionBox/ButtonBar/BuildingButton
 @onready var resource_button: Button = $MarginContainer/RootBox/FunctionPanel/FunctionBox/ButtonBar/ResourceButton
 @onready var history_button: Button = $MarginContainer/RootBox/FunctionPanel/FunctionBox/ButtonBar/HistoryButton
+@onready var save_load_button: Button = $MarginContainer/RootBox/FunctionPanel/FunctionBox/ButtonBar/SaveLoadButton
 @onready var pending_event_panel: PanelContainer = $MarginContainer/RootBox/FunctionPanel/FunctionBox/PendingEventPanel
 @onready var event_title_label: Label = $MarginContainer/RootBox/FunctionPanel/FunctionBox/PendingEventPanel/EventBox/EventTitleLabel
 @onready var event_description_label: Label = $MarginContainer/RootBox/FunctionPanel/FunctionBox/PendingEventPanel/EventBox/EventDescriptionLabel
@@ -36,6 +37,22 @@ const SORT_OPTIONS: Array[String] = ["默认", "境界", "战力", "忠诚", "�
 @onready var placeholder_label: Label = $MarginContainer/RootBox/FunctionPanel/FunctionBox/PlaceholderLabel
 @onready var history_section: VBoxContainer = $MarginContainer/RootBox/FunctionPanel/FunctionBox/HistorySection
 @onready var history_list: VBoxContainer = $MarginContainer/RootBox/FunctionPanel/FunctionBox/HistorySection/HistoryScroll/HistoryList
+@onready var save_load_section: VBoxContainer = $MarginContainer/RootBox/FunctionPanel/FunctionBox/SaveLoadSection
+@onready var manual_slot_1_label: Label = $MarginContainer/RootBox/FunctionPanel/FunctionBox/SaveLoadSection/ManualSlot1/SlotLabel
+@onready var manual_slot_1_save: Button = $MarginContainer/RootBox/FunctionPanel/FunctionBox/SaveLoadSection/ManualSlot1/SaveButton
+@onready var manual_slot_1_load: Button = $MarginContainer/RootBox/FunctionPanel/FunctionBox/SaveLoadSection/ManualSlot1/LoadButton
+@onready var manual_slot_2_label: Label = $MarginContainer/RootBox/FunctionPanel/FunctionBox/SaveLoadSection/ManualSlot2/SlotLabel
+@onready var manual_slot_2_save: Button = $MarginContainer/RootBox/FunctionPanel/FunctionBox/SaveLoadSection/ManualSlot2/SaveButton
+@onready var manual_slot_2_load: Button = $MarginContainer/RootBox/FunctionPanel/FunctionBox/SaveLoadSection/ManualSlot2/LoadButton
+@onready var manual_slot_3_label: Label = $MarginContainer/RootBox/FunctionPanel/FunctionBox/SaveLoadSection/ManualSlot3/SlotLabel
+@onready var manual_slot_3_save: Button = $MarginContainer/RootBox/FunctionPanel/FunctionBox/SaveLoadSection/ManualSlot3/SaveButton
+@onready var manual_slot_3_load: Button = $MarginContainer/RootBox/FunctionPanel/FunctionBox/SaveLoadSection/ManualSlot3/LoadButton
+@onready var quick_slot_label: Label = $MarginContainer/RootBox/FunctionPanel/FunctionBox/SaveLoadSection/QuickSlot/SlotLabel
+@onready var quick_save_button: Button = $MarginContainer/RootBox/FunctionPanel/FunctionBox/SaveLoadSection/QuickSlot/SaveButton
+@onready var quick_load_button: Button = $MarginContainer/RootBox/FunctionPanel/FunctionBox/SaveLoadSection/QuickSlot/LoadButton
+@onready var autosave_slot_label: Label = $MarginContainer/RootBox/FunctionPanel/FunctionBox/SaveLoadSection/AutosaveSlot/SlotLabel
+@onready var autosave_load_button: Button = $MarginContainer/RootBox/FunctionPanel/FunctionBox/SaveLoadSection/AutosaveSlot/LoadButton
+@onready var save_load_result_label: Label = $MarginContainer/RootBox/FunctionPanel/FunctionBox/SaveLoadSection/SaveLoadResultLabel
 @onready var disciple_section: VBoxContainer = $MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleSection
 @onready var search_line_edit: LineEdit = $MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleSection/DiscipleTopBar/SearchLineEdit
 @onready var assignment_filter_option: OptionButton = $MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleSection/DiscipleTopBar/AssignmentFilterOption
@@ -69,6 +86,16 @@ func _ready() -> void:
 	building_button.pressed.connect(_on_building_button_pressed)
 	resource_button.pressed.connect(_on_resource_button_pressed)
 	history_button.pressed.connect(_on_history_button_pressed)
+	save_load_button.pressed.connect(_on_save_load_button_pressed)
+	manual_slot_1_save.pressed.connect(_on_manual_save_pressed.bind(1))
+	manual_slot_1_load.pressed.connect(_on_manual_load_pressed.bind(1))
+	manual_slot_2_save.pressed.connect(_on_manual_save_pressed.bind(2))
+	manual_slot_2_load.pressed.connect(_on_manual_load_pressed.bind(2))
+	manual_slot_3_save.pressed.connect(_on_manual_save_pressed.bind(3))
+	manual_slot_3_load.pressed.connect(_on_manual_load_pressed.bind(3))
+	quick_save_button.pressed.connect(_on_quick_save_pressed)
+	quick_load_button.pressed.connect(_on_quick_load_pressed)
+	autosave_load_button.pressed.connect(_on_autosave_load_pressed)
 	search_line_edit.text_changed.connect(_on_disciple_filter_changed)
 	assignment_filter_option.item_selected.connect(_on_disciple_option_changed)
 	sort_option.item_selected.connect(_on_disciple_option_changed)
@@ -82,6 +109,7 @@ func _ready() -> void:
 	_refresh_date_label()
 	_refresh_daily_report(GameState.last_daily_report)
 	_refresh_pending_event_panel()
+	_refresh_save_slots()
 	_clear_disciple_detail()
 
 
@@ -176,6 +204,8 @@ func _refresh_all(report: Dictionary = GameState.last_daily_report) -> void:
 		_refresh_disciple_roster()
 	if history_section.visible:
 		_refresh_history_list()
+	if save_load_section.visible:
+		_refresh_save_slots()
 
 
 func _refresh_date_label() -> void:
@@ -289,6 +319,7 @@ func _on_back_button_pressed() -> void:
 func _on_disciple_button_pressed() -> void:
 	placeholder_label.visible = false
 	history_section.visible = false
+	save_load_section.visible = false
 	disciple_section.visible = true
 	_refresh_disciple_roster()
 
@@ -307,11 +338,13 @@ func _show_placeholder(message: String) -> void:
 	placeholder_label.text = message
 	disciple_section.visible = false
 	history_section.visible = false
+	save_load_section.visible = false
 
 
 func _on_history_button_pressed() -> void:
 	placeholder_label.visible = false
 	disciple_section.visible = false
+	save_load_section.visible = false
 	history_section.visible = true
 	_refresh_history_list()
 
@@ -338,6 +371,75 @@ func _refresh_history_list() -> void:
 			str(entry.get("message", "")),
 		]
 		history_list.add_child(entry_label)
+
+
+func _on_save_load_button_pressed() -> void:
+	placeholder_label.visible = false
+	disciple_section.visible = false
+	history_section.visible = false
+	save_load_section.visible = true
+	save_load_result_label.text = ""
+	_refresh_save_slots()
+
+
+func _on_manual_save_pressed(slot_index: int) -> void:
+	_show_save_result(SaveManager.save_manual_slot(slot_index), "存档槽%d保存成功。" % slot_index)
+	_refresh_save_slots()
+
+
+func _on_manual_load_pressed(slot_index: int) -> void:
+	_handle_load_result(SaveManager.load_manual_slot(slot_index))
+
+
+func _on_quick_save_pressed() -> void:
+	_show_save_result(SaveManager.quick_save(), "快速存档成功。")
+	_refresh_save_slots()
+
+
+func _on_quick_load_pressed() -> void:
+	_handle_load_result(SaveManager.quick_load())
+
+
+func _on_autosave_load_pressed() -> void:
+	_handle_load_result(SaveManager.load_autosave())
+
+
+func _show_save_result(result: Dictionary, success_message: String) -> void:
+	save_load_result_label.text = success_message if bool(result.get("success", false)) else str(result.get("message", "操作失败。"))
+
+
+func _handle_load_result(result: Dictionary) -> void:
+	if not bool(result.get("success", false)):
+		save_load_result_label.text = str(result.get("message", "读档失败。"))
+		return
+	SceneManager.go_to_world_map()
+
+
+func _refresh_save_slots() -> void:
+	var summaries: Array[Dictionary] = SaveManager.get_slot_summaries()
+	var summary_by_id: Dictionary = {}
+	for summary in summaries:
+		summary_by_id[str(summary.get("slot_id", ""))] = summary
+	_update_slot_row(manual_slot_1_label, manual_slot_1_load, "存档槽1", summary_by_id.get("manual_1", {}))
+	_update_slot_row(manual_slot_2_label, manual_slot_2_load, "存档槽2", summary_by_id.get("manual_2", {}))
+	_update_slot_row(manual_slot_3_label, manual_slot_3_load, "存档槽3", summary_by_id.get("manual_3", {}))
+	_update_slot_row(quick_slot_label, quick_load_button, "快速存档", summary_by_id.get("quick", {}))
+	_update_slot_row(autosave_slot_label, autosave_load_button, "自动存档", summary_by_id.get("autosave", {}))
+
+
+func _update_slot_row(label: Label, load_button: Button, prefix: String, summary: Dictionary) -> void:
+	var exists: bool = bool(summary.get("exists", false))
+	load_button.disabled = not exists
+	if not exists:
+		label.text = prefix + "：空"
+		return
+	var state: Dictionary = summary.get("game_state", {})
+	label.text = "%s：第%d年%d月%d日" % [
+		prefix,
+		int(state.get("year", 1)),
+		int(state.get("month", 1)),
+		int(state.get("day", 1)),
+	]
 
 
 func _on_disciple_filter_changed(_new_text: String) -> void:

@@ -88,6 +88,8 @@ func next_day() -> Dictionary:
 		},
 		date_before
 	)
+	if day == 1:
+		last_daily_report["autosave"] = SaveManager.autosave()
 	daily_simulation_completed.emit(last_daily_report)
 	return last_daily_report
 

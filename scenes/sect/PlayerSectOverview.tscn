@@ -193,6 +193,11 @@ custom_minimum_size = Vector2(160, 44)
 layout_mode = 2
 text = "历史"
 
+[node name="SaveLoadButton" type="Button" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/ButtonBar"]
+custom_minimum_size = Vector2(160, 44)
+layout_mode = 2
+text = "存读档"
+
 [node name="PendingEventPanel" type="PanelContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox"]
 visible = false
 layout_mode = 2
@@ -244,6 +249,103 @@ size_flags_vertical = 3
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 5
+
+[node name="SaveLoadSection" type="VBoxContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox"]
+visible = false
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 8
+
+[node name="SaveLoadTitleLabel" type="Label" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/SaveLoadSection"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "存档与读档"
+
+[node name="ManualSlot1" type="HBoxContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/SaveLoadSection"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="SlotLabel" type="Label" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/SaveLoadSection/ManualSlot1"]
+custom_minimum_size = Vector2(360, 36)
+layout_mode = 2
+text = "存档槽1：空"
+
+[node name="SaveButton" type="Button" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/SaveLoadSection/ManualSlot1"]
+layout_mode = 2
+text = "保存"
+
+[node name="LoadButton" type="Button" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/SaveLoadSection/ManualSlot1"]
+layout_mode = 2
+text = "读取"
+
+[node name="ManualSlot2" type="HBoxContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/SaveLoadSection"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="SlotLabel" type="Label" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/SaveLoadSection/ManualSlot2"]
+custom_minimum_size = Vector2(360, 36)
+layout_mode = 2
+text = "存档槽2：空"
+
+[node name="SaveButton" type="Button" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/SaveLoadSection/ManualSlot2"]
+layout_mode = 2
+text = "保存"
+
+[node name="LoadButton" type="Button" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/SaveLoadSection/ManualSlot2"]
+layout_mode = 2
+text = "读取"
+
+[node name="ManualSlot3" type="HBoxContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/SaveLoadSection"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="SlotLabel" type="Label" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/SaveLoadSection/ManualSlot3"]
+custom_minimum_size = Vector2(360, 36)
+layout_mode = 2
+text = "存档槽3：空"
+
+[node name="SaveButton" type="Button" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/SaveLoadSection/ManualSlot3"]
+layout_mode = 2
+text = "保存"
+
+[node name="LoadButton" type="Button" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/SaveLoadSection/ManualSlot3"]
+layout_mode = 2
+text = "读取"
+
+[node name="QuickSlot" type="HBoxContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/SaveLoadSection"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="SlotLabel" type="Label" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/SaveLoadSection/QuickSlot"]
+custom_minimum_size = Vector2(360, 36)
+layout_mode = 2
+text = "快速存档：空"
+
+[node name="SaveButton" type="Button" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/SaveLoadSection/QuickSlot"]
+layout_mode = 2
+text = "快速保存"
+
+[node name="LoadButton" type="Button" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/SaveLoadSection/QuickSlot"]
+layout_mode = 2
+text = "快速读取"
+
+[node name="AutosaveSlot" type="HBoxContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/SaveLoadSection"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="SlotLabel" type="Label" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/SaveLoadSection/AutosaveSlot"]
+custom_minimum_size = Vector2(360, 36)
+layout_mode = 2
+text = "自动存档：空"
+
+[node name="LoadButton" type="Button" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/SaveLoadSection/AutosaveSlot"]
+layout_mode = 2
+text = "读取自动存档"
+
+[node name="SaveLoadResultLabel" type="Label" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/SaveLoadSection"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 15
+autowrap_mode = 3
 
 [node name="DiscipleSection" type="VBoxContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox"]
 visible = false
