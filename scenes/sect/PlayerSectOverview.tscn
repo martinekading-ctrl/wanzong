@@ -347,6 +347,35 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 15
 autowrap_mode = 3
 
+[node name="BuildingSection" type="VBoxContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox"]
+visible = false
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 8
+
+[node name="BuildingTitleLabel" type="Label" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/BuildingSection"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "宗门建设"
+
+[node name="BuildingHintLabel" type="Label" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/BuildingSection"]
+layout_mode = 2
+text = "建设按日推进；当前同时只能进行一项建设。"
+
+[node name="BuildingScroll" type="ScrollContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/BuildingSection"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="BuildingList" type="VBoxContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/BuildingSection/BuildingScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
+
+[node name="BuildingResultLabel" type="Label" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/BuildingSection"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 15
+autowrap_mode = 3
+
 [node name="DiscipleSection" type="VBoxContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox"]
 visible = false
 layout_mode = 2

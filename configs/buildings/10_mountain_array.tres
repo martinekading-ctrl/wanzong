@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="BuildingDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/data/BuildingDefinition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "mountain_array"
+display_name = "护山大阵"
+description = "覆盖宗门领地的防御阵法。"
+category = "defense"
+max_level = 5
+construction_costs = {"spirit_stone": 500, "wood": 100, "stone": 300, "spirit_ore": 50}
+construction_days = 8
+capacity = 1
+maintenance_costs = {"spirit_stone": 10}
+effects = [{"key": "sect_defense", "operation": "multiply", "value": 0.25}]
+prerequisites = ["sect_hall"]

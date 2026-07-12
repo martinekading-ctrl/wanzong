@@ -53,6 +53,9 @@ const SORT_OPTIONS: Array[String] = ["默认", "境界", "战力", "忠诚", "�
 @onready var autosave_slot_label: Label = $MarginContainer/RootBox/FunctionPanel/FunctionBox/SaveLoadSection/AutosaveSlot/SlotLabel
 @onready var autosave_load_button: Button = $MarginContainer/RootBox/FunctionPanel/FunctionBox/SaveLoadSection/AutosaveSlot/LoadButton
 @onready var save_load_result_label: Label = $MarginContainer/RootBox/FunctionPanel/FunctionBox/SaveLoadSection/SaveLoadResultLabel
+@onready var building_section: VBoxContainer = $MarginContainer/RootBox/FunctionPanel/FunctionBox/BuildingSection
+@onready var building_list: VBoxContainer = $MarginContainer/RootBox/FunctionPanel/FunctionBox/BuildingSection/BuildingScroll/BuildingList
+@onready var building_result_label: Label = $MarginContainer/RootBox/FunctionPanel/FunctionBox/BuildingSection/BuildingResultLabel
 @onready var disciple_section: VBoxContainer = $MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleSection
 @onready var search_line_edit: LineEdit = $MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleSection/DiscipleTopBar/SearchLineEdit
 @onready var assignment_filter_option: OptionButton = $MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleSection/DiscipleTopBar/AssignmentFilterOption
@@ -206,6 +209,8 @@ func _refresh_all(report: Dictionary = GameState.last_daily_report) -> void:
 		_refresh_history_list()
 	if save_load_section.visible:
 		_refresh_save_slots()
+	if building_section.visible:
+		_refresh_building_section()
 
 
 func _refresh_date_label() -> void:
@@ -240,6 +245,7 @@ func _refresh_daily_report(report: Dictionary) -> void:
 	var warnings: Array = report.get("warnings", [])
 	var new_events: Array = report.get("events", [])
 	var ai_summary: Dictionary = report.get("ai_summary", {})
+	var construction_summary: Dictionary = report.get("construction", {})
 	if not warnings.is_empty():
 		warning_text = "；".join(PackedStringArray(warnings))
 	settlement_result_label.text = "\n".join(PackedStringArray([
@@ -255,6 +261,10 @@ func _refresh_daily_report(report: Dictionary) -> void:
 			int(ai_summary.get("sects_updated", 0)),
 			int(ai_summary.get("disciples_updated", 0)),
 			int(ai_summary.get("duration_ms", 0)),
+		],
+		"建设进度：%d项推进，%d项完成" % [
+			construction_summary.get("progressed", []).size(),
+			construction_summary.get("completed", []).size(),
 		],
 		"警告：" + warning_text,
 	]))
@@ -320,12 +330,19 @@ func _on_disciple_button_pressed() -> void:
 	placeholder_label.visible = false
 	history_section.visible = false
 	save_load_section.visible = false
+	building_section.visible = false
 	disciple_section.visible = true
 	_refresh_disciple_roster()
 
 
 func _on_building_button_pressed() -> void:
-	_show_placeholder("建筑系统后续开放")
+	placeholder_label.visible = false
+	disciple_section.visible = false
+	history_section.visible = false
+	save_load_section.visible = false
+	building_section.visible = true
+	building_result_label.text = ""
+	_refresh_building_section()
 
 
 func _on_resource_button_pressed() -> void:
@@ -339,12 +356,14 @@ func _show_placeholder(message: String) -> void:
 	disciple_section.visible = false
 	history_section.visible = false
 	save_load_section.visible = false
+	building_section.visible = false
 
 
 func _on_history_button_pressed() -> void:
 	placeholder_label.visible = false
 	disciple_section.visible = false
 	save_load_section.visible = false
+	building_section.visible = false
 	history_section.visible = true
 	_refresh_history_list()
 
@@ -377,6 +396,7 @@ func _on_save_load_button_pressed() -> void:
 	placeholder_label.visible = false
 	disciple_section.visible = false
 	history_section.visible = false
+	building_section.visible = false
 	save_load_section.visible = true
 	save_load_result_label.text = ""
 	_refresh_save_slots()
@@ -440,6 +460,67 @@ func _update_slot_row(label: Label, load_button: Button, prefix: String, summary
 		int(state.get("month", 1)),
 		int(state.get("day", 1)),
 	]
+
+
+func _refresh_building_section() -> void:
+	for child in building_list.get_children():
+		building_list.remove_child(child)
+		child.queue_free()
+	var player_sect: Dictionary = WorldDataManager.get_player_sect()
+	if player_sect.is_empty():
+		return
+	var sect_id: String = str(player_sect["sect_id"])
+	var instance_by_definition: Dictionary = {}
+	for instance in ConstructionManager.get_buildings_by_sect_id(sect_id):
+		instance_by_definition[str(instance.get("definition_id", ""))] = instance
+	for definition in BuildingRegistry.get_all():
+		var row := HBoxContainer.new()
+		row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		var info := Label.new()
+		info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		var instance: Dictionary = instance_by_definition.get(definition.id, {})
+		var target_level: int = 1
+		var status_text: String = "未建设"
+		if not instance.is_empty():
+			target_level = int(instance.get("level", 0)) + 1
+			if str(instance.get("status", "")) == "constructing":
+				status_text = "建设中，剩余%d日" % int(instance.get("remaining_days", 0))
+				target_level = int(instance.get("target_level", 1))
+			else:
+				status_text = "等级%d" % int(instance.get("level", 1))
+		var costs: Dictionary = ConstructionManager.get_construction_costs(definition, target_level)
+		info.text = "%s｜%s｜%d日｜%s" % [
+			definition.display_name,
+			status_text,
+			ConstructionManager.get_construction_days(definition, target_level),
+			_format_building_costs(costs),
+		]
+		var action_button := Button.new()
+		action_button.text = "升级" if not instance.is_empty() and str(instance.get("status", "")) == "active" else "建设"
+		action_button.disabled = str(instance.get("status", "")) == "constructing" or target_level > definition.max_level
+		action_button.pressed.connect(_on_building_action_pressed.bind(definition.id))
+		row.add_child(info)
+		row.add_child(action_button)
+		building_list.add_child(row)
+
+
+func _on_building_action_pressed(building_id: String) -> void:
+	var player_sect: Dictionary = WorldDataManager.get_player_sect()
+	var result: Dictionary = ConstructionManager.start_construction(str(player_sect.get("sect_id", "")), building_id)
+	building_result_label.text = str(result.get("message", "建设请求失败。"))
+	_refresh_resource_panel()
+	_refresh_building_section()
+
+
+func _format_building_costs(costs: Dictionary) -> String:
+	var names: Dictionary = {
+		"spirit_stone": "灵石", "food": "粮食", "wood": "木材", "stone": "石材",
+		"spirit_grass": "灵草", "spirit_ore": "灵矿",
+	}
+	var parts := PackedStringArray()
+	for resource_key in costs:
+		parts.append("%s%d" % [str(names.get(resource_key, resource_key)), int(costs[resource_key])])
+	return "、".join(parts)
 
 
 func _on_disciple_filter_changed(_new_text: String) -> void:

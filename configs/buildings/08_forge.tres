@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="BuildingDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/data/BuildingDefinition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "forge"
+display_name = "炼器坊"
+description = "用于锻造法器和装备。"
+category = "crafting"
+max_level = 5
+construction_costs = {"spirit_stone": 280, "wood": 100, "stone": 220, "spirit_ore": 30}
+construction_days = 6
+capacity = 5
+maintenance_costs = {"spirit_stone": 5}
+effects = [{"key": "forging_efficiency", "operation": "multiply", "value": 0.2}]
+prerequisites = ["sect_hall", "mine"]

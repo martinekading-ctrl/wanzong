@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="BuildingDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/data/BuildingDefinition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "spirit_field"
+display_name = "灵田"
+description = "种植灵谷，为宗门稳定提供粮食。"
+category = "production"
+max_level = 5
+construction_costs = {"spirit_stone": 80, "wood": 100, "stone": 50}
+construction_days = 3
+capacity = 10
+maintenance_costs = {"spirit_stone": 1}
+effects = [{"key": "food_production", "operation": "multiply", "value": 0.15}]
+prerequisites = []

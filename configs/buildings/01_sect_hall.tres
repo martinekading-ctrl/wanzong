@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="BuildingDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/data/BuildingDefinition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "sect_hall"
+display_name = "宗门大殿"
+description = "宗门核心建筑，决定宗门等级和基础管理能力。"
+category = "core"
+max_level = 5
+construction_costs = {"spirit_stone": 200, "wood": 150, "stone": 150}
+construction_days = 5
+capacity = 1
+maintenance_costs = {"spirit_stone": 5}
+effects = [{"key": "sect_level_cap", "operation": "add", "value": 1.0}]
+prerequisites = []

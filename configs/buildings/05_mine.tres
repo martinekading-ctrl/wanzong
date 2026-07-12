@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="BuildingDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/data/BuildingDefinition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "mine"
+display_name = "矿场"
+description = "开采石材和灵矿，为建设与炼器提供原料。"
+category = "production"
+max_level = 5
+construction_costs = {"spirit_stone": 120, "wood": 80, "stone": 120}
+construction_days = 4
+capacity = 12
+maintenance_costs = {"spirit_stone": 2, "wood": 1}
+effects = [{"key": "ore_production", "operation": "multiply", "value": 0.15}]
+prerequisites = ["sect_hall"]

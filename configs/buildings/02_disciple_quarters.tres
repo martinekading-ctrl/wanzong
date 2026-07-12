@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="BuildingDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/data/BuildingDefinition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "disciple_quarters"
+display_name = "弟子居所"
+description = "为弟子提供居住空间，提高宗门弟子容量。"
+category = "residential"
+max_level = 5
+construction_costs = {"spirit_stone": 50, "wood": 150, "stone": 80}
+construction_days = 3
+capacity = 20
+maintenance_costs = {"wood": 1}
+effects = [{"key": "disciple_capacity", "operation": "add", "value": 20.0}]
+prerequisites = []

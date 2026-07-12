@@ -31,6 +31,7 @@ func new_game() -> void:
 	GameHistoryManager.reset()
 	player_sect = SectManager.create_player_sect()
 	AISimulationManager.initialize_from_world_data()
+	ConstructionManager.rebuild_runtime_state()
 
 
 func random_int(minimum: int, maximum: int) -> int:
@@ -53,6 +54,7 @@ func next_day() -> Dictionary:
 	DiscipleManager.apply_daily_results(disciple_results)
 	var sect_result: Dictionary = SectManager.daily_update(player_sect, economy_result)
 	var ai_summary: Dictionary = AISimulationManager.daily_update(date_before)
+	var construction_summary: Dictionary = ConstructionManager.daily_update(date_before)
 	var event_results: Array[Dictionary] = EventManager.daily_update({
 		"sect_id": player_sect.id,
 		"date": date_before,
@@ -68,6 +70,7 @@ func next_day() -> Dictionary:
 		"disciple_results": disciple_results,
 		"sect_result": sect_result,
 		"ai_summary": ai_summary,
+		"construction": construction_summary,
 		"events": event_results,
 		"warnings": economy_result.get("warnings", []),
 	}

@@ -19,6 +19,8 @@ var resources: Array = []
 # 玩家宗门可建设点数据。
 var build_slots: Array = []
 
+var building_instances: Array[Dictionary] = []
+
 var disciples: Array = []
 
 var sect_resources: Dictionary = {}
@@ -141,6 +143,7 @@ func init_world_data() -> void:
 		{"slot_id": 5, "owner_sect_id": "sect_001", "position": Vector2(2068, 2198), "is_empty": true},
 		{"slot_id": 6, "owner_sect_id": "sect_001", "position": Vector2(2268, 2148), "is_empty": true},
 	]
+	building_instances = []
 
 	disciples = [
 		_create_disciple_data("disciple_001", "sect_001", "林青", "男", 18, "炼气三层", "木灵根", "上品", 72, 88, 76, "修炼", 420, "正常", "性情沉稳，擅长吐纳行气，是青玄宗年轻弟子中的中坚。", {"role": "外门弟子", "appearance_id": "male_disciple_01", "portrait_id": "portrait_male_01", "model_id": "model_male_01", "battle_model_id": "battle_male_01", "color_scheme": "outer_gray", "tags": ["稳重"], "battle_position": "middle", "weapon_type": "剑", "hp": 320, "max_hp": 320, "attack": 72, "defense": 48, "speed": 56, "spiritual_power": 84}),
@@ -189,6 +192,7 @@ func reset_world_data() -> void:
 	sects.clear()
 	resources.clear()
 	build_slots.clear()
+	building_instances.clear()
 	disciples.clear()
 	sect_resources.clear()
 	event_instances.clear()
@@ -480,6 +484,7 @@ func export_world_state() -> Dictionary:
 		"sects": sects.duplicate(true),
 		"resources": resources.duplicate(true),
 		"build_slots": build_slots.duplicate(true),
+		"building_instances": building_instances.duplicate(true),
 		"disciples": disciples.duplicate(true),
 		"sect_resources": sect_resources.duplicate(true),
 		"ai_states": ai_states.duplicate(true),
@@ -501,6 +506,7 @@ func restore_world_state(state: Dictionary) -> bool:
 	sects.assign(state.get("sects", []))
 	resources.assign(state.get("resources", []))
 	build_slots.assign(state.get("build_slots", []))
+	building_instances.assign(state.get("building_instances", []))
 	disciples.assign(state.get("disciples", []))
 	sect_resources = state.get("sect_resources", {}).duplicate(true)
 	ai_states = state.get("ai_states", {}).duplicate(true)
@@ -538,6 +544,26 @@ func get_all_resources() -> Array:
 # 获取全部建设点数据。
 func get_all_build_slots() -> Array:
 	return build_slots
+
+
+func get_building_instances_by_sect_id(sect_id: String) -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	for instance in building_instances:
+		if str(instance.get("sect_id", "")) == sect_id:
+			result.append(instance)
+	return result
+
+
+func update_build_slot(slot_id: int, values: Dictionary) -> bool:
+	for index in range(build_slots.size()):
+		if int(build_slots[index].get("slot_id", -1)) != slot_id:
+			continue
+		var slot: Dictionary = build_slots[index]
+		for key in values:
+			slot[key] = values[key]
+		build_slots[index] = slot
+		return true
+	return false
 
 
 func get_all_disciples() -> Array:

@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="BuildingDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/data/BuildingDefinition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "scripture_pavilion"
+display_name = "藏经阁"
+description = "收藏功法典籍，辅助修炼和突破。"
+category = "cultivation"
+max_level = 5
+construction_costs = {"spirit_stone": 300, "wood": 180, "stone": 180}
+construction_days = 6
+capacity = 30
+maintenance_costs = {"spirit_stone": 5}
+effects = [{"key": "cultivation_gain", "operation": "multiply", "value": 0.1}, {"key": "breakthrough_rate", "operation": "add", "value": 0.02}]
+prerequisites = ["sect_hall"]

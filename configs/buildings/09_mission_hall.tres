@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="BuildingDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/data/BuildingDefinition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "mission_hall"
+display_name = "任务堂"
+description = "组织外出任务，增加可同时派遣的队伍。"
+category = "administration"
+max_level = 3
+construction_costs = {"spirit_stone": 180, "wood": 160, "stone": 120}
+construction_days = 5
+capacity = 2
+maintenance_costs = {"spirit_stone": 3}
+effects = [{"key": "mission_capacity", "operation": "add", "value": 2.0}]
+prerequisites = ["sect_hall"]

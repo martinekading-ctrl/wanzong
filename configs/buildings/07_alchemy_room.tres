@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="BuildingDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/data/BuildingDefinition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "alchemy_room"
+display_name = "炼丹房"
+description = "用于炼制丹药，提高炼丹效率。"
+category = "crafting"
+max_level = 5
+construction_costs = {"spirit_stone": 260, "wood": 120, "stone": 160, "spirit_grass": 30}
+construction_days = 6
+capacity = 5
+maintenance_costs = {"spirit_stone": 5}
+effects = [{"key": "alchemy_efficiency", "operation": "multiply", "value": 0.2}]
+prerequisites = ["sect_hall", "herb_garden"]
