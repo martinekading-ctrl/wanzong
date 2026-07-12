@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/data/MissionDefinition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "mission_gathering"
+display_name = "外出采集"
+description = "前往宗门周边采集木材、石材与灵草。"
+mission_type = "gathering"
+duration_days = 3
+costs = {"food": 20}
+rewards = {"wood": 80, "stone": 40, "spirit_grass": 10}
+base_success_rate = 0.9
+difficulty = 0.1
+risk = 0.1
+min_team_size = 1
+max_team_size = 3
+terrain = "forest"
+result_effects = []
+discoveries = []

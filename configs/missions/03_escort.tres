@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/data/MissionDefinition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "mission_escort"
+display_name = "护送商队"
+description = "护送往来商队穿过危险区域。"
+mission_type = "escort"
+duration_days = 5
+costs = {"food": 50}
+rewards = {"spirit_stone": 150}
+base_success_rate = 0.75
+difficulty = 0.25
+risk = 0.25
+min_team_size = 2
+max_team_size = 4
+terrain = "road"
+result_effects = [{"amount": 5, "key": "reputation", "type": "sect_field_delta"}]
+discoveries = []

@@ -18,6 +18,8 @@ var loyalty: int = 50
 var assignment: String = "空闲"
 var combat_power: int = 50
 var breakthrough_history: Array[Dictionary] = []
+var is_deployed: bool = false
+var team_id: String = ""
 
 
 func cultivate(amount: int, definition: RealmDefinition) -> int:
@@ -60,8 +62,8 @@ func to_world_dictionary() -> Dictionary:
 		"battle_model_id": "battle_male_01" if gender == "男" else "battle_female_01",
 		"color_scheme": "outer_gray",
 		"tags": [personality],
-		"is_deployed": false,
-		"team_id": "",
+		"is_deployed": is_deployed,
+		"team_id": team_id,
 		"battle_position": "middle",
 		"weapon_type": "拳掌",
 		"hp": health,

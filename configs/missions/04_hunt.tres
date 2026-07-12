@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/data/MissionDefinition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "mission_hunt"
+display_name = "讨伐妖兽"
+description = "清理危害一方的妖兽，风险较高。"
+mission_type = "hunt"
+duration_days = 6
+costs = {"food": 60, "spirit_stone": 30}
+rewards = {"spirit_stone": 100, "spirit_ore": 50}
+base_success_rate = 0.65
+difficulty = 0.35
+risk = 0.4
+min_team_size = 2
+max_team_size = 5
+terrain = "mountain"
+result_effects = [{"amount": 8, "key": "reputation", "type": "sect_field_delta"}]
+discoveries = []

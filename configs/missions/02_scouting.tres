@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/data/MissionDefinition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "mission_scouting"
+display_name = "区域侦查"
+description = "侦查未知区域并记录附近势力和资源。"
+mission_type = "scouting"
+duration_days = 4
+costs = {"food": 30, "spirit_stone": 20}
+rewards = {"spirit_stone": 50}
+base_success_rate = 0.8
+difficulty = 0.2
+risk = 0.15
+min_team_size = 1
+max_team_size = 3
+terrain = "any"
+result_effects = [{"amount": 3, "key": "reputation", "type": "sect_field_delta"}]
+discoveries = [{"discovery_type": "map_area", "id": "nearby_area"}]

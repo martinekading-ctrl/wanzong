@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/data/MissionDefinition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "mission_recruitment"
+display_name = "寻访弟子"
+description = "前往附近聚落寻找有资质的新人。"
+mission_type = "recruitment"
+duration_days = 7
+costs = {"food": 100, "spirit_stone": 100}
+rewards = {}
+base_success_rate = 0.7
+difficulty = 0.25
+risk = 0.1
+min_team_size = 1
+max_team_size = 3
+terrain = "settlement"
+result_effects = [{"amount": 1, "type": "recruit_disciple"}]
+discoveries = []

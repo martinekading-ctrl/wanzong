@@ -157,6 +157,8 @@ func get_daily_production_amount(disciple: DiscipleData, assignment: String) -> 
 func prepare_daily_actions(sect_id: String) -> Array[Dictionary]:
 	var actions: Array[Dictionary] = []
 	for disciple in get_disciples_by_sect_id(sect_id):
+		if disciple.is_deployed:
+			continue
 		var assignment: String = _normalize_assignment(disciple.assignment)
 		var action: Dictionary = _create_base_daily_result(disciple, assignment)
 		match assignment:
@@ -262,6 +264,8 @@ func load_from_world_data() -> void:
 			maxi(10, disciple.talent + disciple.cultivation)
 		))
 		disciple.breakthrough_history.assign(world_disciple.get("breakthrough_history", []))
+		disciple.is_deployed = bool(world_disciple.get("is_deployed", false))
+		disciple.team_id = str(world_disciple.get("team_id", ""))
 		disciples.append(disciple)
 		_disciple_by_id[disciple.id] = disciple
 		if not _disciples_by_sect.has(disciple.sect_id):
@@ -351,4 +355,6 @@ func sync_disciple_state(disciple: DiscipleData) -> void:
 		"loyalty": disciple.loyalty,
 		"combat_power": disciple.combat_power,
 		"breakthrough_history": disciple.breakthrough_history.duplicate(true),
+		"is_deployed": disciple.is_deployed,
+		"team_id": disciple.team_id,
 	})

@@ -29,6 +29,7 @@ const SORT_OPTIONS: Array[String] = ["默认", "境界", "战力", "忠诚", "�
 @onready var resource_button: Button = $MarginContainer/RootBox/FunctionPanel/FunctionBox/ButtonBar/ResourceButton
 @onready var history_button: Button = $MarginContainer/RootBox/FunctionPanel/FunctionBox/ButtonBar/HistoryButton
 @onready var save_load_button: Button = $MarginContainer/RootBox/FunctionPanel/FunctionBox/ButtonBar/SaveLoadButton
+@onready var mission_button: Button = $MarginContainer/RootBox/FunctionPanel/FunctionBox/ButtonBar/MissionButton
 @onready var pending_event_panel: PanelContainer = $MarginContainer/RootBox/FunctionPanel/FunctionBox/PendingEventPanel
 @onready var event_title_label: Label = $MarginContainer/RootBox/FunctionPanel/FunctionBox/PendingEventPanel/EventBox/EventTitleLabel
 @onready var event_description_label: Label = $MarginContainer/RootBox/FunctionPanel/FunctionBox/PendingEventPanel/EventBox/EventDescriptionLabel
@@ -58,6 +59,13 @@ const SORT_OPTIONS: Array[String] = ["默认", "境界", "战力", "忠诚", "�
 @onready var sect_upgrade_button: Button = $MarginContainer/RootBox/FunctionPanel/FunctionBox/BuildingSection/SectUpgradeBox/SectUpgradeButton
 @onready var building_list: VBoxContainer = $MarginContainer/RootBox/FunctionPanel/FunctionBox/BuildingSection/BuildingScroll/BuildingList
 @onready var building_result_label: Label = $MarginContainer/RootBox/FunctionPanel/FunctionBox/BuildingSection/BuildingResultLabel
+@onready var mission_section: VBoxContainer = $MarginContainer/RootBox/FunctionPanel/FunctionBox/MissionSection
+@onready var mission_option: OptionButton = $MarginContainer/RootBox/FunctionPanel/FunctionBox/MissionSection/MissionControlBox/MissionOption
+@onready var start_mission_button: Button = $MarginContainer/RootBox/FunctionPanel/FunctionBox/MissionSection/MissionControlBox/StartMissionButton
+@onready var selected_team_label: Label = $MarginContainer/RootBox/FunctionPanel/FunctionBox/MissionSection/SelectedTeamLabel
+@onready var available_disciple_list: VBoxContainer = $MarginContainer/RootBox/FunctionPanel/FunctionBox/MissionSection/MissionBody/AvailablePanel/AvailableScroll/AvailableDiscipleList
+@onready var active_mission_list: VBoxContainer = $MarginContainer/RootBox/FunctionPanel/FunctionBox/MissionSection/MissionBody/ActivePanel/ActiveScroll/ActiveMissionList
+@onready var mission_result_label: Label = $MarginContainer/RootBox/FunctionPanel/FunctionBox/MissionSection/MissionResultLabel
 @onready var disciple_section: VBoxContainer = $MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleSection
 @onready var search_line_edit: LineEdit = $MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleSection/DiscipleTopBar/SearchLineEdit
 @onready var assignment_filter_option: OptionButton = $MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleSection/DiscipleTopBar/AssignmentFilterOption
@@ -82,6 +90,8 @@ const SORT_OPTIONS: Array[String] = ["默认", "境界", "战力", "忠诚", "�
 @onready var detail_hint_label: Label = $MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleSection/DiscipleBody/DiscipleDetailPanel/DiscipleDetailBox/DetailHintLabel
 
 var current_selected_disciple_id: String = ""
+var selected_mission_disciple_ids: Array[String] = []
+var mission_definition_ids: Array[String] = []
 
 
 func _ready() -> void:
@@ -92,6 +102,8 @@ func _ready() -> void:
 	resource_button.pressed.connect(_on_resource_button_pressed)
 	history_button.pressed.connect(_on_history_button_pressed)
 	save_load_button.pressed.connect(_on_save_load_button_pressed)
+	mission_button.pressed.connect(_on_mission_button_pressed)
+	start_mission_button.pressed.connect(_on_start_mission_pressed)
 	manual_slot_1_save.pressed.connect(_on_manual_save_pressed.bind(1))
 	manual_slot_1_load.pressed.connect(_on_manual_load_pressed.bind(1))
 	manual_slot_2_save.pressed.connect(_on_manual_save_pressed.bind(2))
@@ -110,6 +122,7 @@ func _ready() -> void:
 	test_month_button.pressed.connect(_on_next_day_button_pressed)
 	_setup_roster_options()
 	_setup_assignment_options()
+	_setup_mission_options()
 	_refresh_player_sect_info()
 	_refresh_resource_panel()
 	_refresh_date_label()
@@ -139,6 +152,20 @@ func _setup_assignment_options() -> void:
 	for assignment_text in DiscipleManager.get_supported_assignments():
 		assignment_option.add_item(assignment_text)
 	assignment_option.select(0)
+
+
+func _setup_mission_options() -> void:
+	mission_option.clear()
+	mission_definition_ids.clear()
+	for definition in MissionRegistry.get_all():
+		mission_definition_ids.append(definition.id)
+		mission_option.add_item("%s（%d日，%d-%d人）" % [
+			definition.display_name,
+			definition.duration_days,
+			definition.min_team_size,
+			definition.max_team_size,
+		])
+	mission_option.select(0)
 
 
 func _refresh_player_sect_info() -> void:
@@ -214,6 +241,8 @@ func _refresh_all(report: Dictionary = GameState.last_daily_report) -> void:
 		_refresh_save_slots()
 	if building_section.visible:
 		_refresh_building_section()
+	if mission_section.visible:
+		_refresh_mission_section()
 
 
 func _refresh_date_label() -> void:
@@ -249,6 +278,7 @@ func _refresh_daily_report(report: Dictionary) -> void:
 	var new_events: Array = report.get("events", [])
 	var ai_summary: Dictionary = report.get("ai_summary", {})
 	var construction_summary: Dictionary = report.get("construction", {})
+	var mission_summary: Dictionary = report.get("missions", {})
 	if not warnings.is_empty():
 		warning_text = "；".join(PackedStringArray(warnings))
 	settlement_result_label.text = "\n".join(PackedStringArray([
@@ -268,6 +298,10 @@ func _refresh_daily_report(report: Dictionary) -> void:
 		"建设进度：%d项推进，%d项完成" % [
 			construction_summary.get("progressed", []).size(),
 			construction_summary.get("completed", []).size(),
+		],
+		"派遣任务：%d项推进，%d项完成" % [
+			mission_summary.get("progressed", []).size(),
+			mission_summary.get("completed", []).size(),
 		],
 		"警告：" + warning_text,
 	]))
@@ -334,6 +368,7 @@ func _on_disciple_button_pressed() -> void:
 	history_section.visible = false
 	save_load_section.visible = false
 	building_section.visible = false
+	mission_section.visible = false
 	disciple_section.visible = true
 	_refresh_disciple_roster()
 
@@ -343,6 +378,7 @@ func _on_building_button_pressed() -> void:
 	disciple_section.visible = false
 	history_section.visible = false
 	save_load_section.visible = false
+	mission_section.visible = false
 	building_section.visible = true
 	building_result_label.text = ""
 	_refresh_building_section()
@@ -360,6 +396,7 @@ func _show_placeholder(message: String) -> void:
 	history_section.visible = false
 	save_load_section.visible = false
 	building_section.visible = false
+	mission_section.visible = false
 
 
 func _on_history_button_pressed() -> void:
@@ -367,6 +404,7 @@ func _on_history_button_pressed() -> void:
 	disciple_section.visible = false
 	save_load_section.visible = false
 	building_section.visible = false
+	mission_section.visible = false
 	history_section.visible = true
 	_refresh_history_list()
 
@@ -395,11 +433,105 @@ func _refresh_history_list() -> void:
 		history_list.add_child(entry_label)
 
 
+func _on_mission_button_pressed() -> void:
+	placeholder_label.visible = false
+	disciple_section.visible = false
+	history_section.visible = false
+	save_load_section.visible = false
+	building_section.visible = false
+	mission_section.visible = true
+	mission_result_label.text = ""
+	_refresh_mission_section()
+
+
+func _refresh_mission_section() -> void:
+	_clear_dynamic_children(available_disciple_list)
+	_clear_dynamic_children(active_mission_list)
+	var player_sect: Dictionary = WorldDataManager.get_player_sect()
+	var sect_id: String = str(player_sect.get("sect_id", ""))
+	var valid_selected_ids: Array[String] = []
+	for disciple_id in selected_mission_disciple_ids:
+		var selected_disciple: Dictionary = WorldDataManager.get_disciple_by_id(disciple_id)
+		if not selected_disciple.is_empty() and not bool(selected_disciple.get("is_deployed", false)):
+			valid_selected_ids.append(disciple_id)
+	selected_mission_disciple_ids = valid_selected_ids
+
+	for disciple_data in WorldDataManager.get_disciples_by_sect_id(sect_id):
+		var disciple_id: String = str(disciple_data.get("disciple_id", ""))
+		var check_box := CheckBox.new()
+		check_box.text = "%s｜%s｜战力%d%s" % [
+			str(disciple_data.get("disciple_name", disciple_id)),
+			str(disciple_data.get("realm", "未知")),
+			int(disciple_data.get("combat_power", 0)),
+			"｜派遣中" if bool(disciple_data.get("is_deployed", false)) else "",
+		]
+		check_box.button_pressed = disciple_id in selected_mission_disciple_ids
+		check_box.disabled = bool(disciple_data.get("is_deployed", false))
+		check_box.toggled.connect(_on_mission_disciple_toggled.bind(disciple_id))
+		available_disciple_list.add_child(check_box)
+
+	var active_missions: Array[Dictionary] = MissionManager.get_active_missions(sect_id)
+	if active_missions.is_empty():
+		var empty_label := Label.new()
+		empty_label.text = "暂无进行中的任务。"
+		active_mission_list.add_child(empty_label)
+	else:
+		for mission_data in active_missions:
+			var mission_label := Label.new()
+			mission_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			mission_label.text = "%s｜剩余%d日｜成功率%.1f%%" % [
+				str(mission_data.get("display_name", "任务")),
+				int(mission_data.get("remaining_days", 0)),
+				float(mission_data.get("success_chance", 0.0)) * 100.0,
+			]
+			active_mission_list.add_child(mission_label)
+	selected_team_label.text = "已选弟子：%d｜任务容量：%d（进行中%d）" % [
+		selected_mission_disciple_ids.size(),
+		ModifierManager.get_mission_capacity(sect_id),
+		active_missions.size(),
+	]
+
+
+func _on_mission_disciple_toggled(selected: bool, disciple_id: String) -> void:
+	if selected and disciple_id not in selected_mission_disciple_ids:
+		selected_mission_disciple_ids.append(disciple_id)
+	elif not selected:
+		selected_mission_disciple_ids.erase(disciple_id)
+	selected_team_label.text = "已选弟子：%d" % selected_mission_disciple_ids.size()
+
+
+func _on_start_mission_pressed() -> void:
+	if mission_option.selected < 0 or mission_option.selected >= mission_definition_ids.size():
+		mission_result_label.text = "请选择任务。"
+		return
+	if selected_mission_disciple_ids.is_empty():
+		mission_result_label.text = "请至少选择一名可用弟子。"
+		return
+	var player_sect: Dictionary = WorldDataManager.get_player_sect()
+	var result: Dictionary = MissionManager.create_and_start_mission(
+		str(player_sect.get("sect_id", "")),
+		selected_mission_disciple_ids,
+		mission_definition_ids[mission_option.selected]
+	)
+	mission_result_label.text = str(result.get("message", "任务派遣失败。"))
+	if bool(result.get("success", false)):
+		selected_mission_disciple_ids.clear()
+	_refresh_resource_panel()
+	_refresh_mission_section()
+
+
+func _clear_dynamic_children(container: Node) -> void:
+	for child in container.get_children():
+		container.remove_child(child)
+		child.queue_free()
+
+
 func _on_save_load_button_pressed() -> void:
 	placeholder_label.visible = false
 	disciple_section.visible = false
 	history_section.visible = false
 	building_section.visible = false
+	mission_section.visible = false
 	save_load_section.visible = true
 	save_load_result_label.text = ""
 	_refresh_save_slots()

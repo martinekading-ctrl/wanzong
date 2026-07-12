@@ -134,9 +134,13 @@ func get_ai_sect_ids() -> Array[String]:
 # AI允许省略逐弟子日报字典，但生产、维护、口粮、修炼和健康仍复用玩家侧常量与公式。
 func _simulate_daily_sect(sect: SectData) -> Dictionary:
 	var disciples: Array[DiscipleData] = DiscipleManager.get_disciples_by_sect_id(sect.id)
+	var available_disciples: Array[DiscipleData] = []
+	for disciple in disciples:
+		if not disciple.is_deployed:
+			available_disciples.append(disciple)
 	var production: Dictionary = {}
 	var cultivation_disciples: Array[DiscipleData] = []
-	for disciple in disciples:
+	for disciple in available_disciples:
 		match disciple.assignment:
 			DiscipleManager.ASSIGNMENT_FARM:
 				production["food"] = int(production.get("food", 0)) + DiscipleManager.get_daily_production_amount(disciple, disciple.assignment)
@@ -166,7 +170,7 @@ func _simulate_daily_sect(sect: SectData) -> Dictionary:
 	if maintenance_paid < maintenance_required:
 		warnings.append("宗门维护灵石不足。")
 
-	var food_required: int = disciples.size() * EconomyManager.DAILY_FOOD_COST_PER_DISCIPLE
+	var food_required: int = available_disciples.size() * EconomyManager.DAILY_FOOD_COST_PER_DISCIPLE
 	var food_paid: int = mini(food_required, sect.resources.get_amount("food"))
 	if food_paid > 0:
 		sect.consume_resource("food", food_paid)
@@ -183,8 +187,8 @@ func _simulate_daily_sect(sect: SectData) -> Dictionary:
 		warnings.append("弟子修炼灵石不足。")
 
 	var cultivation_index: int = 0
-	for disciple_index in range(disciples.size()):
-		var disciple: DiscipleData = disciples[disciple_index]
+	for disciple_index in range(available_disciples.size()):
+		var disciple: DiscipleData = available_disciples[disciple_index]
 		var health_before: int = disciple.health
 		var cultivation_before: int = disciple.cultivation
 		if disciple.assignment == DiscipleManager.ASSIGNMENT_IDLE:

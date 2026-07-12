@@ -198,6 +198,11 @@ custom_minimum_size = Vector2(160, 44)
 layout_mode = 2
 text = "存读档"
 
+[node name="MissionButton" type="Button" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/ButtonBar"]
+custom_minimum_size = Vector2(160, 44)
+layout_mode = 2
+text = "任务"
+
 [node name="PendingEventPanel" type="PanelContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox"]
 visible = false
 layout_mode = 2
@@ -385,6 +390,67 @@ size_flags_horizontal = 3
 theme_override_constants/separation = 6
 
 [node name="BuildingResultLabel" type="Label" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/BuildingSection"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 15
+autowrap_mode = 3
+
+[node name="MissionSection" type="VBoxContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox"]
+visible = false
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 8
+
+[node name="MissionTitleLabel" type="Label" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/MissionSection"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "任务与派遣"
+
+[node name="MissionControlBox" type="HBoxContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/MissionSection"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="MissionOption" type="OptionButton" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/MissionSection/MissionControlBox"]
+custom_minimum_size = Vector2(220, 36)
+layout_mode = 2
+
+[node name="StartMissionButton" type="Button" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/MissionSection/MissionControlBox"]
+layout_mode = 2
+text = "组队并出发"
+
+[node name="SelectedTeamLabel" type="Label" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/MissionSection"]
+layout_mode = 2
+text = "已选弟子：0"
+
+[node name="MissionBody" type="HBoxContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/MissionSection"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 12
+
+[node name="AvailablePanel" type="PanelContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/MissionSection/MissionBody"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="AvailableScroll" type="ScrollContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/MissionSection/MissionBody/AvailablePanel"]
+layout_mode = 2
+
+[node name="AvailableDiscipleList" type="VBoxContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/MissionSection/MissionBody/AvailablePanel/AvailableScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ActivePanel" type="PanelContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/MissionSection/MissionBody"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="ActiveScroll" type="ScrollContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/MissionSection/MissionBody/ActivePanel"]
+layout_mode = 2
+
+[node name="ActiveMissionList" type="VBoxContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/MissionSection/MissionBody/ActivePanel/ActiveScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="MissionResultLabel" type="Label" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/MissionSection"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 15
 autowrap_mode = 3
