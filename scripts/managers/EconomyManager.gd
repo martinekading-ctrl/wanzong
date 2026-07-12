@@ -54,6 +54,12 @@ func _apply_production(sect: SectData, daily_actions: Array[Dictionary]) -> Dict
 		actions_by_resource[resource_type].append(action)
 	var failed_resources := PackedStringArray()
 	for resource_type in production:
+		var modifier_key: String = str({
+			"food": "food_production", "herb": "herb_production",
+			"ore": "ore_production", "wood": "wood_production",
+		}.get(resource_type, ""))
+		if modifier_key != "":
+			production[resource_type] = roundi(ModifierManager.apply_numeric_modifier(sect.id, modifier_key, float(production[resource_type])))
 		if sect.add_resource(str(resource_type), int(production[resource_type])):
 			continue
 		for action in actions_by_resource[resource_type]:

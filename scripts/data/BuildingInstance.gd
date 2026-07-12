@@ -11,6 +11,8 @@ var remaining_days: int = 0
 var build_slot_id: int = -1
 var started_date: Dictionary = {}
 var completed_date: Dictionary = {}
+var operational: bool = false
+var maintenance_shortages: Dictionary = {}
 
 
 func to_dictionary() -> Dictionary:
@@ -25,6 +27,8 @@ func to_dictionary() -> Dictionary:
 		"build_slot_id": build_slot_id,
 		"started_date": started_date.duplicate(true),
 		"completed_date": completed_date.duplicate(true),
+		"operational": operational,
+		"maintenance_shortages": maintenance_shortages.duplicate(true),
 	}
 
 
@@ -40,4 +44,6 @@ static func from_dictionary(data: Dictionary) -> BuildingInstance:
 	instance.build_slot_id = int(data.get("build_slot_id", -1))
 	instance.started_date = data.get("started_date", {}).duplicate(true)
 	instance.completed_date = data.get("completed_date", {}).duplicate(true)
+	instance.operational = bool(data.get("operational", instance.status == "active"))
+	instance.maintenance_shortages = data.get("maintenance_shortages", {}).duplicate(true)
 	return instance

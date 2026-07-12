@@ -66,7 +66,7 @@ func calculate_success_rate(
 	var health_bonus: float = (float(disciple.health) - float(definition.minimum_health)) * 0.00125
 	var external_bonus: float = (
 		float(modifiers.get("pill_bonus", 0.0))
-		+ float(modifiers.get("building_bonus", 0.0))
+		+ float(modifiers.get("building_bonus", ModifierManager.get_additive_value(disciple.sect_id, "breakthrough_rate")))
 		+ float(modifiers.get("other_bonus", 0.0))
 	)
 	return clampf(

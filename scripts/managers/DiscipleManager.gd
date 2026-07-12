@@ -31,6 +31,9 @@ func create_disciple(
 	gender: String = "男"
 ) -> DiscipleData:
 	WorldDataManager.init_world_data()
+	if WorldDataManager.get_disciples_by_sect_id(sect_id).size() >= ModifierManager.get_disciple_capacity(sect_id):
+		push_warning("宗门弟子容量已满：" + sect_id)
+		return null
 	_update_next_disciple_number()
 	var disciple := DiscipleData.new()
 	disciple.id = "disciple_%03d" % _next_disciple_number
@@ -133,7 +136,8 @@ func get_supported_assignments() -> Array[String]:
 
 
 func get_daily_cultivation_gain(disciple: DiscipleData) -> int:
-	return CULTIVATION_BASE_GAIN + int(disciple.talent / 25.0)
+	var base_gain: int = CULTIVATION_BASE_GAIN + int(disciple.talent / 25.0)
+	return maxi(0, roundi(ModifierManager.apply_numeric_modifier(disciple.sect_id, "cultivation_gain", float(base_gain))))
 
 
 func get_daily_production_amount(disciple: DiscipleData, assignment: String) -> int:

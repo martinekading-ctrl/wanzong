@@ -54,6 +54,8 @@ const SORT_OPTIONS: Array[String] = ["默认", "境界", "战力", "忠诚", "�
 @onready var autosave_load_button: Button = $MarginContainer/RootBox/FunctionPanel/FunctionBox/SaveLoadSection/AutosaveSlot/LoadButton
 @onready var save_load_result_label: Label = $MarginContainer/RootBox/FunctionPanel/FunctionBox/SaveLoadSection/SaveLoadResultLabel
 @onready var building_section: VBoxContainer = $MarginContainer/RootBox/FunctionPanel/FunctionBox/BuildingSection
+@onready var sect_level_label: Label = $MarginContainer/RootBox/FunctionPanel/FunctionBox/BuildingSection/SectUpgradeBox/SectLevelLabel
+@onready var sect_upgrade_button: Button = $MarginContainer/RootBox/FunctionPanel/FunctionBox/BuildingSection/SectUpgradeBox/SectUpgradeButton
 @onready var building_list: VBoxContainer = $MarginContainer/RootBox/FunctionPanel/FunctionBox/BuildingSection/BuildingScroll/BuildingList
 @onready var building_result_label: Label = $MarginContainer/RootBox/FunctionPanel/FunctionBox/BuildingSection/BuildingResultLabel
 @onready var disciple_section: VBoxContainer = $MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleSection
@@ -99,6 +101,7 @@ func _ready() -> void:
 	quick_save_button.pressed.connect(_on_quick_save_pressed)
 	quick_load_button.pressed.connect(_on_quick_load_pressed)
 	autosave_load_button.pressed.connect(_on_autosave_load_pressed)
+	sect_upgrade_button.pressed.connect(_on_sect_upgrade_pressed)
 	search_line_edit.text_changed.connect(_on_disciple_filter_changed)
 	assignment_filter_option.item_selected.connect(_on_disciple_option_changed)
 	sort_option.item_selected.connect(_on_disciple_option_changed)
@@ -470,6 +473,13 @@ func _refresh_building_section() -> void:
 	if player_sect.is_empty():
 		return
 	var sect_id: String = str(player_sect["sect_id"])
+	var upgrade_preview: Dictionary = SectManager.get_sect_upgrade_preview(sect_id)
+	sect_level_label.text = "宗门等级：%d｜大殿等级：%d｜升级消耗：%s" % [
+		int(upgrade_preview.get("current_level", 1)),
+		int(upgrade_preview.get("hall_level", 0)),
+		_format_building_costs(upgrade_preview.get("costs", {})),
+	]
+	sect_upgrade_button.disabled = not bool(upgrade_preview.get("can_upgrade", false))
 	var instance_by_definition: Dictionary = {}
 	for instance in ConstructionManager.get_buildings_by_sect_id(sect_id):
 		instance_by_definition[str(instance.get("definition_id", ""))] = instance
@@ -487,7 +497,10 @@ func _refresh_building_section() -> void:
 				status_text = "建设中，剩余%d日" % int(instance.get("remaining_days", 0))
 				target_level = int(instance.get("target_level", 1))
 			else:
-				status_text = "等级%d" % int(instance.get("level", 1))
+				status_text = "等级%d%s" % [
+					int(instance.get("level", 1)),
+					"" if bool(instance.get("operational", true)) else "（维护不足，已停运）",
+				]
 		var costs: Dictionary = ConstructionManager.get_construction_costs(definition, target_level)
 		info.text = "%s｜%s｜%d日｜%s" % [
 			definition.display_name,
@@ -508,6 +521,15 @@ func _on_building_action_pressed(building_id: String) -> void:
 	var player_sect: Dictionary = WorldDataManager.get_player_sect()
 	var result: Dictionary = ConstructionManager.start_construction(str(player_sect.get("sect_id", "")), building_id)
 	building_result_label.text = str(result.get("message", "建设请求失败。"))
+	_refresh_resource_panel()
+	_refresh_building_section()
+
+
+func _on_sect_upgrade_pressed() -> void:
+	var player_sect: Dictionary = WorldDataManager.get_player_sect()
+	var result: Dictionary = SectManager.upgrade_sect(str(player_sect.get("sect_id", "")))
+	building_result_label.text = str(result.get("message", "宗门升级失败。"))
+	_refresh_player_sect_info()
 	_refresh_resource_panel()
 	_refresh_building_section()
 

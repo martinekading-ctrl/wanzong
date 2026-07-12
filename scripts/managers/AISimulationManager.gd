@@ -89,6 +89,7 @@ func monthly_update(date: Dictionary) -> Dictionary:
 		state["current_goal"] = _select_highest_goal(scores)
 		WorldDataManager.ai_states[sect_id] = state
 		var assignment_result: Dictionary = _rebalance_assignments(sect_id, state)
+		var construction_result: Dictionary = _try_ai_construction(sect_id, state)
 		var recruitment_result: Dictionary = _try_recruit_disciple(sect_id, state)
 		var breakthrough_result: Dictionary = _attempt_monthly_breakthroughs(sect_id)
 		var strategic_action: Dictionary = _perform_strategic_action(sect_id, state)
@@ -103,6 +104,7 @@ func monthly_update(date: Dictionary) -> Dictionary:
 			"goal": state["current_goal"],
 			"scores": scores,
 			"assignments": assignment_result,
+			"construction": construction_result,
 			"recruitment": recruitment_result,
 			"breakthroughs": breakthrough_result,
 			"strategic_action": strategic_action,
@@ -148,6 +150,12 @@ func _simulate_daily_sect(sect: SectData) -> Dictionary:
 				if not disciple.at_bottleneck and RealmRegistry.get_by_id(disciple.realm_id) != null:
 					cultivation_disciples.append(disciple)
 	for resource_key in production:
+		var modifier_key: String = str({
+			"food": "food_production", "herb": "herb_production",
+			"ore": "ore_production", "wood": "wood_production",
+		}.get(resource_key, ""))
+		if modifier_key != "":
+			production[resource_key] = roundi(ModifierManager.apply_numeric_modifier(sect.id, modifier_key, float(production[resource_key])))
 		sect.add_resource(str(resource_key), int(production[resource_key]))
 
 	var warnings: Array[String] = []
@@ -297,6 +305,7 @@ func split_ai_sect(parent_sect_id: String) -> Dictionary:
 	new_sect["master_name"] = "分宗执事"
 	new_sect["is_player"] = false
 	new_sect["disciple_count"] = transferred_count
+	new_sect["base_disciple_capacity"] = transferred_count + 10
 	new_sect["combat_power"] = 0
 	new_sect["location"] = new_location
 	new_sect["position"] = new_location
@@ -368,6 +377,8 @@ func _rebalance_assignments(sect_id: String, state: Dictionary) -> Dictionary:
 
 func _try_recruit_disciple(sect_id: String, state: Dictionary) -> Dictionary:
 	var resources: Dictionary = WorldDataManager.get_sect_resources(sect_id)
+	if WorldDataManager.get_disciples_by_sect_id(sect_id).size() >= ModifierManager.get_disciple_capacity(sect_id):
+		return {"success": false, "reason": "capacity"}
 	if int(resources.get("spirit_stone", 0)) < RECRUIT_SPIRIT_STONE_COST:
 		return {"success": false, "reason": "spirit_stone"}
 	if int(resources.get("food", 0)) < RECRUIT_FOOD_COST:
@@ -388,6 +399,25 @@ func _try_recruit_disciple(sect_id: String, state: Dictionary) -> Dictionary:
 		"disciple_id": disciple.id if disciple != null else "",
 		"costs": {"spirit_stone": RECRUIT_SPIRIT_STONE_COST, "food": RECRUIT_FOOD_COST},
 	}
+
+
+func _try_ai_construction(sect_id: String, state: Dictionary) -> Dictionary:
+	for instance in ConstructionManager.get_buildings_by_sect_id(sect_id):
+		if str(instance.get("status", "")) == "constructing":
+			return {"success": false, "reason": "already_constructing"}
+	var active_ids: Array[String] = []
+	for instance in ConstructionManager.get_buildings_by_sect_id(sect_id):
+		if str(instance.get("status", "")) == "active":
+			active_ids.append(str(instance.get("definition_id", "")))
+	var building_id: String = "sect_hall"
+	if "sect_hall" in active_ids:
+		match str(state.get("current_goal", "development")):
+			"survival", "resource_need": building_id = "spirit_field"
+			"military": building_id = "scripture_pavilion"
+			"diplomacy": building_id = "mission_hall"
+			_:
+				building_id = "disciple_quarters" if ModifierManager.get_disciple_capacity(sect_id) - WorldDataManager.get_disciples_by_sect_id(sect_id).size() < 5 else "mine"
+	return ConstructionManager.start_construction(sect_id, building_id)
 
 
 func _attempt_monthly_breakthroughs(sect_id: String) -> Dictionary:

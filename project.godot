@@ -27,6 +27,7 @@ BreakthroughManager="*res://scripts/managers/BreakthroughManager.gd"
 EventManager="*res://scripts/managers/EventManager.gd"
 AISimulationManager="*res://scripts/managers/AISimulationManager.gd"
 ConstructionManager="*res://scripts/managers/ConstructionManager.gd"
+ModifierManager="*res://scripts/managers/ModifierManager.gd"
 SaveManager="*res://scripts/core/SaveManager.gd"
 GameState="*res://scripts/core/GameState.gd"
 

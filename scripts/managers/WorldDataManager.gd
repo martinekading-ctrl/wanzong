@@ -256,6 +256,7 @@ func _create_sect_data(
 		"master_name": master_name,
 		"realm_rank": realm_rank,
 		"disciple_count": disciple_count,
+		"base_disciple_capacity": disciple_count + 10,
 		"reputation": reputation,
 		"combat_power": combat_power,
 		"location": location,

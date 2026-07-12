@@ -362,6 +362,19 @@ text = "宗门建设"
 layout_mode = 2
 text = "建设按日推进；当前同时只能进行一项建设。"
 
+[node name="SectUpgradeBox" type="HBoxContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/BuildingSection"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="SectLevelLabel" type="Label" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/BuildingSection/SectUpgradeBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "宗门等级"
+
+[node name="SectUpgradeButton" type="Button" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/BuildingSection/SectUpgradeBox"]
+layout_mode = 2
+text = "升级宗门"
+
 [node name="BuildingScroll" type="ScrollContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/BuildingSection"]
 layout_mode = 2
 size_flags_vertical = 3

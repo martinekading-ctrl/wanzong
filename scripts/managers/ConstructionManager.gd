@@ -68,6 +68,8 @@ func start_construction(sect_id: String, building_id: String) -> Dictionary:
 		instance.build_slot_id = build_slot_id
 	instance.target_level = target_level
 	instance.status = "constructing"
+	instance.operational = false
+	instance.maintenance_shortages = {}
 	instance.remaining_days = get_construction_days(definition, target_level)
 	instance.started_date = _current_date()
 	instance.completed_date = {}
@@ -87,6 +89,7 @@ func start_construction(sect_id: String, building_id: String) -> Dictionary:
 
 
 func daily_update(date: Dictionary) -> Dictionary:
+	var maintenance: Dictionary = _settle_daily_maintenance()
 	var progressed: Array[Dictionary] = []
 	var completed: Array[Dictionary] = []
 	for index in range(WorldDataManager.building_instances.size()):
@@ -96,6 +99,7 @@ func daily_update(date: Dictionary) -> Dictionary:
 		instance.remaining_days = maxi(0, instance.remaining_days - 1)
 		if instance.remaining_days == 0:
 			instance.status = "active"
+			instance.operational = true
 			instance.level = instance.target_level
 			instance.completed_date = date.duplicate(true)
 			_register_completed_building(instance)
@@ -116,7 +120,7 @@ func daily_update(date: Dictionary) -> Dictionary:
 			)
 		WorldDataManager.building_instances[index] = instance.to_dictionary()
 		progressed.append(_build_instance_view(instance))
-	return {"progressed": progressed, "completed": completed}
+	return {"progressed": progressed, "completed": completed, "maintenance": maintenance}
 
 
 func get_buildings_by_sect_id(sect_id: String) -> Array[Dictionary]:
@@ -136,6 +140,40 @@ func get_construction_costs(definition: BuildingDefinition, target_level: int) -
 
 func get_construction_days(definition: BuildingDefinition, target_level: int) -> int:
 	return maxi(1, ceili(float(definition.construction_days) * (1.0 + 0.25 * float(maxi(0, target_level - 1)))))
+
+
+func _settle_daily_maintenance() -> Dictionary:
+	var paid_by_sect: Dictionary = {}
+	var shortages_by_sect: Dictionary = {}
+	for index in range(WorldDataManager.building_instances.size()):
+		var instance := BuildingInstance.from_dictionary(WorldDataManager.building_instances[index])
+		if instance.status != "active":
+			continue
+		var definition: BuildingDefinition = BuildingRegistry.get_by_id(instance.definition_id)
+		if definition == null:
+			instance.operational = false
+			WorldDataManager.building_instances[index] = instance.to_dictionary()
+			continue
+		var costs: Dictionary = {}
+		for resource_key in definition.maintenance_costs:
+			costs[resource_key] = int(definition.maintenance_costs[resource_key]) * instance.level
+		var missing: Dictionary = _get_missing_resources(instance.sect_id, costs)
+		if missing.is_empty() and _deduct_costs(instance.sect_id, costs):
+			instance.operational = true
+			instance.maintenance_shortages = {}
+			if not paid_by_sect.has(instance.sect_id):
+				paid_by_sect[instance.sect_id] = {}
+			for resource_key in costs:
+				paid_by_sect[instance.sect_id][resource_key] = int(paid_by_sect[instance.sect_id].get(resource_key, 0)) + int(costs[resource_key])
+		else:
+			instance.operational = false
+			instance.maintenance_shortages = missing
+			if not shortages_by_sect.has(instance.sect_id):
+				shortages_by_sect[instance.sect_id] = {}
+			for resource_key in missing:
+				shortages_by_sect[instance.sect_id][resource_key] = int(shortages_by_sect[instance.sect_id].get(resource_key, 0)) + int(missing[resource_key])
+		WorldDataManager.building_instances[index] = instance.to_dictionary()
+	return {"paid": paid_by_sect, "shortages": shortages_by_sect}
 
 
 func _register_completed_building(instance: BuildingInstance) -> void:
