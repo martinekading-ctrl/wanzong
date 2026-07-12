@@ -26,6 +26,7 @@ func new_game() -> void:
 	SectManager.reset()
 	DiscipleManager.load_from_world_data()
 	EventManager.reset()
+	GameHistoryManager.reset()
 	player_sect = SectManager.create_player_sect()
 
 
@@ -57,6 +58,22 @@ func next_day() -> Dictionary:
 		"events": event_results,
 		"warnings": economy_result.get("warnings", []),
 	}
+	GameHistoryManager.record_entry(
+		"daily_settlement",
+		"每日结算",
+		"宗门完成了第%d年%d月%d日的日常结算。" % [
+			int(date_before["year"]),
+			int(date_before["month"]),
+			int(date_before["day"]),
+		],
+		[player_sect.id],
+		{
+			"production": last_daily_report["production"],
+			"expenses": last_daily_report["expenses"],
+			"shortages": last_daily_report["shortages"],
+		},
+		date_before
+	)
 	daily_simulation_completed.emit(last_daily_report)
 	return last_daily_report
 

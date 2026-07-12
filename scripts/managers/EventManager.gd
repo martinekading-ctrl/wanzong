@@ -125,6 +125,13 @@ func resolve_event(instance_id: String, option_id: String) -> Dictionary:
 	instance.selected_option_id = option_id
 	instance.result = result.duplicate(true)
 	WorldDataManager.event_instances[index] = instance.to_dictionary()
+	GameHistoryManager.record_entry(
+		"major_event",
+		definition.title,
+		str(result.get("message", "")),
+		_get_event_entity_ids(instance.context),
+		result
+	)
 	event_resolved.emit(result)
 	return result
 
@@ -301,3 +308,12 @@ func _compare(left: Variant, operator: String, right: Variant) -> bool:
 
 func _resolution_error(instance_id: String, code: String, message: String) -> Dictionary:
 	return {"success": false, "code": code, "message": message, "instance_id": instance_id}
+
+
+func _get_event_entity_ids(context: Dictionary) -> Array[String]:
+	var ids: Array[String] = []
+	for key in ["sect_id", "entity_id", "mission_id"]:
+		var entity_id: String = str(context.get(key, ""))
+		if entity_id != "" and entity_id not in ids:
+			ids.append(entity_id)
+	return ids

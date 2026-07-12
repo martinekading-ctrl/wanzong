@@ -27,6 +27,8 @@ var event_instances: Array = []
 
 var triggered_event_ids: Array[String] = []
 
+var history_entries: Array[Dictionary] = []
+
 var is_initialized: bool = false
 
 
@@ -157,6 +159,7 @@ func init_world_data() -> void:
 	}
 	event_instances = []
 	triggered_event_ids = []
+	history_entries = []
 
 	is_initialized = true
 
@@ -170,6 +173,7 @@ func reset_world_data() -> void:
 	sect_resources.clear()
 	event_instances.clear()
 	triggered_event_ids.clear()
+	history_entries.clear()
 	init_world_data()
 
 

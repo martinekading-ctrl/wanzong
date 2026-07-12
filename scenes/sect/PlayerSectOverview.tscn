@@ -188,6 +188,11 @@ custom_minimum_size = Vector2(160, 44)
 layout_mode = 2
 text = "资源"
 
+[node name="HistoryButton" type="Button" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/ButtonBar"]
+custom_minimum_size = Vector2(160, 44)
+layout_mode = 2
+text = "历史"
+
 [node name="PendingEventPanel" type="PanelContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox"]
 visible = false
 layout_mode = 2
@@ -219,6 +224,26 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "请选择一个宗门功能。当前版本开放宗门概览与弟子名册。"
 autowrap_mode = 3
+
+[node name="HistorySection" type="VBoxContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox"]
+visible = false
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 8
+
+[node name="HistoryTitleLabel" type="Label" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/HistorySection"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "宗门历史"
+
+[node name="HistoryScroll" type="ScrollContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/HistorySection"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="HistoryList" type="VBoxContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/HistorySection/HistoryScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 5
 
 [node name="DiscipleSection" type="VBoxContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox"]
 visible = false

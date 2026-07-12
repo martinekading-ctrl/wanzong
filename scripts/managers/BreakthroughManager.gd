@@ -234,6 +234,13 @@ func _record_history(disciple: DiscipleData, result: Dictionary) -> void:
 	}
 	disciple.breakthrough_history.append(entry)
 	result["history_entry"] = entry.duplicate(true)
+	GameHistoryManager.record_entry(
+		"disciple_breakthrough",
+		"弟子突破",
+		str(result.get("message", "")),
+		[disciple.id, disciple.sect_id],
+		result
+	)
 
 
 func _reject(disciple_id: String, code: String, message: String) -> Dictionary:

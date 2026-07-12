@@ -27,12 +27,15 @@ const SORT_OPTIONS: Array[String] = ["默认", "境界", "战力", "忠诚", "�
 @onready var disciple_button: Button = $MarginContainer/RootBox/FunctionPanel/FunctionBox/ButtonBar/DiscipleButton
 @onready var building_button: Button = $MarginContainer/RootBox/FunctionPanel/FunctionBox/ButtonBar/BuildingButton
 @onready var resource_button: Button = $MarginContainer/RootBox/FunctionPanel/FunctionBox/ButtonBar/ResourceButton
+@onready var history_button: Button = $MarginContainer/RootBox/FunctionPanel/FunctionBox/ButtonBar/HistoryButton
 @onready var pending_event_panel: PanelContainer = $MarginContainer/RootBox/FunctionPanel/FunctionBox/PendingEventPanel
 @onready var event_title_label: Label = $MarginContainer/RootBox/FunctionPanel/FunctionBox/PendingEventPanel/EventBox/EventTitleLabel
 @onready var event_description_label: Label = $MarginContainer/RootBox/FunctionPanel/FunctionBox/PendingEventPanel/EventBox/EventDescriptionLabel
 @onready var event_option_box: HBoxContainer = $MarginContainer/RootBox/FunctionPanel/FunctionBox/PendingEventPanel/EventBox/EventOptionBox
 @onready var event_result_label: Label = $MarginContainer/RootBox/FunctionPanel/FunctionBox/PendingEventPanel/EventBox/EventResultLabel
 @onready var placeholder_label: Label = $MarginContainer/RootBox/FunctionPanel/FunctionBox/PlaceholderLabel
+@onready var history_section: VBoxContainer = $MarginContainer/RootBox/FunctionPanel/FunctionBox/HistorySection
+@onready var history_list: VBoxContainer = $MarginContainer/RootBox/FunctionPanel/FunctionBox/HistorySection/HistoryScroll/HistoryList
 @onready var disciple_section: VBoxContainer = $MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleSection
 @onready var search_line_edit: LineEdit = $MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleSection/DiscipleTopBar/SearchLineEdit
 @onready var assignment_filter_option: OptionButton = $MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleSection/DiscipleTopBar/AssignmentFilterOption
@@ -65,6 +68,7 @@ func _ready() -> void:
 	disciple_button.pressed.connect(_on_disciple_button_pressed)
 	building_button.pressed.connect(_on_building_button_pressed)
 	resource_button.pressed.connect(_on_resource_button_pressed)
+	history_button.pressed.connect(_on_history_button_pressed)
 	search_line_edit.text_changed.connect(_on_disciple_filter_changed)
 	assignment_filter_option.item_selected.connect(_on_disciple_option_changed)
 	sort_option.item_selected.connect(_on_disciple_option_changed)
@@ -170,6 +174,8 @@ func _refresh_all(report: Dictionary = GameState.last_daily_report) -> void:
 	_refresh_pending_event_panel()
 	if disciple_section.visible:
 		_refresh_disciple_roster()
+	if history_section.visible:
+		_refresh_history_list()
 
 
 func _refresh_date_label() -> void:
@@ -276,6 +282,7 @@ func _on_back_button_pressed() -> void:
 
 func _on_disciple_button_pressed() -> void:
 	placeholder_label.visible = false
+	history_section.visible = false
 	disciple_section.visible = true
 	_refresh_disciple_roster()
 
@@ -293,6 +300,38 @@ func _show_placeholder(message: String) -> void:
 	placeholder_label.visible = true
 	placeholder_label.text = message
 	disciple_section.visible = false
+	history_section.visible = false
+
+
+func _on_history_button_pressed() -> void:
+	placeholder_label.visible = false
+	disciple_section.visible = false
+	history_section.visible = true
+	_refresh_history_list()
+
+
+func _refresh_history_list() -> void:
+	for child in history_list.get_children():
+		history_list.remove_child(child)
+		child.queue_free()
+	var entries: Array[Dictionary] = GameHistoryManager.get_all_entries()
+	entries.reverse()
+	if entries.is_empty():
+		var empty_label := Label.new()
+		empty_label.text = "暂无历史记录。"
+		history_list.add_child(empty_label)
+		return
+	for entry in entries.slice(0, mini(entries.size(), 100)):
+		var entry_label := Label.new()
+		entry_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		entry_label.text = "第%d年%d月%d日｜%s｜%s" % [
+			int(entry.get("year", 1)),
+			int(entry.get("month", 1)),
+			int(entry.get("day", 1)),
+			str(entry.get("title", "记录")),
+			str(entry.get("message", "")),
+		]
+		history_list.add_child(entry_label)
 
 
 func _on_disciple_filter_changed(_new_text: String) -> void:
