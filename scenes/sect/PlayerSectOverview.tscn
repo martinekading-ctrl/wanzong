@@ -218,6 +218,11 @@ custom_minimum_size = Vector2(160, 44)
 layout_mode = 2
 text = "背包"
 
+[node name="MarketButton" type="Button" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/ButtonBar"]
+custom_minimum_size = Vector2(160, 44)
+layout_mode = 2
+text = "市场"
+
 [node name="PendingEventPanel" type="PanelContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox"]
 visible = false
 layout_mode = 2
@@ -641,6 +646,31 @@ size_flags_vertical = 3
 layout_mode = 2
 
 [node name="RecipeList" type="VBoxContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/InventorySection/RecipePanel/RecipeScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="MarketSection" type="VBoxContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox"]
+visible = false
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 8
+
+[node name="ControlBox" type="HBoxContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/MarketSection"]
+layout_mode = 2
+
+[node name="MarketOption" type="OptionButton" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/MarketSection/ControlBox"]
+custom_minimum_size = Vector2(300, 36)
+layout_mode = 2
+
+[node name="ResultLabel" type="Label" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/MarketSection"]
+layout_mode = 2
+autowrap_mode = 3
+
+[node name="ItemScroll" type="ScrollContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/MarketSection"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="ItemList" type="VBoxContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/MarketSection/ItemScroll"]
 layout_mode = 2
 size_flags_horizontal = 3
 

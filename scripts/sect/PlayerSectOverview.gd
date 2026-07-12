@@ -33,6 +33,7 @@ const SORT_OPTIONS: Array[String] = ["默认", "境界", "战力", "忠诚", "�
 @onready var diplomacy_button: Button = $MarginContainer/RootBox/FunctionPanel/FunctionBox/ButtonBar/DiplomacyButton
 @onready var battle_button: Button = $MarginContainer/RootBox/FunctionPanel/FunctionBox/ButtonBar/BattleButton
 @onready var inventory_button: Button = $MarginContainer/RootBox/FunctionPanel/FunctionBox/ButtonBar/InventoryButton
+@onready var market_button: Button = $MarginContainer/RootBox/FunctionPanel/FunctionBox/ButtonBar/MarketButton
 @onready var pending_event_panel: PanelContainer = $MarginContainer/RootBox/FunctionPanel/FunctionBox/PendingEventPanel
 @onready var event_title_label: Label = $MarginContainer/RootBox/FunctionPanel/FunctionBox/PendingEventPanel/EventBox/EventTitleLabel
 @onready var event_description_label: Label = $MarginContainer/RootBox/FunctionPanel/FunctionBox/PendingEventPanel/EventBox/EventDescriptionLabel
@@ -95,6 +96,10 @@ const SORT_OPTIONS: Array[String] = ["默认", "境界", "战力", "忠诚", "�
 @onready var inventory_section: HBoxContainer = $MarginContainer/RootBox/FunctionPanel/FunctionBox/InventorySection
 @onready var inventory_item_list: VBoxContainer = $MarginContainer/RootBox/FunctionPanel/FunctionBox/InventorySection/ItemPanel/ItemScroll/ItemList
 @onready var inventory_recipe_list: VBoxContainer = $MarginContainer/RootBox/FunctionPanel/FunctionBox/InventorySection/RecipePanel/RecipeScroll/RecipeList
+@onready var market_section: VBoxContainer = $MarginContainer/RootBox/FunctionPanel/FunctionBox/MarketSection
+@onready var market_option: OptionButton = $MarginContainer/RootBox/FunctionPanel/FunctionBox/MarketSection/ControlBox/MarketOption
+@onready var market_result_label: Label = $MarginContainer/RootBox/FunctionPanel/FunctionBox/MarketSection/ResultLabel
+@onready var market_item_list: VBoxContainer = $MarginContainer/RootBox/FunctionPanel/FunctionBox/MarketSection/ItemScroll/ItemList
 @onready var disciple_section: VBoxContainer = $MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleSection
 @onready var search_line_edit: LineEdit = $MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleSection/DiscipleTopBar/SearchLineEdit
 @onready var assignment_filter_option: OptionButton = $MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleSection/DiscipleTopBar/AssignmentFilterOption
@@ -127,6 +132,7 @@ var selected_resource_disciple_ids: Array[String] = []
 var diplomacy_target_ids: Array[String] = []
 var diplomacy_action_ids: Array[String] = []
 var inventory_message: String = ""
+var market_ids: Array[String] = []
 
 
 func _ready() -> void:
@@ -141,6 +147,8 @@ func _ready() -> void:
 	diplomacy_button.pressed.connect(_on_diplomacy_button_pressed)
 	battle_button.pressed.connect(SceneManager.go_to_battle_report)
 	inventory_button.pressed.connect(_on_inventory_button_pressed)
+	market_button.pressed.connect(_on_market_button_pressed)
+	market_option.item_selected.connect(_on_market_selected)
 	start_mission_button.pressed.connect(_on_start_mission_pressed)
 	mission_option.item_selected.connect(_on_mission_option_selected)
 	resource_site_option.item_selected.connect(_on_resource_site_selected)
@@ -332,6 +340,8 @@ func _refresh_all(report: Dictionary = GameState.last_daily_report) -> void:
 		_refresh_diplomacy_section()
 	if inventory_section.visible:
 		_refresh_inventory_section()
+	if market_section.visible:
+		_refresh_market_section()
 
 
 func _refresh_date_label() -> void:
@@ -373,6 +383,7 @@ func _refresh_daily_report(report: Dictionary) -> void:
 	var territory_summary: Dictionary = report.get("territories", {})
 	var diplomacy_summary: Dictionary = report.get("diplomacy", {})
 	var war_summary: Dictionary = report.get("wars", {})
+	var market_summary: Dictionary = report.get("market", {})
 	if not warnings.is_empty():
 		warning_text = "；".join(PackedStringArray(warnings))
 	settlement_result_label.text = "\n".join(PackedStringArray([
@@ -408,6 +419,7 @@ func _refresh_daily_report(report: Dictionary) -> void:
 		],
 		"外交关系：%d组｜有效契约：%d" % [int(diplomacy_summary.get("relation_count", 0)), int(diplomacy_summary.get("active_pacts", 0))],
 		"战争行动：%d项推进，%d项结束" % [war_summary.get("progressed", []).size(), war_summary.get("completed", []).size()],
+		"市场刷新：%d处" % int(market_summary.get("markets_updated", 0)),
 		"警告：" + warning_text,
 	]))
 
@@ -477,6 +489,7 @@ func _on_disciple_button_pressed() -> void:
 	resource_site_section.visible = false
 	diplomacy_section.visible = false
 	inventory_section.visible = false
+	market_section.visible = false
 	disciple_section.visible = true
 	_refresh_disciple_roster()
 
@@ -490,6 +503,7 @@ func _on_building_button_pressed() -> void:
 	resource_site_section.visible = false
 	diplomacy_section.visible = false
 	inventory_section.visible = false
+	market_section.visible = false
 	building_section.visible = true
 	building_result_label.text = ""
 	_refresh_building_section()
@@ -505,6 +519,7 @@ func _on_resource_button_pressed() -> void:
 	mission_section.visible = false
 	diplomacy_section.visible = false
 	inventory_section.visible = false
+	market_section.visible = false
 	resource_site_section.visible = true
 	resource_site_result_label.text = ""
 	_refresh_resource_site_section()
@@ -521,6 +536,7 @@ func _show_placeholder(message: String) -> void:
 	resource_site_section.visible = false
 	diplomacy_section.visible = false
 	inventory_section.visible = false
+	market_section.visible = false
 
 
 func _on_history_button_pressed() -> void:
@@ -532,6 +548,7 @@ func _on_history_button_pressed() -> void:
 	resource_site_section.visible = false
 	diplomacy_section.visible = false
 	inventory_section.visible = false
+	market_section.visible = false
 	history_section.visible = true
 	_refresh_history_list()
 
@@ -569,6 +586,7 @@ func _on_mission_button_pressed() -> void:
 	resource_site_section.visible = false
 	diplomacy_section.visible = false
 	inventory_section.visible = false
+	market_section.visible = false
 	mission_section.visible = true
 	mission_result_label.text = ""
 	_refresh_mission_section()
@@ -819,6 +837,7 @@ func _on_diplomacy_button_pressed() -> void:
 	mission_section.visible = false
 	resource_site_section.visible = false
 	inventory_section.visible = false
+	market_section.visible = false
 	diplomacy_section.visible = true
 	diplomacy_result_label.text = ""
 	_setup_diplomacy_options()
@@ -942,6 +961,7 @@ func _on_inventory_button_pressed() -> void:
 	mission_section.visible = false
 	resource_site_section.visible = false
 	diplomacy_section.visible = false
+	market_section.visible = false
 	inventory_section.visible = true
 	inventory_message = ""
 	_refresh_inventory_section()
@@ -1037,6 +1057,87 @@ func _craft_type_text(craft_type: String) -> String:
 	return {"alchemy": "炼丹", "forging": "炼器", "array": "阵法"}.get(craft_type, craft_type)
 
 
+func _on_market_button_pressed() -> void:
+	placeholder_label.visible = false
+	disciple_section.visible = false
+	history_section.visible = false
+	save_load_section.visible = false
+	building_section.visible = false
+	mission_section.visible = false
+	resource_site_section.visible = false
+	diplomacy_section.visible = false
+	inventory_section.visible = false
+	market_section.visible = true
+	market_result_label.text = ""
+	_setup_market_options()
+	_refresh_market_section()
+
+
+func _setup_market_options() -> void:
+	var previous_id: String = _get_selected_market_id()
+	market_option.clear()
+	market_ids.clear()
+	for market in MarketManager.get_markets():
+		var market_id: String = str(market.get("market_id", ""))
+		var owner_id: String = str(market.get("owner_sect_id", ""))
+		market_ids.append(market_id)
+		market_option.add_item("%s｜%s地区" % [str(WorldDataManager.get_sect_by_id(owner_id).get("sect_name", owner_id)), str(market.get("region", "central"))])
+	market_option.select(market_ids.find(previous_id) if previous_id in market_ids else 0)
+
+
+func _refresh_market_section() -> void:
+	_clear_dynamic_children(market_item_list)
+	var market_id: String = _get_selected_market_id()
+	var market: Dictionary = MarketManager.get_market(market_id)
+	var owner_id: String = str(market.get("owner_sect_id", ""))
+	var blocked: bool = str(DiplomacyManager.get_relation("sect_001", owner_id).get("status", "")) in ["war", "hostile"]
+	var title := Label.new()
+	title.text = "市场库存｜贸易量%d｜关系%s%s" % [int(market.get("trade_volume", 0)), _diplomacy_status_text(str(DiplomacyManager.get_relation("sect_001", owner_id).get("status", "neutral"))), "｜禁止交易" if blocked else ""]
+	title.add_theme_font_size_override("font_size", 20)
+	market_item_list.add_child(title)
+	for definition in ItemRegistry.get_all():
+		if definition.id == "spirit_stone":
+			continue
+		var row := HBoxContainer.new()
+		var stock: int = int(market.get("stock", {}).get(definition.id, 0))
+		var buy_price: int = MarketManager.get_price(market_id, "sect_001", definition.id, true)
+		var sell_price: int = MarketManager.get_price(market_id, "sect_001", definition.id, false)
+		var label := Label.new()
+		label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		label.text = "%s｜库存%d｜持有%d｜买%d灵石｜卖%d灵石" % [definition.display_name, stock, InventoryManager.get_item_count("sect_001", definition.id), buy_price, sell_price]
+		row.add_child(label)
+		var buy_button := Button.new()
+		buy_button.text = "购买1"
+		buy_button.disabled = blocked or stock <= 0 or InventoryManager.get_item_count("sect_001", "spirit_stone") < buy_price
+		buy_button.pressed.connect(_on_market_trade_pressed.bind("buy", definition.id))
+		row.add_child(buy_button)
+		var sell_button := Button.new()
+		sell_button.text = "出售1"
+		sell_button.disabled = blocked or InventoryManager.get_item_count("sect_001", definition.id) <= 0
+		sell_button.pressed.connect(_on_market_trade_pressed.bind("sell", definition.id))
+		row.add_child(sell_button)
+		market_item_list.add_child(row)
+
+
+func _on_market_selected(_index: int) -> void:
+	if market_section.visible:
+		market_result_label.text = ""
+		_refresh_market_section()
+
+
+func _on_market_trade_pressed(action: String, item_id: String) -> void:
+	var result: Dictionary = MarketManager.buy_item(_get_selected_market_id(), "sect_001", item_id, 1) if action == "buy" else MarketManager.sell_item(_get_selected_market_id(), "sect_001", item_id, 1)
+	market_result_label.text = str(result.get("message", "交易失败。"))
+	_refresh_resource_panel()
+	_refresh_market_section()
+
+
+func _get_selected_market_id() -> String:
+	if market_option.selected < 0 or market_option.selected >= market_ids.size():
+		return ""
+	return market_ids[market_option.selected]
+
+
 func _on_save_load_button_pressed() -> void:
 	placeholder_label.visible = false
 	disciple_section.visible = false
@@ -1046,6 +1147,7 @@ func _on_save_load_button_pressed() -> void:
 	resource_site_section.visible = false
 	diplomacy_section.visible = false
 	inventory_section.visible = false
+	market_section.visible = false
 	save_load_section.visible = true
 	save_load_result_label.text = ""
 	_refresh_save_slots()
