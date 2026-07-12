@@ -28,7 +28,7 @@ func calculate_power(sect: SectData) -> int:
 		return 0
 	var disciple_power: int = 0
 	for disciple in DiscipleManager.get_disciples_by_sect_id(sect.id):
-		disciple_power += maxi(10, disciple.talent + disciple.cultivation)
+		disciple_power += disciple.combat_power
 	return maxi(0, sect.level * 100 + disciple_power)
 
 

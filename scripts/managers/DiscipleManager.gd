@@ -63,7 +63,7 @@ func cultivate_all(amount: int = 10) -> void:
 	for disciple in disciples:
 		var definition: RealmDefinition = RealmRegistry.get_by_id(disciple.realm_id)
 		disciple.cultivate(amount, definition)
-		_sync_disciple_progress(disciple)
+		sync_disciple_state(disciple)
 
 
 func update_assignment(disciple_id: String, assignment: String) -> bool:
@@ -163,13 +163,8 @@ func apply_daily_results(results: Array[Dictionary]) -> void:
 		if actual_gain < requested_gain and disciple.at_bottleneck:
 			result["message"] = "修为达到上限，已进入突破瓶颈。"
 		disciple.health = clampi(disciple.health + int(result.get("health_change", 0)), 0, 100)
-		_sync_disciple_progress(disciple)
-		WorldDataManager.update_disciple_data(disciple_id, "health", disciple.health)
-		WorldDataManager.update_disciple_data(
-			disciple_id,
-			"combat_power",
-			maxi(10, disciple.talent + disciple.cultivation)
-		)
+		disciple.combat_power = maxi(10, disciple.combat_power + actual_gain)
+		sync_disciple_state(disciple)
 
 
 func load_from_world_data() -> void:
@@ -205,8 +200,13 @@ func load_from_world_data() -> void:
 		disciple.health = int(world_disciple.get("health", 100))
 		disciple.loyalty = int(world_disciple.get("loyalty", 50))
 		disciple.assignment = str(world_disciple.get("assignment", ASSIGNMENT_IDLE))
+		disciple.combat_power = int(world_disciple.get(
+			"combat_power",
+			maxi(10, disciple.talent + disciple.cultivation)
+		))
+		disciple.breakthrough_history.assign(world_disciple.get("breakthrough_history", []))
 		disciples.append(disciple)
-		_sync_disciple_progress(disciple)
+		sync_disciple_state(disciple)
 	_update_next_disciple_number()
 
 
@@ -277,9 +277,18 @@ func _get_daily_variation(min_value: int, max_value: int) -> int:
 	return randi_range(min_value, max_value)
 
 
-func _sync_disciple_progress(disciple: DiscipleData) -> void:
+func sync_disciple_state(disciple: DiscipleData) -> void:
+	if disciple == null:
+		return
 	WorldDataManager.update_disciple_data(disciple.id, "realm_id", disciple.realm_id)
 	WorldDataManager.update_disciple_data(disciple.id, "realm", disciple.realm)
 	WorldDataManager.update_disciple_data(disciple.id, "cultivation", disciple.cultivation)
 	WorldDataManager.update_disciple_data(disciple.id, "spiritual_power", disciple.cultivation)
 	WorldDataManager.update_disciple_data(disciple.id, "at_bottleneck", disciple.at_bottleneck)
+	WorldDataManager.update_disciple_data(disciple.id, "health", disciple.health)
+	WorldDataManager.update_disciple_data(disciple.id, "combat_power", disciple.combat_power)
+	WorldDataManager.update_disciple_data(
+		disciple.id,
+		"breakthrough_history",
+		disciple.breakthrough_history.duplicate(true)
+	)

@@ -16,6 +16,8 @@ var personality: String = "沉稳"
 var health: int = 100
 var loyalty: int = 50
 var assignment: String = "空闲"
+var combat_power: int = 50
+var breakthrough_history: Array[Dictionary] = []
 
 
 func cultivate(amount: int, definition: RealmDefinition) -> int:
@@ -49,7 +51,7 @@ func to_world_dictionary() -> Dictionary:
 		"loyalty": loyalty,
 		"mood": health,
 		"assignment": assignment,
-		"combat_power": maxi(10, cultivation + talent),
+		"combat_power": combat_power,
 		"status": "正常",
 		"description": "由弟子数据系统创建的宗门弟子。",
 		"appearance_id": "male_disciple_01" if gender == "男" else "female_disciple_01",
@@ -74,6 +76,7 @@ func to_world_dictionary() -> Dictionary:
 		"potential": potential,
 		"personality": personality,
 		"health": health,
+		"breakthrough_history": breakthrough_history.duplicate(true),
 	}
 
 

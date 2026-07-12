@@ -282,6 +282,7 @@ func _create_disciple_data(
 		"speed": int(extra_data.get("speed", 40)),
 		"spiritual_power": int(extra_data.get("spiritual_power", 20)),
 		"battle_status": str(extra_data.get("battle_status", "正常")),
+		"breakthrough_history": extra_data.get("breakthrough_history", []),
 	}
 
 

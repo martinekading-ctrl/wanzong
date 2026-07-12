@@ -319,6 +319,31 @@ text = "确认安排"
 layout_mode = 2
 theme_override_font_sizes/font_size = 15
 
+[node name="BreakthroughBox" type="VBoxContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleSection/DiscipleBody/DiscipleDetailPanel/DiscipleDetailBox"]
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="BreakthroughTitleLabel" type="Label" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleSection/DiscipleBody/DiscipleDetailPanel/DiscipleDetailBox/BreakthroughBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 17
+text = "境界突破"
+
+[node name="BreakthroughPreviewLabel" type="Label" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleSection/DiscipleBody/DiscipleDetailPanel/DiscipleDetailBox/BreakthroughBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 15
+autowrap_mode = 3
+
+[node name="BreakthroughButton" type="Button" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleSection/DiscipleBody/DiscipleDetailPanel/DiscipleDetailBox/BreakthroughBox"]
+custom_minimum_size = Vector2(140, 36)
+layout_mode = 2
+text = "发起突破"
+
+[node name="BreakthroughResultLabel" type="Label" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleSection/DiscipleBody/DiscipleDetailPanel/DiscipleDetailBox/BreakthroughBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 15
+autowrap_mode = 3
+
 [node name="DetailDescriptionLabel" type="Label" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleSection/DiscipleBody/DiscipleDetailPanel/DiscipleDetailBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 16
