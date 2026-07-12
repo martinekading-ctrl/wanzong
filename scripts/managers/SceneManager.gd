@@ -7,6 +7,7 @@ const MAIN_MENU_SCENE: String = "res://scenes/ui/MainMenu.tscn"
 const WORLD_SCENE: String = "res://scenes/world/World.tscn"
 
 const PLAYER_SECT_OVERVIEW_SCENE: String = "res://scenes/sect/PlayerSectOverview.tscn"
+const BATTLE_REPORT_SCENE: String = "res://scenes/battle/BattleReport.tscn"
 
 # 游戏常驻根节点 Main。
 var main_root: Node = null
@@ -33,6 +34,10 @@ func go_to_world_map() -> void:
 
 func go_to_player_sect_overview() -> void:
 	_change_page(PLAYER_SECT_OVERVIEW_SCENE)
+
+
+func go_to_battle_report() -> void:
+	_change_page(BATTLE_REPORT_SCENE)
 
 
 # 退出游戏。

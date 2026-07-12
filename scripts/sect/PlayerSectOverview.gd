@@ -31,6 +31,7 @@ const SORT_OPTIONS: Array[String] = ["默认", "境界", "战力", "忠诚", "�
 @onready var save_load_button: Button = $MarginContainer/RootBox/FunctionPanel/FunctionBox/ButtonBar/SaveLoadButton
 @onready var mission_button: Button = $MarginContainer/RootBox/FunctionPanel/FunctionBox/ButtonBar/MissionButton
 @onready var diplomacy_button: Button = $MarginContainer/RootBox/FunctionPanel/FunctionBox/ButtonBar/DiplomacyButton
+@onready var battle_button: Button = $MarginContainer/RootBox/FunctionPanel/FunctionBox/ButtonBar/BattleButton
 @onready var pending_event_panel: PanelContainer = $MarginContainer/RootBox/FunctionPanel/FunctionBox/PendingEventPanel
 @onready var event_title_label: Label = $MarginContainer/RootBox/FunctionPanel/FunctionBox/PendingEventPanel/EventBox/EventTitleLabel
 @onready var event_description_label: Label = $MarginContainer/RootBox/FunctionPanel/FunctionBox/PendingEventPanel/EventBox/EventDescriptionLabel
@@ -133,6 +134,7 @@ func _ready() -> void:
 	save_load_button.pressed.connect(_on_save_load_button_pressed)
 	mission_button.pressed.connect(_on_mission_button_pressed)
 	diplomacy_button.pressed.connect(_on_diplomacy_button_pressed)
+	battle_button.pressed.connect(SceneManager.go_to_battle_report)
 	start_mission_button.pressed.connect(_on_start_mission_pressed)
 	mission_option.item_selected.connect(_on_mission_option_selected)
 	resource_site_option.item_selected.connect(_on_resource_site_selected)
