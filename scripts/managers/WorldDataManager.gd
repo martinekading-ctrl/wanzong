@@ -247,6 +247,8 @@ func _create_sect_data(
 		"description": description,
 		"territory_radius": territory_radius,
 		"territory_level": 1,
+		"is_active": true,
+		"buildings": [],
 	}
 
 
@@ -414,6 +416,46 @@ func add_disciple_data(disciple_data: Dictionary) -> bool:
 	if not _disciple_indexes_by_sect.has(sect_id):
 		_disciple_indexes_by_sect[sect_id] = []
 	_disciple_indexes_by_sect[sect_id].append(disciple_index)
+	return true
+
+
+func transfer_disciple_data(disciple_id: String, new_sect_id: String) -> bool:
+	if not _disciple_index_by_id.has(disciple_id) or not _sect_index_by_id.has(new_sect_id):
+		return false
+	var disciple_index: int = int(_disciple_index_by_id[disciple_id])
+	var disciple_data: Dictionary = disciples[disciple_index]
+	var old_sect_id: String = str(disciple_data.get("sect_id", ""))
+	disciple_data["sect_id"] = new_sect_id
+	disciples[disciple_index] = disciple_data
+	if _disciple_indexes_by_sect.has(old_sect_id):
+		_disciple_indexes_by_sect[old_sect_id].erase(disciple_index)
+	if not _disciple_indexes_by_sect.has(new_sect_id):
+		_disciple_indexes_by_sect[new_sect_id] = []
+	_disciple_indexes_by_sect[new_sect_id].append(disciple_index)
+	return true
+
+
+func get_next_generated_sect_id() -> String:
+	var highest_number: int = 0
+	for sect_data in sects:
+		var sect_id: String = str(sect_data.get("sect_id", ""))
+		if not sect_id.begins_with("sect_generated_"):
+			continue
+		var number_text: String = sect_id.trim_prefix("sect_generated_")
+		if number_text.is_valid_int():
+			highest_number = maxi(highest_number, number_text.to_int())
+	return "sect_generated_%03d" % (highest_number + 1)
+
+
+func add_ai_sect_data(sect_data: Dictionary, resources_data: Dictionary, ai_state: Dictionary) -> bool:
+	var sect_id: String = str(sect_data.get("sect_id", ""))
+	if sect_id == "" or _sect_index_by_id.has(sect_id) or bool(sect_data.get("is_player", false)):
+		return false
+	sects.append(sect_data.duplicate(true))
+	_sect_index_by_id[sect_id] = sects.size() - 1
+	sect_resources[sect_id] = resources_data.duplicate(true)
+	ai_states[sect_id] = ai_state.duplicate(true)
+	_disciple_indexes_by_sect[sect_id] = []
 	return true
 
 

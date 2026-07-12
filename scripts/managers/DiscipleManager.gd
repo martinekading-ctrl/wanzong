@@ -101,6 +101,26 @@ func get_disciples_by_sect_id(sect_id: String) -> Array[DiscipleData]:
 	return result
 
 
+func transfer_disciple(disciple_id: String, new_sect_id: String) -> bool:
+	var disciple: DiscipleData = get_disciple_by_id(disciple_id)
+	if disciple == null or WorldDataManager.get_sect_by_id(new_sect_id).is_empty():
+		return false
+	var old_sect_id: String = disciple.sect_id
+	if old_sect_id == new_sect_id:
+		return true
+	if not WorldDataManager.transfer_disciple_data(disciple_id, new_sect_id):
+		return false
+	if _disciples_by_sect.has(old_sect_id):
+		_disciples_by_sect[old_sect_id].erase(disciple)
+	if not _disciples_by_sect.has(new_sect_id):
+		_disciples_by_sect[new_sect_id] = []
+	_disciples_by_sect[new_sect_id].append(disciple)
+	disciple.sect_id = new_sect_id
+	_sync_disciple_count(old_sect_id)
+	_sync_disciple_count(new_sect_id)
+	return true
+
+
 func get_supported_assignments() -> Array[String]:
 	return [
 		ASSIGNMENT_IDLE,
