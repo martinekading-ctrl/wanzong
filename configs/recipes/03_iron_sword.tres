@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="RecipeDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/data/RecipeDefinition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "recipe_iron_sword"
+display_name = "锻造玄铁剑"
+craft_type = "forging"
+ingredients = {"spirit_ore": 12, "wood": 5, "spirit_stone": 20}
+outputs = {"iron_sword": 1}
+required_building_id = "forge"
+duration_days = 3
+base_success_rate = 0.9
+

@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="RecipeDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/data/RecipeDefinition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "recipe_healing_pill"
+display_name = "炼制回春丹"
+craft_type = "alchemy"
+ingredients = {"spirit_grass": 8, "spirit_stone": 12}
+outputs = {"healing_pill": 1}
+required_building_id = "alchemy_room"
+required_disciple_tags = ["丹道"]
+duration_days = 2
+base_success_rate = 0.8
+

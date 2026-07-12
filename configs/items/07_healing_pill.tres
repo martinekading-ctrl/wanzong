@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/data/ItemDefinition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "healing_pill"
+display_name = "回春丹"
+description = "治疗外伤并恢复健康。"
+category = "consumable"
+stack_limit = 999
+base_value = 45
+effects = [{"amount": 25, "type": "health"}]
+

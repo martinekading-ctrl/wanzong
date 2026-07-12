@@ -32,6 +32,7 @@ const SORT_OPTIONS: Array[String] = ["默认", "境界", "战力", "忠诚", "�
 @onready var mission_button: Button = $MarginContainer/RootBox/FunctionPanel/FunctionBox/ButtonBar/MissionButton
 @onready var diplomacy_button: Button = $MarginContainer/RootBox/FunctionPanel/FunctionBox/ButtonBar/DiplomacyButton
 @onready var battle_button: Button = $MarginContainer/RootBox/FunctionPanel/FunctionBox/ButtonBar/BattleButton
+@onready var inventory_button: Button = $MarginContainer/RootBox/FunctionPanel/FunctionBox/ButtonBar/InventoryButton
 @onready var pending_event_panel: PanelContainer = $MarginContainer/RootBox/FunctionPanel/FunctionBox/PendingEventPanel
 @onready var event_title_label: Label = $MarginContainer/RootBox/FunctionPanel/FunctionBox/PendingEventPanel/EventBox/EventTitleLabel
 @onready var event_description_label: Label = $MarginContainer/RootBox/FunctionPanel/FunctionBox/PendingEventPanel/EventBox/EventDescriptionLabel
@@ -91,6 +92,9 @@ const SORT_OPTIONS: Array[String] = ["默认", "境界", "战力", "忠诚", "�
 @onready var diplomacy_relation_info_label: Label = $MarginContainer/RootBox/FunctionPanel/FunctionBox/DiplomacySection/RelationInfoLabel
 @onready var diplomacy_relation_list: VBoxContainer = $MarginContainer/RootBox/FunctionPanel/FunctionBox/DiplomacySection/RelationScroll/RelationList
 @onready var diplomacy_result_label: Label = $MarginContainer/RootBox/FunctionPanel/FunctionBox/DiplomacySection/ResultLabel
+@onready var inventory_section: HBoxContainer = $MarginContainer/RootBox/FunctionPanel/FunctionBox/InventorySection
+@onready var inventory_item_list: VBoxContainer = $MarginContainer/RootBox/FunctionPanel/FunctionBox/InventorySection/ItemPanel/ItemScroll/ItemList
+@onready var inventory_recipe_list: VBoxContainer = $MarginContainer/RootBox/FunctionPanel/FunctionBox/InventorySection/RecipePanel/RecipeScroll/RecipeList
 @onready var disciple_section: VBoxContainer = $MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleSection
 @onready var search_line_edit: LineEdit = $MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleSection/DiscipleTopBar/SearchLineEdit
 @onready var assignment_filter_option: OptionButton = $MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleSection/DiscipleTopBar/AssignmentFilterOption
@@ -135,6 +139,7 @@ func _ready() -> void:
 	mission_button.pressed.connect(_on_mission_button_pressed)
 	diplomacy_button.pressed.connect(_on_diplomacy_button_pressed)
 	battle_button.pressed.connect(SceneManager.go_to_battle_report)
+	inventory_button.pressed.connect(_on_inventory_button_pressed)
 	start_mission_button.pressed.connect(_on_start_mission_pressed)
 	mission_option.item_selected.connect(_on_mission_option_selected)
 	resource_site_option.item_selected.connect(_on_resource_site_selected)
@@ -324,6 +329,8 @@ func _refresh_all(report: Dictionary = GameState.last_daily_report) -> void:
 		_refresh_resource_site_section()
 	if diplomacy_section.visible:
 		_refresh_diplomacy_section()
+	if inventory_section.visible:
+		_refresh_inventory_section()
 
 
 func _refresh_date_label() -> void:
@@ -466,6 +473,7 @@ func _on_disciple_button_pressed() -> void:
 	mission_section.visible = false
 	resource_site_section.visible = false
 	diplomacy_section.visible = false
+	inventory_section.visible = false
 	disciple_section.visible = true
 	_refresh_disciple_roster()
 
@@ -478,6 +486,7 @@ func _on_building_button_pressed() -> void:
 	mission_section.visible = false
 	resource_site_section.visible = false
 	diplomacy_section.visible = false
+	inventory_section.visible = false
 	building_section.visible = true
 	building_result_label.text = ""
 	_refresh_building_section()
@@ -492,6 +501,7 @@ func _on_resource_button_pressed() -> void:
 	building_section.visible = false
 	mission_section.visible = false
 	diplomacy_section.visible = false
+	inventory_section.visible = false
 	resource_site_section.visible = true
 	resource_site_result_label.text = ""
 	_refresh_resource_site_section()
@@ -507,6 +517,7 @@ func _show_placeholder(message: String) -> void:
 	mission_section.visible = false
 	resource_site_section.visible = false
 	diplomacy_section.visible = false
+	inventory_section.visible = false
 
 
 func _on_history_button_pressed() -> void:
@@ -517,6 +528,7 @@ func _on_history_button_pressed() -> void:
 	mission_section.visible = false
 	resource_site_section.visible = false
 	diplomacy_section.visible = false
+	inventory_section.visible = false
 	history_section.visible = true
 	_refresh_history_list()
 
@@ -553,6 +565,7 @@ func _on_mission_button_pressed() -> void:
 	building_section.visible = false
 	resource_site_section.visible = false
 	diplomacy_section.visible = false
+	inventory_section.visible = false
 	mission_section.visible = true
 	mission_result_label.text = ""
 	_refresh_mission_section()
@@ -802,6 +815,7 @@ func _on_diplomacy_button_pressed() -> void:
 	building_section.visible = false
 	mission_section.visible = false
 	resource_site_section.visible = false
+	inventory_section.visible = false
 	diplomacy_section.visible = true
 	diplomacy_result_label.text = ""
 	_setup_diplomacy_options()
@@ -916,6 +930,69 @@ func _diplomacy_status_text(status: String) -> String:
 	}.get(status, status)
 
 
+func _on_inventory_button_pressed() -> void:
+	placeholder_label.visible = false
+	disciple_section.visible = false
+	history_section.visible = false
+	save_load_section.visible = false
+	building_section.visible = false
+	mission_section.visible = false
+	resource_site_section.visible = false
+	diplomacy_section.visible = false
+	inventory_section.visible = true
+	_refresh_inventory_section()
+
+
+func _refresh_inventory_section() -> void:
+	_clear_dynamic_children(inventory_item_list)
+	_clear_dynamic_children(inventory_recipe_list)
+	var item_title := Label.new()
+	item_title.text = "宗门物品"
+	item_title.add_theme_font_size_override("font_size", 20)
+	inventory_item_list.add_child(item_title)
+	for definition in ItemRegistry.get_all():
+		var label := Label.new()
+		label.text = "%s｜%s｜数量%d｜基础价值%d" % [
+			definition.display_name,
+			_item_category_text(definition.category),
+			InventoryManager.get_item_count("sect_001", definition.id),
+			definition.base_value,
+		]
+		inventory_item_list.add_child(label)
+	var recipe_title := Label.new()
+	recipe_title.text = "已知配方（制作功能在下一阶段开放）"
+	recipe_title.add_theme_font_size_override("font_size", 20)
+	inventory_recipe_list.add_child(recipe_title)
+	for recipe in RecipeRegistry.get_all():
+		var label := Label.new()
+		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		label.text = "%s｜%s｜材料：%s｜产物：%s｜%d日｜当前材料%s" % [
+			recipe.display_name,
+			_craft_type_text(recipe.craft_type),
+			_format_item_requirements(recipe.ingredients),
+			_format_item_requirements(recipe.outputs),
+			recipe.duration_days,
+			"充足" if InventoryManager.has_items("sect_001", recipe.ingredients) else "不足",
+		]
+		inventory_recipe_list.add_child(label)
+
+
+func _format_item_requirements(items: Dictionary) -> String:
+	var parts := PackedStringArray()
+	for item_id in items:
+		var definition: ItemDefinition = ItemRegistry.get_by_id(str(item_id))
+		parts.append("%s×%d" % [definition.display_name if definition != null else str(item_id), int(items[item_id])])
+	return "、".join(parts)
+
+
+func _item_category_text(category: String) -> String:
+	return {"material": "材料", "consumable": "消耗品", "equipment": "装备", "advanced_material": "高级材料"}.get(category, category)
+
+
+func _craft_type_text(craft_type: String) -> String:
+	return {"alchemy": "炼丹", "forging": "炼器", "array": "阵法"}.get(craft_type, craft_type)
+
+
 func _on_save_load_button_pressed() -> void:
 	placeholder_label.visible = false
 	disciple_section.visible = false
@@ -924,6 +1001,7 @@ func _on_save_load_button_pressed() -> void:
 	mission_section.visible = false
 	resource_site_section.visible = false
 	diplomacy_section.visible = false
+	inventory_section.visible = false
 	save_load_section.visible = true
 	save_load_result_label.text = ""
 	_refresh_save_slots()

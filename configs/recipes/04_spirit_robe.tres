@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="RecipeDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/data/RecipeDefinition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "recipe_spirit_robe"
+display_name = "炼制护灵袍"
+craft_type = "forging"
+ingredients = {"spirit_ore": 8, "wood": 10, "spirit_stone": 30}
+outputs = {"spirit_robe": 1}
+required_building_id = "forge"
+duration_days = 4
+base_success_rate = 0.82
+

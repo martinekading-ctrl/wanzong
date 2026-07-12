@@ -136,6 +136,7 @@ func apply_snapshot(raw_snapshot: Dictionary) -> bool:
 	DiplomacyManager.rebuild_runtime_state()
 	BattleManager.rebuild_runtime_state()
 	WarManager.rebuild_runtime_state()
+	InventoryManager.rebuild_runtime_state()
 	GameState.year = int(game_state_data.get("year", 1))
 	GameState.month = int(game_state_data.get("month", 1))
 	GameState.day = int(game_state_data.get("day", 1))

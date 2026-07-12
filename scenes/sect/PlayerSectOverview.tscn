@@ -213,6 +213,11 @@ custom_minimum_size = Vector2(160, 44)
 layout_mode = 2
 text = "战报"
 
+[node name="InventoryButton" type="Button" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/ButtonBar"]
+custom_minimum_size = Vector2(160, 44)
+layout_mode = 2
+text = "背包"
+
 [node name="PendingEventPanel" type="PanelContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox"]
 visible = false
 layout_mode = 2
@@ -608,6 +613,36 @@ size_flags_horizontal = 3
 [node name="ResultLabel" type="Label" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/DiplomacySection"]
 layout_mode = 2
 autowrap_mode = 3
+
+[node name="InventorySection" type="HBoxContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox"]
+visible = false
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 12
+
+[node name="ItemPanel" type="PanelContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/InventorySection"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="ItemScroll" type="ScrollContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/InventorySection/ItemPanel"]
+layout_mode = 2
+
+[node name="ItemList" type="VBoxContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/InventorySection/ItemPanel/ItemScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="RecipePanel" type="PanelContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/InventorySection"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="RecipeScroll" type="ScrollContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/InventorySection/RecipePanel"]
+layout_mode = 2
+
+[node name="RecipeList" type="VBoxContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/InventorySection/RecipePanel/RecipeScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
 
 [node name="DiscipleSection" type="VBoxContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox"]
 visible = false
