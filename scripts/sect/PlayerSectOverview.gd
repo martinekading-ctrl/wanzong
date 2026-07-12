@@ -126,6 +126,7 @@ var resource_site_ids: Array[int] = []
 var selected_resource_disciple_ids: Array[String] = []
 var diplomacy_target_ids: Array[String] = []
 var diplomacy_action_ids: Array[String] = []
+var inventory_message: String = ""
 
 
 func _ready() -> void:
@@ -366,6 +367,7 @@ func _refresh_daily_report(report: Dictionary) -> void:
 	var new_events: Array = report.get("events", [])
 	var ai_summary: Dictionary = report.get("ai_summary", {})
 	var construction_summary: Dictionary = report.get("construction", {})
+	var crafting_summary: Dictionary = report.get("crafting", {})
 	var mission_summary: Dictionary = report.get("missions", {})
 	var resource_site_summary: Dictionary = report.get("resource_sites", {})
 	var territory_summary: Dictionary = report.get("territories", {})
@@ -391,6 +393,7 @@ func _refresh_daily_report(report: Dictionary) -> void:
 			construction_summary.get("progressed", []).size(),
 			construction_summary.get("completed", []).size(),
 		],
+		"制作进度：%d项推进，%d项完成" % [crafting_summary.get("progressed", []).size(), crafting_summary.get("completed", []).size()],
 		"派遣任务：%d项推进，%d项完成" % [
 			mission_summary.get("progressed", []).size(),
 			mission_summary.get("completed", []).size(),
@@ -940,6 +943,7 @@ func _on_inventory_button_pressed() -> void:
 	resource_site_section.visible = false
 	diplomacy_section.visible = false
 	inventory_section.visible = true
+	inventory_message = ""
 	_refresh_inventory_section()
 
 
@@ -960,13 +964,13 @@ func _refresh_inventory_section() -> void:
 		]
 		inventory_item_list.add_child(label)
 	var recipe_title := Label.new()
-	recipe_title.text = "已知配方（制作功能在下一阶段开放）"
+	recipe_title.text = "已知配方与制作｜" + (inventory_message if inventory_message != "" else "选择配方开始制作")
 	recipe_title.add_theme_font_size_override("font_size", 20)
 	inventory_recipe_list.add_child(recipe_title)
 	for recipe in RecipeRegistry.get_all():
-		var label := Label.new()
-		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		label.text = "%s｜%s｜材料：%s｜产物：%s｜%d日｜当前材料%s" % [
+		var recipe_button := Button.new()
+		recipe_button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		recipe_button.text = "%s｜%s｜材料：%s｜产物：%s｜%d日｜当前材料%s" % [
 			recipe.display_name,
 			_craft_type_text(recipe.craft_type),
 			_format_item_requirements(recipe.ingredients),
@@ -974,7 +978,47 @@ func _refresh_inventory_section() -> void:
 			recipe.duration_days,
 			"充足" if InventoryManager.has_items("sect_001", recipe.ingredients) else "不足",
 		]
-		inventory_recipe_list.add_child(label)
+		recipe_button.disabled = not InventoryManager.has_items("sect_001", recipe.ingredients) or _find_crafting_worker(recipe).is_empty()
+		recipe_button.pressed.connect(_on_recipe_craft_pressed.bind(recipe.id))
+		inventory_recipe_list.add_child(recipe_button)
+	for job in CraftingManager.get_jobs("sect_001", true):
+		var job_label := Label.new()
+		var recipe: RecipeDefinition = RecipeRegistry.get_by_id(str(job.get("recipe_id", "")))
+		job_label.text = "制作中：%s｜负责弟子%s｜剩余%d日｜成功率%.1f%%" % [
+			recipe.display_name if recipe != null else str(job.get("recipe_id", "")),
+			str(WorldDataManager.get_disciple_by_id(str(job.get("disciple_id", ""))).get("disciple_name", "")),
+			int(job.get("remaining_days", 0)),
+			float(job.get("success_chance", 0.0)) * 100.0,
+		]
+		inventory_recipe_list.add_child(job_label)
+
+
+func _on_recipe_craft_pressed(recipe_id: String) -> void:
+	var recipe: RecipeDefinition = RecipeRegistry.get_by_id(recipe_id)
+	var worker: Dictionary = _find_crafting_worker(recipe)
+	if worker.is_empty():
+		inventory_message = "没有符合条件的可用弟子。"
+	else:
+		var result: Dictionary = CraftingManager.start_crafting("sect_001", recipe_id, str(worker.get("disciple_id", "")))
+		inventory_message = str(result.get("message", "制作启动失败。"))
+	_refresh_resource_panel()
+	_refresh_inventory_section()
+
+
+func _find_crafting_worker(recipe: RecipeDefinition) -> Dictionary:
+	if recipe == null:
+		return {}
+	for disciple in WorldDataManager.get_player_disciples():
+		if bool(disciple.get("is_deployed", false)) or int(disciple.get("health", 0)) <= 0:
+			continue
+		var matches: bool = true
+		for required_tag in recipe.required_disciple_tags:
+			if required_tag not in disciple.get("tags", []):
+				matches = false
+				break
+		if matches:
+			return disciple
+	return {}
 
 
 func _format_item_requirements(items: Dictionary) -> String:

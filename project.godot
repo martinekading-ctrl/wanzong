@@ -36,6 +36,7 @@ DiplomacyManager="*res://scripts/managers/DiplomacyManager.gd"
 BattleManager="*res://scripts/managers/BattleManager.gd"
 WarManager="*res://scripts/managers/WarManager.gd"
 InventoryManager="*res://scripts/managers/InventoryManager.gd"
+CraftingManager="*res://scripts/managers/CraftingManager.gd"
 SaveManager="*res://scripts/core/SaveManager.gd"
 GameState="*res://scripts/core/GameState.gd"
 

@@ -151,9 +151,24 @@ func _build_team(sect_id: String, disciple_ids: Array, use_sect_defense: bool) -
 			unit.defense = ModifierManager.get_sect_defense(sect_id, unit.defense)
 		unit.speed = maxi(1, int(data.get("speed", 10)))
 		unit.spiritual_power = maxi(0, int(data.get("spiritual_power", 0)))
+		for equipped_item_id in data.get("equipment", {}).values():
+			var equipment: ItemDefinition = ItemRegistry.get_by_id(str(equipped_item_id))
+			if equipment == null or equipment.category != "equipment":
+				continue
+			unit.attack += int(equipment.stat_modifiers.get("attack", 0))
+			unit.defense += int(equipment.stat_modifiers.get("defense", 0))
+			unit.speed += int(equipment.stat_modifiers.get("speed", 0))
+			unit.spiritual_power += int(equipment.stat_modifiers.get("spiritual_power", 0))
+			var hp_bonus: int = int(equipment.stat_modifiers.get("max_hp", 0))
+			unit.max_hp += hp_bonus
+			unit.current_hp += hp_bonus
 		unit.accuracy = clampf(0.78 + float(unit.speed) / 500.0, 0.75, 0.95)
 		unit.critical_rate = clampf(0.05 + float(data.get("talent", data.get("comprehension", 50))) / 1000.0, 0.05, 0.2)
 		unit.resistance = clampf(float(unit.defense) / 500.0, 0.0, 0.5)
+		for equipped_item_id in data.get("equipment", {}).values():
+			var equipment: ItemDefinition = ItemRegistry.get_by_id(str(equipped_item_id))
+			if equipment != null:
+				unit.resistance = clampf(unit.resistance + float(equipment.stat_modifiers.get("resistance", 0.0)), 0.0, 0.8)
 		result.append(unit.to_dictionary())
 	return result
 

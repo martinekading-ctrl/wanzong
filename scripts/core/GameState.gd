@@ -40,6 +40,7 @@ func new_game() -> void:
 	BattleManager.rebuild_runtime_state()
 	WarManager.rebuild_runtime_state()
 	InventoryManager.initialize_world_state()
+	CraftingManager.rebuild_runtime_state()
 
 
 func random_int(minimum: int, maximum: int) -> int:
@@ -63,6 +64,7 @@ func next_day() -> Dictionary:
 	var sect_result: Dictionary = SectManager.daily_update(player_sect, economy_result)
 	var ai_summary: Dictionary = AISimulationManager.daily_update(date_before)
 	var construction_summary: Dictionary = ConstructionManager.daily_update(date_before)
+	var crafting_summary: Dictionary = CraftingManager.daily_update(date_before)
 	var mission_summary: Dictionary = MissionManager.daily_update(date_before)
 	var resource_site_summary: Dictionary = ResourceSiteManager.daily_update(date_before)
 	var territory_summary: Dictionary = TerritoryManager.daily_update(date_before)
@@ -84,6 +86,7 @@ func next_day() -> Dictionary:
 		"sect_result": sect_result,
 		"ai_summary": ai_summary,
 		"construction": construction_summary,
+		"crafting": crafting_summary,
 		"missions": mission_summary,
 		"resource_sites": resource_site_summary,
 		"territories": territory_summary,

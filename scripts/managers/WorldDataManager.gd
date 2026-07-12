@@ -42,6 +42,7 @@ var relations: Array[Dictionary] = []
 var diplomatic_pacts: Array[Dictionary] = []
 var war_campaigns: Array[Dictionary] = []
 var sect_inventories: Dictionary = {}
+var crafting_jobs: Array[Dictionary] = []
 var game_settings: Dictionary = {}
 var ui_state: Dictionary = {}
 
@@ -214,6 +215,7 @@ func reset_world_data() -> void:
 	diplomatic_pacts.clear()
 	war_campaigns.clear()
 	sect_inventories.clear()
+	crafting_jobs.clear()
 	game_settings.clear()
 	ui_state.clear()
 	_sect_index_by_id.clear()
@@ -513,6 +515,7 @@ func export_world_state() -> Dictionary:
 		"diplomatic_pacts": diplomatic_pacts.duplicate(true),
 		"war_campaigns": war_campaigns.duplicate(true),
 		"sect_inventories": sect_inventories.duplicate(true),
+		"crafting_jobs": crafting_jobs.duplicate(true),
 		"game_settings": game_settings.duplicate(true),
 		"ui_state": ui_state.duplicate(true),
 	}
@@ -541,6 +544,7 @@ func restore_world_state(state: Dictionary) -> bool:
 	diplomatic_pacts.assign(state.get("diplomatic_pacts", []))
 	war_campaigns.assign(state.get("war_campaigns", []))
 	sect_inventories = state.get("sect_inventories", {}).duplicate(true)
+	crafting_jobs.assign(state.get("crafting_jobs", []))
 	game_settings = state.get("game_settings", {}).duplicate(true)
 	ui_state = state.get("ui_state", {}).duplicate(true)
 	is_initialized = true
