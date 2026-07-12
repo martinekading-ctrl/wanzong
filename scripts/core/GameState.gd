@@ -37,6 +37,7 @@ func new_game() -> void:
 	ResourceSiteManager.initialize_world_state()
 	TerritoryManager.initialize_world_state()
 	DiplomacyManager.initialize_world_state()
+	BattleManager.rebuild_runtime_state()
 
 
 func random_int(minimum: int, maximum: int) -> int:

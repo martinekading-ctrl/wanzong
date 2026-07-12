@@ -33,6 +33,7 @@ SecretRealmManager="*res://scripts/managers/SecretRealmManager.gd"
 ResourceSiteManager="*res://scripts/managers/ResourceSiteManager.gd"
 TerritoryManager="*res://scripts/managers/TerritoryManager.gd"
 DiplomacyManager="*res://scripts/managers/DiplomacyManager.gd"
+BattleManager="*res://scripts/managers/BattleManager.gd"
 SaveManager="*res://scripts/core/SaveManager.gd"
 GameState="*res://scripts/core/GameState.gd"
 
