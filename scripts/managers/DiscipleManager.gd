@@ -14,10 +14,14 @@ const MINIMUM_PRODUCTION: int = 1
 
 var disciples: Array[DiscipleData] = []
 var _next_disciple_number: int = 1
+var _disciples_by_sect: Dictionary = {}
+var _disciple_by_id: Dictionary = {}
 
 
 func reset() -> void:
 	disciples.clear()
+	_disciples_by_sect.clear()
+	_disciple_by_id.clear()
 	_next_disciple_number = 1
 
 
@@ -36,7 +40,15 @@ func create_disciple(
 	disciple.gender = gender
 	disciple.assignment = ASSIGNMENT_IDLE
 	disciples.append(disciple)
-	WorldDataManager.disciples.append(disciple.to_world_dictionary())
+	_disciple_by_id[disciple.id] = disciple
+	if not _disciples_by_sect.has(sect_id):
+		_disciples_by_sect[sect_id] = []
+	_disciples_by_sect[sect_id].append(disciple)
+	if not WorldDataManager.add_disciple_data(disciple.to_world_dictionary()):
+		disciples.erase(disciple)
+		_disciple_by_id.erase(disciple.id)
+		_disciples_by_sect[sect_id].erase(disciple)
+		return null
 	_sync_disciple_count(sect_id)
 	return disciple
 
@@ -47,14 +59,14 @@ func remove_disciple(disciple_id: String) -> bool:
 		if disciples[index].id != disciple_id:
 			continue
 		removed_sect_id = disciples[index].sect_id
+		_disciple_by_id.erase(disciples[index].id)
+		if _disciples_by_sect.has(removed_sect_id):
+			_disciples_by_sect[removed_sect_id].erase(disciples[index])
 		disciples.remove_at(index)
 		break
 	if removed_sect_id == "":
 		return false
-	for index in range(WorldDataManager.disciples.size() - 1, -1, -1):
-		if str(WorldDataManager.disciples[index].get("disciple_id", "")) == disciple_id:
-			WorldDataManager.disciples.remove_at(index)
-			break
+	WorldDataManager.remove_disciple_data(disciple_id)
 	_sync_disciple_count(removed_sect_id)
 	return true
 
@@ -79,17 +91,13 @@ func update_assignment(disciple_id: String, assignment: String) -> bool:
 
 
 func get_disciple_by_id(disciple_id: String) -> DiscipleData:
-	for disciple in disciples:
-		if disciple.id == disciple_id:
-			return disciple
-	return null
+	return _disciple_by_id.get(disciple_id) as DiscipleData
 
 
 func get_disciples_by_sect_id(sect_id: String) -> Array[DiscipleData]:
 	var result: Array[DiscipleData] = []
-	for disciple in disciples:
-		if disciple.sect_id == sect_id:
-			result.append(disciple)
+	for disciple in _disciples_by_sect.get(sect_id, []):
+		result.append(disciple as DiscipleData)
 	return result
 
 
@@ -102,6 +110,23 @@ func get_supported_assignments() -> Array[String]:
 		ASSIGNMENT_MINING,
 		ASSIGNMENT_HERB,
 	]
+
+
+func get_daily_cultivation_gain(disciple: DiscipleData) -> int:
+	return CULTIVATION_BASE_GAIN + int(disciple.talent / 25.0)
+
+
+func get_daily_production_amount(disciple: DiscipleData, assignment: String) -> int:
+	match assignment:
+		ASSIGNMENT_FARM:
+			return maxi(MINIMUM_PRODUCTION, 8 + int(disciple.talent / 20.0) + _get_daily_variation(-1, 2))
+		ASSIGNMENT_LOGGING:
+			return maxi(MINIMUM_PRODUCTION, 6 + int(disciple.potential / 25.0) + _get_daily_variation(-1, 2))
+		ASSIGNMENT_MINING:
+			return maxi(MINIMUM_PRODUCTION, 4 + int(disciple.talent / 30.0) + _get_daily_variation(-1, 1))
+		ASSIGNMENT_HERB:
+			return maxi(MINIMUM_PRODUCTION, 4 + int(disciple.talent / 25.0) + _get_daily_variation(-1, 2))
+	return 0
 
 
 # 只生成每日行动计划，不在此阶段修改资源或弟子状态。
@@ -124,17 +149,17 @@ func prepare_daily_actions(sect_id: String) -> Array[Dictionary]:
 					action["at_bottleneck"] = true
 					action["message"] = "已达修炼瓶颈，等待突破。"
 				else:
-					action["cultivation_gain"] = CULTIVATION_BASE_GAIN + int(disciple.talent / 25.0)
+					action["cultivation_gain"] = get_daily_cultivation_gain(disciple)
 					action["cost"]["spirit_stone"] = EconomyManager.DAILY_CULTIVATION_COST_PER_DISCIPLE
 					action["message"] = "等待分配修炼灵石。"
 			ASSIGNMENT_FARM:
-				_set_production(action, "food", 8 + int(disciple.talent / 20.0) + _get_daily_variation(-1, 2))
+				_set_production(action, "food", get_daily_production_amount(disciple, assignment))
 			ASSIGNMENT_LOGGING:
-				_set_production(action, "wood", 6 + int(disciple.potential / 25.0) + _get_daily_variation(-1, 2))
+				_set_production(action, "wood", get_daily_production_amount(disciple, assignment))
 			ASSIGNMENT_MINING:
-				_set_production(action, "ore", 4 + int(disciple.talent / 30.0) + _get_daily_variation(-1, 1))
+				_set_production(action, "ore", get_daily_production_amount(disciple, assignment))
 			ASSIGNMENT_HERB:
-				_set_production(action, "herb", 4 + int(disciple.talent / 25.0) + _get_daily_variation(-1, 2))
+				_set_production(action, "herb", get_daily_production_amount(disciple, assignment))
 		actions.append(action)
 	return actions
 
@@ -164,7 +189,15 @@ func apply_daily_results(results: Array[Dictionary]) -> void:
 			result["message"] = "修为达到上限，已进入突破瓶颈。"
 		disciple.health = clampi(disciple.health + int(result.get("health_change", 0)), 0, 100)
 		disciple.combat_power = maxi(10, disciple.combat_power + actual_gain)
-		sync_disciple_state(disciple)
+		WorldDataManager.update_disciple_fields(disciple.id, {
+			"realm_id": disciple.realm_id,
+			"realm": disciple.realm,
+			"cultivation": disciple.cultivation,
+			"spiritual_power": disciple.cultivation,
+			"at_bottleneck": disciple.at_bottleneck,
+			"health": disciple.health,
+			"combat_power": disciple.combat_power,
+		})
 
 
 func load_from_world_data() -> void:
@@ -206,6 +239,10 @@ func load_from_world_data() -> void:
 		))
 		disciple.breakthrough_history.assign(world_disciple.get("breakthrough_history", []))
 		disciples.append(disciple)
+		_disciple_by_id[disciple.id] = disciple
+		if not _disciples_by_sect.has(disciple.sect_id):
+			_disciples_by_sect[disciple.sect_id] = []
+		_disciples_by_sect[disciple.sect_id].append(disciple)
 		sync_disciple_state(disciple)
 	_update_next_disciple_number()
 
@@ -280,16 +317,14 @@ func _get_daily_variation(min_value: int, max_value: int) -> int:
 func sync_disciple_state(disciple: DiscipleData) -> void:
 	if disciple == null:
 		return
-	WorldDataManager.update_disciple_data(disciple.id, "realm_id", disciple.realm_id)
-	WorldDataManager.update_disciple_data(disciple.id, "realm", disciple.realm)
-	WorldDataManager.update_disciple_data(disciple.id, "cultivation", disciple.cultivation)
-	WorldDataManager.update_disciple_data(disciple.id, "spiritual_power", disciple.cultivation)
-	WorldDataManager.update_disciple_data(disciple.id, "at_bottleneck", disciple.at_bottleneck)
-	WorldDataManager.update_disciple_data(disciple.id, "health", disciple.health)
-	WorldDataManager.update_disciple_data(disciple.id, "loyalty", disciple.loyalty)
-	WorldDataManager.update_disciple_data(disciple.id, "combat_power", disciple.combat_power)
-	WorldDataManager.update_disciple_data(
-		disciple.id,
-		"breakthrough_history",
-		disciple.breakthrough_history.duplicate(true)
-	)
+	WorldDataManager.update_disciple_fields(disciple.id, {
+		"realm_id": disciple.realm_id,
+		"realm": disciple.realm,
+		"cultivation": disciple.cultivation,
+		"spiritual_power": disciple.cultivation,
+		"at_bottleneck": disciple.at_bottleneck,
+		"health": disciple.health,
+		"loyalty": disciple.loyalty,
+		"combat_power": disciple.combat_power,
+		"breakthrough_history": disciple.breakthrough_history.duplicate(true),
+	})

@@ -209,6 +209,7 @@ func _refresh_daily_report(report: Dictionary) -> void:
 	var warning_text: String = "无"
 	var warnings: Array = report.get("warnings", [])
 	var new_events: Array = report.get("events", [])
+	var ai_summary: Dictionary = report.get("ai_summary", {})
 	if not warnings.is_empty():
 		warning_text = "；".join(PackedStringArray(warnings))
 	settlement_result_label.text = "\n".join(PackedStringArray([
@@ -220,6 +221,11 @@ func _refresh_daily_report(report: Dictionary) -> void:
 		"修炼成功：%d人；修炼失败：%d人" % [cultivation_success, cultivation_failed],
 		"修为增长：%d；瓶颈弟子：%d人" % [cultivation_gain, bottleneck_count],
 		"新触发事件：%d件" % new_events.size(),
+		"AI世界：%d宗门，%d弟子，耗时%d毫秒" % [
+			int(ai_summary.get("sects_updated", 0)),
+			int(ai_summary.get("disciples_updated", 0)),
+			int(ai_summary.get("duration_ms", 0)),
+		],
 		"警告：" + warning_text,
 	]))
 

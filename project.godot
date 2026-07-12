@@ -25,6 +25,7 @@ EconomyManager="*res://scripts/managers/EconomyManager.gd"
 GameHistoryManager="*res://scripts/managers/GameHistoryManager.gd"
 BreakthroughManager="*res://scripts/managers/BreakthroughManager.gd"
 EventManager="*res://scripts/managers/EventManager.gd"
+AISimulationManager="*res://scripts/managers/AISimulationManager.gd"
 GameState="*res://scripts/core/GameState.gd"
 
 [display]

@@ -19,6 +19,26 @@ func create_player_sect() -> SectData:
 	return player_sect
 
 
+func create_sect(sect_id: String) -> SectData:
+	if sects.has(sect_id):
+		return sects[sect_id] as SectData
+	var world_sect: Dictionary = WorldDataManager.get_sect_by_id(sect_id)
+	if world_sect.is_empty():
+		push_warning("SectManager：未找到宗门数据：" + sect_id)
+		return null
+	var sect := SectData.new()
+	sect.setup_from_world_data(world_sect)
+	sects[sect.id] = sect
+	return sect
+
+
+func get_all_runtime_sects() -> Array[SectData]:
+	var result: Array[SectData] = []
+	for sect in sects.values():
+		result.append(sect as SectData)
+	return result
+
+
 func get_sect(sect_id: String) -> SectData:
 	return sects.get(sect_id) as SectData
 

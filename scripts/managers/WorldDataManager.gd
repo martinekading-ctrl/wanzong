@@ -29,6 +29,12 @@ var triggered_event_ids: Array[String] = []
 
 var history_entries: Array[Dictionary] = []
 
+var ai_states: Dictionary = {}
+
+var _sect_index_by_id: Dictionary = {}
+var _disciple_index_by_id: Dictionary = {}
+var _disciple_indexes_by_sect: Dictionary = {}
+
 var is_initialized: bool = false
 
 
@@ -90,6 +96,7 @@ func init_world_data() -> void:
 			[], [], "雄踞群山并与灵兽共修，是实力深厚的古老宗门。"
 		),
 	]
+	_rebuild_runtime_indexes()
 
 	resources = [
 		{"resource_id": 1, "resource_name": "灵矿", "resource_type": "spirit_mine", "position": Vector2(350, 450), "level": 1, "amount": 1200, "owner_sect_id": 0},
@@ -144,6 +151,7 @@ func init_world_data() -> void:
 		_create_disciple_data("disciple_012", "sect_001", "叶寒", "男", 17, "凡人", "杂灵根", "下品", 61, 90, 83, "空闲", 90, "正常", "刚入宗不久，灵根驳杂但意志坚韧。", {"role": "外门弟子", "appearance_id": "male_disciple_01", "portrait_id": "portrait_male_01", "model_id": "model_male_01", "battle_model_id": "battle_male_01", "color_scheme": "outer_gray", "tags": ["稳重"], "battle_position": "middle", "weapon_type": "拳掌", "hp": 160, "max_hp": 160, "attack": 22, "defense": 24, "speed": 44, "spiritual_power": 20}),
 	]
 	update_sect_data("sect_001", "disciple_count", disciples.size())
+	_initialize_ai_simulation_data()
 
 	sect_resources = {
 		"sect_001": _create_sect_resource_data(1000, 5000, 300, 200, 50, 20, 500),
@@ -160,6 +168,7 @@ func init_world_data() -> void:
 	event_instances = []
 	triggered_event_ids = []
 	history_entries = []
+	_rebuild_runtime_indexes()
 
 	is_initialized = true
 
@@ -174,6 +183,10 @@ func reset_world_data() -> void:
 	event_instances.clear()
 	triggered_event_ids.clear()
 	history_entries.clear()
+	ai_states.clear()
+	_sect_index_by_id.clear()
+	_disciple_index_by_id.clear()
+	_disciple_indexes_by_sect.clear()
 	init_world_data()
 
 
@@ -298,6 +311,120 @@ func _create_disciple_data(
 	}
 
 
+func _initialize_ai_simulation_data() -> void:
+	ai_states.clear()
+	var realm_names: Array[String] = [
+		"炼气一层", "炼气二层", "炼气三层", "炼气四层", "炼气五层", "炼气六层"
+	]
+	var assignments: Array[String] = ["灵田", "灵田", "伐木", "采矿", "采药", "修炼", "修炼", "空闲"]
+	var spiritual_roots: Array[String] = ["金灵根", "木灵根", "水灵根", "火灵根", "土灵根", "杂灵根"]
+	for sect_data in sects:
+		if bool(sect_data.get("is_player", false)):
+			continue
+		var sect_id: String = str(sect_data["sect_id"])
+		var sect_number: int = sect_id.trim_prefix("sect_").to_int()
+		var target_count: int = int(sect_data.get("disciple_count", 0))
+		var max_realm_layer: int = clampi(2 + int(sect_data.get("combat_power", 0)) / 1800, 2, 6)
+		for disciple_index in range(target_count):
+			var realm_layer: int = 1 + ((disciple_index + sect_number) % max_realm_layer)
+			var talent: int = 35 + ((disciple_index * 7 + sect_number * 5) % 56)
+			var potential: int = 35 + ((disciple_index * 11 + sect_number * 3) % 56)
+			var cultivation_value: int = 10 + ((disciple_index * 13 + sect_number) % 40)
+			var gender: String = "男" if disciple_index % 2 == 0 else "女"
+			var disciple_name: String = "%s弟子%03d" % [str(sect_data["sect_name"]), disciple_index + 1]
+			disciples.append(_create_disciple_data(
+				"ai_disciple_%03d_%04d" % [sect_number, disciple_index + 1],
+				sect_id,
+				disciple_name,
+				gender,
+				16 + ((disciple_index + sect_number) % 35),
+				realm_names[realm_layer - 1],
+				spiritual_roots[(disciple_index + sect_number) % spiritual_roots.size()],
+				"上品" if potential >= 75 else ("中品" if potential >= 45 else "下品"),
+				talent,
+				45 + ((disciple_index * 3 + sect_number) % 51),
+				50 + ((disciple_index * 5 + sect_number) % 46),
+				assignments[(disciple_index + sect_number) % assignments.size()],
+				80 + realm_layer * 45 + int((talent + potential) / 4.0),
+				"正常",
+				"由AI宗门模拟系统维护的宗门弟子。",
+				{
+					"role": "内门弟子" if realm_layer >= 4 else "外门弟子",
+					"spiritual_power": cultivation_value,
+					"hp": 120 + realm_layer * 35,
+					"max_hp": 120 + realm_layer * 35,
+					"attack": 20 + realm_layer * 12,
+					"defense": 18 + realm_layer * 10,
+					"speed": 35 + realm_layer * 4,
+					"tags": ["AI模拟"],
+				}
+			))
+		ai_states[sect_id] = {
+			"sect_id": sect_id,
+			"personality": _get_ai_personality(str(sect_data.get("sect_type", "orthodox"))),
+			"current_goal": "stability",
+			"status": "active",
+			"development_points": 0,
+			"monthly_cycle_count": 0,
+			"resource_shortage_days": 0,
+			"power_trend": 0,
+			"influence": maxi(1, int(sect_data.get("combat_power", 0)) / 100),
+			"buildings": {},
+			"relations": {},
+			"last_update_date": {},
+		}
+
+
+func _get_ai_personality(sect_type: String) -> String:
+	return str({
+		"sword": "aggressive",
+		"alchemy": "mercantile",
+		"demonic": "ruthless",
+		"buddhist": "cautious",
+		"snow": "isolationist",
+		"desert": "opportunistic",
+		"ocean": "mercantile",
+	}.get(sect_type, "balanced"))
+
+
+func _rebuild_runtime_indexes() -> void:
+	_sect_index_by_id.clear()
+	_disciple_index_by_id.clear()
+	_disciple_indexes_by_sect.clear()
+	for sect_index in range(sects.size()):
+		_sect_index_by_id[str(sects[sect_index].get("sect_id", ""))] = sect_index
+	for disciple_index in range(disciples.size()):
+		var disciple_id: String = str(disciples[disciple_index].get("disciple_id", ""))
+		var sect_id: String = str(disciples[disciple_index].get("sect_id", ""))
+		_disciple_index_by_id[disciple_id] = disciple_index
+		if not _disciple_indexes_by_sect.has(sect_id):
+			_disciple_indexes_by_sect[sect_id] = []
+		_disciple_indexes_by_sect[sect_id].append(disciple_index)
+
+
+func add_disciple_data(disciple_data: Dictionary) -> bool:
+	var disciple_id: String = str(disciple_data.get("disciple_id", ""))
+	if disciple_id == "" or _disciple_index_by_id.has(disciple_id):
+		push_warning("新增弟子数据失败，ID为空或重复：" + disciple_id)
+		return false
+	disciples.append(disciple_data)
+	var disciple_index: int = disciples.size() - 1
+	_disciple_index_by_id[disciple_id] = disciple_index
+	var sect_id: String = str(disciple_data.get("sect_id", ""))
+	if not _disciple_indexes_by_sect.has(sect_id):
+		_disciple_indexes_by_sect[sect_id] = []
+	_disciple_indexes_by_sect[sect_id].append(disciple_index)
+	return true
+
+
+func remove_disciple_data(disciple_id: String) -> bool:
+	if not _disciple_index_by_id.has(disciple_id):
+		return false
+	disciples.remove_at(int(_disciple_index_by_id[disciple_id]))
+	_rebuild_runtime_indexes()
+	return true
+
+
 # 获取全部宗门数据。
 func get_all_sects() -> Array:
 	return sects
@@ -319,10 +446,8 @@ func get_all_disciples() -> Array:
 
 # 根据字符串宗门 ID 查找宗门数据。
 func get_sect_by_id(sect_id: String) -> Dictionary:
-	for sect_data in sects:
-		if str(sect_data["sect_id"]) == sect_id:
-			return sect_data
-
+	if _sect_index_by_id.has(sect_id):
+		return sects[int(_sect_index_by_id[sect_id])]
 	return {}
 
 
@@ -332,11 +457,9 @@ func update_sect_data(sect_id: String, key: String, value: Variant) -> bool:
 		push_warning("经济资源只能通过 update_sect_resource() 更新：" + key)
 		return false
 
-	for sect_index in range(sects.size()):
+	if _sect_index_by_id.has(sect_id):
+		var sect_index: int = int(_sect_index_by_id[sect_id])
 		var sect_data: Dictionary = sects[sect_index]
-		if str(sect_data["sect_id"]) != sect_id:
-			continue
-
 		sect_data[key] = value
 		if key == "location":
 			sect_data["position"] = value
@@ -390,9 +513,8 @@ func get_ai_sects() -> Array:
 
 func get_disciples_by_sect_id(sect_id: String) -> Array:
 	var result: Array = []
-	for disciple_data in disciples:
-		if str(disciple_data["sect_id"]) == sect_id:
-			result.append(disciple_data)
+	for disciple_index in _disciple_indexes_by_sect.get(sect_id, []):
+		result.append(disciples[int(disciple_index)])
 	return result
 
 
@@ -404,19 +526,21 @@ func get_player_disciples() -> Array:
 
 
 func get_disciple_by_id(disciple_id: String) -> Dictionary:
-	for disciple_data in disciples:
-		if str(disciple_data["disciple_id"]) == disciple_id:
-			return disciple_data
+	if _disciple_index_by_id.has(disciple_id):
+		return disciples[int(_disciple_index_by_id[disciple_id])]
 	return {}
 
 
 func update_disciple_data(disciple_id: String, key: String, value: Variant) -> bool:
-	for disciple_index in range(disciples.size()):
-		var disciple_data: Dictionary = disciples[disciple_index]
-		if str(disciple_data["disciple_id"]) != disciple_id:
-			continue
+	return update_disciple_fields(disciple_id, {key: value})
 
-		disciple_data[key] = value
+
+func update_disciple_fields(disciple_id: String, values: Dictionary) -> bool:
+	if _disciple_index_by_id.has(disciple_id):
+		var disciple_index: int = int(_disciple_index_by_id[disciple_id])
+		var disciple_data: Dictionary = disciples[disciple_index]
+		for key in values:
+			disciple_data[key] = values[key]
 		disciples[disciple_index] = disciple_data
 		return true
 

@@ -42,19 +42,27 @@ func daily_update(sect: SectData, daily_actions: Array[Dictionary]) -> Dictionar
 
 func _apply_production(sect: SectData, daily_actions: Array[Dictionary]) -> Dictionary:
 	var production: Dictionary = {}
+	var actions_by_resource: Dictionary = {}
 	for action in daily_actions:
 		var resource_type: String = str(action.get("resource_type", ""))
 		var amount: int = int(action.get("resource_amount", 0))
 		if resource_type == "" or amount <= 0:
 			continue
-		var before_amount: int = sect.resources.get_amount(resource_type)
-		if not sect.add_resource(resource_type, amount):
-			action["success"] = false
-			action["message"] = "资源产出写入失败。"
+		production[resource_type] = int(production.get(resource_type, 0)) + amount
+		if not actions_by_resource.has(resource_type):
+			actions_by_resource[resource_type] = []
+		actions_by_resource[resource_type].append(action)
+	var failed_resources := PackedStringArray()
+	for resource_type in production:
+		if sect.add_resource(str(resource_type), int(production[resource_type])):
 			continue
-		var actual_amount: int = sect.resources.get_amount(resource_type) - before_amount
-		action["resource_amount"] = actual_amount
-		production[resource_type] = int(production.get(resource_type, 0)) + actual_amount
+		for action in actions_by_resource[resource_type]:
+			action["success"] = false
+			action["resource_amount"] = 0
+			action["message"] = "资源产出写入失败。"
+		failed_resources.append(str(resource_type))
+	for resource_type in failed_resources:
+		production.erase(resource_type)
 	return production
 
 
@@ -87,7 +95,7 @@ func _settle_cultivation(
 	warnings: Array[String]
 ) -> Dictionary:
 	var cultivation_count: int = 0
-	var paid: int = 0
+	var eligible_actions: Array[Dictionary] = []
 	var failed_count: int = 0
 	for action in daily_actions:
 		if str(action.get("assignment", "")) != DiscipleManager.ASSIGNMENT_CULTIVATE:
@@ -97,11 +105,19 @@ func _settle_cultivation(
 			action["cost"]["spirit_stone"] = 0
 			continue
 		cultivation_count += 1
-		if sect.resources.has_enough("spirit_stone", DAILY_CULTIVATION_COST_PER_DISCIPLE):
-			sect.consume_resource("spirit_stone", DAILY_CULTIVATION_COST_PER_DISCIPLE)
+		eligible_actions.append(action)
+	var affordable_count: int = mini(
+		cultivation_count,
+		int(sect.resources.get_amount("spirit_stone") / DAILY_CULTIVATION_COST_PER_DISCIPLE)
+	)
+	var paid: int = affordable_count * DAILY_CULTIVATION_COST_PER_DISCIPLE
+	if paid > 0:
+		sect.consume_resource("spirit_stone", paid)
+	for index in range(eligible_actions.size()):
+		var action: Dictionary = eligible_actions[index]
+		if index < affordable_count:
 			action["cost"]["spirit_stone"] = DAILY_CULTIVATION_COST_PER_DISCIPLE
 			action["message"] = "修炼完成。"
-			paid += DAILY_CULTIVATION_COST_PER_DISCIPLE
 		else:
 			action["cost"]["spirit_stone"] = 0
 			action["cultivation_gain"] = 0
