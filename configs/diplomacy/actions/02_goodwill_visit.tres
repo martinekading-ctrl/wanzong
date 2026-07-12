@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="DiplomaticActionDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/data/DiplomaticActionDefinition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "goodwill_visit"
+display_name = "友好拜访"
+description = "派遣使者拜访对方宗门，增进相互了解。"
+actor_costs = {"food": 30, "spirit_stone": 20}
+relation_delta = 6
+trust_delta = 8
+tension_delta = -3
+base_acceptance = 0.9
+cooldown_days = 20
+

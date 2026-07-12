@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="DiplomaticActionDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/data/DiplomaticActionDefinition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "fair_trade"
+display_name = "互通有无"
+description = "以粮食交换对方的灵石，建立基础贸易互信。"
+actor_costs = {"food": 60}
+target_costs = {"spirit_stone": 25}
+actor_costs_to_target = true
+target_costs_to_actor = true
+relation_delta = 4
+trust_delta = 4
+tension_delta = -2
+base_acceptance = 0.75
+minimum_relation = -40
+cooldown_days = 10
+

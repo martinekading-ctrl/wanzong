@@ -36,6 +36,7 @@ func new_game() -> void:
 	SecretRealmManager.initialize_world_state()
 	ResourceSiteManager.initialize_world_state()
 	TerritoryManager.initialize_world_state()
+	DiplomacyManager.initialize_world_state()
 
 
 func random_int(minimum: int, maximum: int) -> int:
@@ -62,6 +63,7 @@ func next_day() -> Dictionary:
 	var mission_summary: Dictionary = MissionManager.daily_update(date_before)
 	var resource_site_summary: Dictionary = ResourceSiteManager.daily_update(date_before)
 	var territory_summary: Dictionary = TerritoryManager.daily_update(date_before)
+	var diplomacy_summary: Dictionary = DiplomacyManager.daily_update(date_before)
 	var event_results: Array[Dictionary] = EventManager.daily_update({
 		"sect_id": player_sect.id,
 		"date": date_before,
@@ -81,6 +83,7 @@ func next_day() -> Dictionary:
 		"missions": mission_summary,
 		"resource_sites": resource_site_summary,
 		"territories": territory_summary,
+		"diplomacy": diplomacy_summary,
 		"events": event_results,
 		"warnings": economy_result.get("warnings", []),
 	}

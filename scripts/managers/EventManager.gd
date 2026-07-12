@@ -170,8 +170,9 @@ func _evaluate_trigger(definition: EventDefinition, context: Dictionary) -> Dict
 		"disciple_state":
 			return _evaluate_disciple_trigger(trigger, context)
 		"sect_relation":
-			var sect: Dictionary = WorldDataManager.get_sect_by_id(str(trigger.get("sect_id", "")))
-			return {"matched": str(sect.get("relation_to_player", "")) == str(trigger.get("relation", "")), "context": {"entity_id": str(sect.get("sect_id", ""))}}
+			var target_id: String = str(trigger.get("sect_id", ""))
+			var relation: Dictionary = DiplomacyManager.get_relation("sect_001", target_id)
+			return {"matched": str(relation.get("status", "")) == str(trigger.get("relation", "")), "context": {"entity_id": target_id, "relation_value": int(relation.get("value", 0))}}
 		"mission_result":
 			var mission: Dictionary = context.get("mission_result", {})
 			var mission_context: Dictionary = mission.duplicate(true)

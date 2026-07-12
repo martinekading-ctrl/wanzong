@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="DiplomaticActionDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/data/DiplomaticActionDefinition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "small_gift"
+display_name = "赠送薄礼"
+description = "赠送少量灵石表达善意。"
+actor_costs = {"spirit_stone": 50}
+actor_costs_to_target = true
+relation_delta = 10
+trust_delta = 5
+tension_delta = -5
+base_acceptance = 1.0
+cooldown_days = 15
+

@@ -487,11 +487,8 @@ func _perform_strategic_action(sect_id: String, state: Dictionary) -> Dictionary
 			state["influence"] = int(state.get("influence", 1)) + 1
 			return {"type": "expand", "success": true, "costs": costs, "territory_after": territory_after}
 	if goal == "diplomacy":
-		var relations: Dictionary = state.get("relations", {})
-		var player_relation: int = clampi(int(relations.get("sect_001", 0)) + 2, -100, 100)
-		relations["sect_001"] = player_relation
-		state["relations"] = relations
-		return {"type": "improve_relation", "success": true, "target": "sect_001", "value": player_relation}
+		var relation_result: Dictionary = DiplomacyManager.change_relation_value(sect_id, "sect_001", 2, "AI月度外交", _current_date())
+		return {"type": "improve_relation", "success": bool(relation_result.get("success", false)), "target": "sect_001", "value": relation_result.get("relation", {}).get("value", 0)}
 	return {"type": goal, "success": true}
 
 
@@ -506,6 +503,10 @@ func _evaluate_world_status(sect_id: String, state: Dictionary) -> String:
 	if int(state.get("power_trend", 0)) > 0 and int(resources.get("food", 0)) > 1000 and int(resources.get("spirit_stone", 0)) > 500:
 		return "rising"
 	return "active"
+
+
+func _current_date() -> Dictionary:
+	return {"year": GameState.year, "month": GameState.month, "day": GameState.day}
 
 
 func _record_status_change(sect_id: String, before: String, after: String, date: Dictionary) -> void:

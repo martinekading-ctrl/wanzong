@@ -30,6 +30,7 @@ const SORT_OPTIONS: Array[String] = ["默认", "境界", "战力", "忠诚", "�
 @onready var history_button: Button = $MarginContainer/RootBox/FunctionPanel/FunctionBox/ButtonBar/HistoryButton
 @onready var save_load_button: Button = $MarginContainer/RootBox/FunctionPanel/FunctionBox/ButtonBar/SaveLoadButton
 @onready var mission_button: Button = $MarginContainer/RootBox/FunctionPanel/FunctionBox/ButtonBar/MissionButton
+@onready var diplomacy_button: Button = $MarginContainer/RootBox/FunctionPanel/FunctionBox/ButtonBar/DiplomacyButton
 @onready var pending_event_panel: PanelContainer = $MarginContainer/RootBox/FunctionPanel/FunctionBox/PendingEventPanel
 @onready var event_title_label: Label = $MarginContainer/RootBox/FunctionPanel/FunctionBox/PendingEventPanel/EventBox/EventTitleLabel
 @onready var event_description_label: Label = $MarginContainer/RootBox/FunctionPanel/FunctionBox/PendingEventPanel/EventBox/EventDescriptionLabel
@@ -77,6 +78,13 @@ const SORT_OPTIONS: Array[String] = ["默认", "境界", "战力", "忠诚", "�
 @onready var resource_site_disciple_list: VBoxContainer = $MarginContainer/RootBox/FunctionPanel/FunctionBox/ResourceSiteSection/Body/DisciplePanel/DiscipleScroll/DiscipleList
 @onready var owned_resource_site_list: VBoxContainer = $MarginContainer/RootBox/FunctionPanel/FunctionBox/ResourceSiteSection/Body/OwnedPanel/OwnedScroll/OwnedList
 @onready var resource_site_result_label: Label = $MarginContainer/RootBox/FunctionPanel/FunctionBox/ResourceSiteSection/ResultLabel
+@onready var diplomacy_section: VBoxContainer = $MarginContainer/RootBox/FunctionPanel/FunctionBox/DiplomacySection
+@onready var diplomacy_target_option: OptionButton = $MarginContainer/RootBox/FunctionPanel/FunctionBox/DiplomacySection/ControlBox/TargetOption
+@onready var diplomacy_action_option: OptionButton = $MarginContainer/RootBox/FunctionPanel/FunctionBox/DiplomacySection/ControlBox/ActionOption
+@onready var diplomacy_execute_button: Button = $MarginContainer/RootBox/FunctionPanel/FunctionBox/DiplomacySection/ControlBox/ExecuteButton
+@onready var diplomacy_relation_info_label: Label = $MarginContainer/RootBox/FunctionPanel/FunctionBox/DiplomacySection/RelationInfoLabel
+@onready var diplomacy_relation_list: VBoxContainer = $MarginContainer/RootBox/FunctionPanel/FunctionBox/DiplomacySection/RelationScroll/RelationList
+@onready var diplomacy_result_label: Label = $MarginContainer/RootBox/FunctionPanel/FunctionBox/DiplomacySection/ResultLabel
 @onready var disciple_section: VBoxContainer = $MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleSection
 @onready var search_line_edit: LineEdit = $MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleSection/DiscipleTopBar/SearchLineEdit
 @onready var assignment_filter_option: OptionButton = $MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleSection/DiscipleTopBar/AssignmentFilterOption
@@ -106,6 +114,8 @@ var mission_definition_ids: Array[String] = []
 var secret_realm_ids: Array[String] = []
 var resource_site_ids: Array[int] = []
 var selected_resource_disciple_ids: Array[String] = []
+var diplomacy_target_ids: Array[String] = []
+var diplomacy_action_ids: Array[String] = []
 
 
 func _ready() -> void:
@@ -117,6 +127,7 @@ func _ready() -> void:
 	history_button.pressed.connect(_on_history_button_pressed)
 	save_load_button.pressed.connect(_on_save_load_button_pressed)
 	mission_button.pressed.connect(_on_mission_button_pressed)
+	diplomacy_button.pressed.connect(_on_diplomacy_button_pressed)
 	start_mission_button.pressed.connect(_on_start_mission_pressed)
 	mission_option.item_selected.connect(_on_mission_option_selected)
 	resource_site_option.item_selected.connect(_on_resource_site_selected)
@@ -124,6 +135,9 @@ func _ready() -> void:
 	resource_site_negotiate_button.pressed.connect(_on_resource_site_capture.bind("negotiate"))
 	resource_site_assign_button.pressed.connect(_on_resource_site_assign_garrison)
 	resource_site_withdraw_button.pressed.connect(_on_resource_site_withdraw_garrison)
+	diplomacy_target_option.item_selected.connect(_on_diplomacy_selection_changed)
+	diplomacy_action_option.item_selected.connect(_on_diplomacy_selection_changed)
+	diplomacy_execute_button.pressed.connect(_on_diplomacy_execute_pressed)
 	manual_slot_1_save.pressed.connect(_on_manual_save_pressed.bind(1))
 	manual_slot_1_load.pressed.connect(_on_manual_load_pressed.bind(1))
 	manual_slot_2_save.pressed.connect(_on_manual_save_pressed.bind(2))
@@ -296,6 +310,8 @@ func _refresh_all(report: Dictionary = GameState.last_daily_report) -> void:
 		_refresh_mission_section()
 	if resource_site_section.visible:
 		_refresh_resource_site_section()
+	if diplomacy_section.visible:
+		_refresh_diplomacy_section()
 
 
 func _refresh_date_label() -> void:
@@ -334,6 +350,7 @@ func _refresh_daily_report(report: Dictionary) -> void:
 	var mission_summary: Dictionary = report.get("missions", {})
 	var resource_site_summary: Dictionary = report.get("resource_sites", {})
 	var territory_summary: Dictionary = report.get("territories", {})
+	var diplomacy_summary: Dictionary = report.get("diplomacy", {})
 	if not warnings.is_empty():
 		warning_text = "；".join(PackedStringArray(warnings))
 	settlement_result_label.text = "\n".join(PackedStringArray([
@@ -366,6 +383,7 @@ func _refresh_daily_report(report: Dictionary) -> void:
 			int(territory_summary.get("sect_count", 0)),
 			int(territory_summary.get("contested_points", 0)),
 		],
+		"外交关系：%d组" % int(diplomacy_summary.get("relation_count", 0)),
 		"警告：" + warning_text,
 	]))
 
@@ -433,6 +451,7 @@ func _on_disciple_button_pressed() -> void:
 	building_section.visible = false
 	mission_section.visible = false
 	resource_site_section.visible = false
+	diplomacy_section.visible = false
 	disciple_section.visible = true
 	_refresh_disciple_roster()
 
@@ -444,6 +463,7 @@ func _on_building_button_pressed() -> void:
 	save_load_section.visible = false
 	mission_section.visible = false
 	resource_site_section.visible = false
+	diplomacy_section.visible = false
 	building_section.visible = true
 	building_result_label.text = ""
 	_refresh_building_section()
@@ -457,6 +477,7 @@ func _on_resource_button_pressed() -> void:
 	save_load_section.visible = false
 	building_section.visible = false
 	mission_section.visible = false
+	diplomacy_section.visible = false
 	resource_site_section.visible = true
 	resource_site_result_label.text = ""
 	_refresh_resource_site_section()
@@ -471,6 +492,7 @@ func _show_placeholder(message: String) -> void:
 	building_section.visible = false
 	mission_section.visible = false
 	resource_site_section.visible = false
+	diplomacy_section.visible = false
 
 
 func _on_history_button_pressed() -> void:
@@ -480,6 +502,7 @@ func _on_history_button_pressed() -> void:
 	building_section.visible = false
 	mission_section.visible = false
 	resource_site_section.visible = false
+	diplomacy_section.visible = false
 	history_section.visible = true
 	_refresh_history_list()
 
@@ -515,6 +538,7 @@ func _on_mission_button_pressed() -> void:
 	save_load_section.visible = false
 	building_section.visible = false
 	resource_site_section.visible = false
+	diplomacy_section.visible = false
 	mission_section.visible = true
 	mission_result_label.text = ""
 	_refresh_mission_section()
@@ -756,6 +780,105 @@ func _resource_site_status_text(status: String) -> String:
 	}.get(status, status)
 
 
+func _on_diplomacy_button_pressed() -> void:
+	placeholder_label.visible = false
+	disciple_section.visible = false
+	history_section.visible = false
+	save_load_section.visible = false
+	building_section.visible = false
+	mission_section.visible = false
+	resource_site_section.visible = false
+	diplomacy_section.visible = true
+	diplomacy_result_label.text = ""
+	_setup_diplomacy_options()
+	_refresh_diplomacy_section()
+
+
+func _setup_diplomacy_options() -> void:
+	var previous_target: String = _get_selected_diplomacy_target()
+	diplomacy_target_option.clear()
+	diplomacy_target_ids.clear()
+	for sect in WorldDataManager.get_ai_sects():
+		var sect_id: String = str(sect.get("sect_id", ""))
+		diplomacy_target_ids.append(sect_id)
+		diplomacy_target_option.add_item(str(sect.get("sect_name", sect_id)))
+	if previous_target in diplomacy_target_ids:
+		diplomacy_target_option.select(diplomacy_target_ids.find(previous_target))
+	else:
+		diplomacy_target_option.select(0)
+	diplomacy_action_option.clear()
+	diplomacy_action_ids.clear()
+	for definition in DiplomaticActionRegistry.get_all():
+		diplomacy_action_ids.append(definition.id)
+		diplomacy_action_option.add_item(definition.display_name)
+	diplomacy_action_option.select(0)
+
+
+func _refresh_diplomacy_section() -> void:
+	_clear_dynamic_children(diplomacy_relation_list)
+	var target_id: String = _get_selected_diplomacy_target()
+	var relation: Dictionary = DiplomacyManager.get_relation("sect_001", target_id)
+	var definition: DiplomaticActionDefinition = _get_selected_diplomacy_action()
+	var acceptance: float = DiplomacyManager.calculate_acceptance("sect_001", target_id, definition) if definition != null and not relation.is_empty() else 0.0
+	diplomacy_relation_info_label.text = "当前目标：%s｜关系值%d｜状态%s｜信任%d｜紧张%d｜行动预计接受率%.1f%%" % [
+		str(WorldDataManager.get_sect_by_id(target_id).get("sect_name", target_id)),
+		int(relation.get("value", 0)),
+		_diplomacy_status_text(str(relation.get("status", "neutral"))),
+		int(relation.get("trust", 0)),
+		int(relation.get("tension", 0)),
+		acceptance * 100.0,
+	]
+	for relation_view in DiplomacyManager.get_relations_for_sect("sect_001"):
+		var other_id: String = str(relation_view.get("other_sect_id", ""))
+		var label := Label.new()
+		label.text = "%s｜%s｜关系%d｜信任%d｜紧张%d" % [
+			str(WorldDataManager.get_sect_by_id(other_id).get("sect_name", other_id)),
+			_diplomacy_status_text(str(relation_view.get("status", "neutral"))),
+			int(relation_view.get("value", 0)),
+			int(relation_view.get("trust", 0)),
+			int(relation_view.get("tension", 0)),
+		]
+		diplomacy_relation_list.add_child(label)
+
+
+func _on_diplomacy_selection_changed(_index: int) -> void:
+	if diplomacy_section.visible:
+		_refresh_diplomacy_section()
+
+
+func _on_diplomacy_execute_pressed() -> void:
+	var definition: DiplomaticActionDefinition = _get_selected_diplomacy_action()
+	if definition == null:
+		diplomacy_result_label.text = "请选择外交行动。"
+		return
+	var result: Dictionary = DiplomacyManager.perform_action("sect_001", _get_selected_diplomacy_target(), definition.id)
+	diplomacy_result_label.text = str(result.get("message", "外交行动执行失败。"))
+	_refresh_resource_panel()
+	_refresh_diplomacy_section()
+
+
+func _get_selected_diplomacy_target() -> String:
+	if diplomacy_target_option.selected < 0 or diplomacy_target_option.selected >= diplomacy_target_ids.size():
+		return ""
+	return diplomacy_target_ids[diplomacy_target_option.selected]
+
+
+func _get_selected_diplomacy_action() -> DiplomaticActionDefinition:
+	if diplomacy_action_option.selected < 0 or diplomacy_action_option.selected >= diplomacy_action_ids.size():
+		return null
+	return DiplomaticActionRegistry.get_by_id(diplomacy_action_ids[diplomacy_action_option.selected])
+
+
+func _diplomacy_status_text(status: String) -> String:
+	return {
+		"self": "自身",
+		"friendly": "友好",
+		"neutral": "中立",
+		"tense": "紧张",
+		"hostile": "敌对",
+	}.get(status, status)
+
+
 func _on_save_load_button_pressed() -> void:
 	placeholder_label.visible = false
 	disciple_section.visible = false
@@ -763,6 +886,7 @@ func _on_save_load_button_pressed() -> void:
 	building_section.visible = false
 	mission_section.visible = false
 	resource_site_section.visible = false
+	diplomacy_section.visible = false
 	save_load_section.visible = true
 	save_load_result_label.text = ""
 	_refresh_save_slots()

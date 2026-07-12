@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="DiplomaticActionDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/data/DiplomaticActionDefinition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "demand_tribute"
+display_name = "索取贡礼"
+description = "凭借宗门实力要求对方交出灵石。"
+target_costs = {"spirit_stone": 50}
+target_costs_to_actor = true
+relation_delta = -12
+trust_delta = -8
+tension_delta = 15
+base_acceptance = 0.2
+maximum_relation = 70
+cooldown_days = 30

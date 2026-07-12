@@ -203,6 +203,11 @@ custom_minimum_size = Vector2(160, 44)
 layout_mode = 2
 text = "任务"
 
+[node name="DiplomacyButton" type="Button" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/ButtonBar"]
+custom_minimum_size = Vector2(160, 44)
+layout_mode = 2
+text = "外交"
+
 [node name="PendingEventPanel" type="PanelContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox"]
 visible = false
 layout_mode = 2
@@ -529,6 +534,49 @@ layout_mode = 2
 size_flags_horizontal = 3
 
 [node name="ResultLabel" type="Label" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/ResourceSiteSection"]
+layout_mode = 2
+autowrap_mode = 3
+
+[node name="DiplomacySection" type="VBoxContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox"]
+visible = false
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 8
+
+[node name="Title" type="Label" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/DiplomacySection"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "宗门外交"
+
+[node name="ControlBox" type="HBoxContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/DiplomacySection"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="TargetOption" type="OptionButton" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/DiplomacySection/ControlBox"]
+custom_minimum_size = Vector2(220, 36)
+layout_mode = 2
+
+[node name="ActionOption" type="OptionButton" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/DiplomacySection/ControlBox"]
+custom_minimum_size = Vector2(220, 36)
+layout_mode = 2
+
+[node name="ExecuteButton" type="Button" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/DiplomacySection/ControlBox"]
+layout_mode = 2
+text = "执行外交行动"
+
+[node name="RelationInfoLabel" type="Label" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/DiplomacySection"]
+layout_mode = 2
+autowrap_mode = 3
+
+[node name="RelationScroll" type="ScrollContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/DiplomacySection"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="RelationList" type="VBoxContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/DiplomacySection/RelationScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ResultLabel" type="Label" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/DiplomacySection"]
 layout_mode = 2
 autowrap_mode = 3
 

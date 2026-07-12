@@ -32,6 +32,7 @@ MissionManager="*res://scripts/managers/MissionManager.gd"
 SecretRealmManager="*res://scripts/managers/SecretRealmManager.gd"
 ResourceSiteManager="*res://scripts/managers/ResourceSiteManager.gd"
 TerritoryManager="*res://scripts/managers/TerritoryManager.gd"
+DiplomacyManager="*res://scripts/managers/DiplomacyManager.gd"
 SaveManager="*res://scripts/core/SaveManager.gd"
 GameState="*res://scripts/core/GameState.gd"
 

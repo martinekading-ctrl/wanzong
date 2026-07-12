@@ -38,6 +38,7 @@ var battle_instances: Array[Dictionary] = []
 var expedition_teams: Array[Dictionary] = []
 var secret_realms: Array[Dictionary] = []
 var territory_states: Dictionary = {}
+var relations: Array[Dictionary] = []
 var game_settings: Dictionary = {}
 var ui_state: Dictionary = {}
 
@@ -206,6 +207,7 @@ func reset_world_data() -> void:
 	expedition_teams.clear()
 	secret_realms.clear()
 	territory_states.clear()
+	relations.clear()
 	game_settings.clear()
 	ui_state.clear()
 	_sect_index_by_id.clear()
@@ -501,6 +503,7 @@ func export_world_state() -> Dictionary:
 		"expedition_teams": expedition_teams.duplicate(true),
 		"secret_realms": secret_realms.duplicate(true),
 		"territory_states": territory_states.duplicate(true),
+		"relations": relations.duplicate(true),
 		"game_settings": game_settings.duplicate(true),
 		"ui_state": ui_state.duplicate(true),
 	}
@@ -525,6 +528,7 @@ func restore_world_state(state: Dictionary) -> bool:
 	expedition_teams.assign(state.get("expedition_teams", []))
 	secret_realms.assign(state.get("secret_realms", []))
 	territory_states = state.get("territory_states", {}).duplicate(true)
+	relations.assign(state.get("relations", []))
 	game_settings = state.get("game_settings", {}).duplicate(true)
 	ui_state = state.get("ui_state", {}).duplicate(true)
 	is_initialized = true
