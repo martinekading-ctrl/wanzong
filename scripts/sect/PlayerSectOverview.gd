@@ -1,5 +1,6 @@
 extends Control
 
+const ResourceCalculatorScript = preload("res://scripts/economy/ResourceCalculator.gd")
 const ASSIGNMENT_FILTERS: Array[String] = ["全部", "空闲", "修炼", "巡山", "采集", "闭关"]
 const DISCIPLE_ASSIGNMENTS: Array[String] = ["空闲", "修炼", "巡山", "采集", "闭关"]
 const SORT_OPTIONS: Array[String] = ["默认", "境界", "战力", "忠诚", "年龄"]
@@ -30,6 +31,8 @@ const REALM_ORDER: Dictionary = {
 @onready var resource_spirit_grass_label: Label = $MarginContainer/RootBox/ResourcePanel/ResourceBox/ResourceGrid/SpiritGrassLabel
 @onready var resource_spirit_ore_label: Label = $MarginContainer/RootBox/ResourcePanel/ResourceBox/ResourceGrid/SpiritOreLabel
 @onready var resource_population_label: Label = $MarginContainer/RootBox/ResourcePanel/ResourceBox/ResourceGrid/PopulationLabel
+@onready var test_month_button: Button = $MarginContainer/RootBox/ResourcePanel/ResourceBox/SettlementBox/TestMonthButton
+@onready var settlement_result_label: Label = $MarginContainer/RootBox/ResourcePanel/ResourceBox/SettlementBox/SettlementResultLabel
 @onready var disciple_button: Button = $MarginContainer/RootBox/FunctionPanel/FunctionBox/ButtonBar/DiscipleButton
 @onready var building_button: Button = $MarginContainer/RootBox/FunctionPanel/FunctionBox/ButtonBar/BuildingButton
 @onready var resource_button: Button = $MarginContainer/RootBox/FunctionPanel/FunctionBox/ButtonBar/ResourceButton
@@ -54,9 +57,11 @@ const REALM_ORDER: Dictionary = {
 @onready var detail_hint_label: Label = $MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleSection/DiscipleBody/DiscipleDetailPanel/DiscipleDetailBox/DetailHintLabel
 
 var current_selected_disciple_id: String = ""
+var resource_calculator: Node = ResourceCalculatorScript.new()
 
 
 func _ready() -> void:
+	add_child(resource_calculator)
 	back_button.pressed.connect(_on_back_button_pressed)
 	disciple_button.pressed.connect(_on_disciple_button_pressed)
 	building_button.pressed.connect(_on_building_button_pressed)
@@ -65,6 +70,7 @@ func _ready() -> void:
 	assignment_filter_option.item_selected.connect(_on_disciple_option_changed)
 	sort_option.item_selected.connect(_on_disciple_option_changed)
 	apply_assignment_button.pressed.connect(_on_apply_assignment_button_pressed)
+	test_month_button.pressed.connect(_on_test_month_button_pressed)
 	_setup_roster_options()
 	_setup_assignment_options()
 	_refresh_player_sect_info()
@@ -114,10 +120,11 @@ func _refresh_player_sect_info() -> void:
 	master_label.text = "宗主：" + str(player_sect["master_name"])
 	rank_label.text = "宗门品阶：" + str(player_sect["realm_rank"])
 	disciple_count_label.text = "弟子数量：" + str(player_sect["disciple_count"])
-	spirit_stone_label.text = "灵石：" + str(player_sect["spirit_stone"])
 	reputation_label.text = "声望：" + str(player_sect["reputation"])
 	combat_power_label.text = "战力：" + str(player_sect["combat_power"])
 	description_label.text = "介绍：" + str(player_sect["description"])
+	var resource_data: Dictionary = WorldDataManager.get_sect_resources(str(player_sect["sect_id"]))
+	spirit_stone_label.text = "灵石：" + str(resource_data.get("spirit_stone", "-"))
 
 
 func _refresh_resource_panel() -> void:
@@ -139,6 +146,69 @@ func _set_resource_labels(resource_data: Dictionary) -> void:
 	resource_spirit_grass_label.text = "灵草：" + str(resource_data.get("spirit_grass", "-"))
 	resource_spirit_ore_label.text = "灵矿：" + str(resource_data.get("spirit_ore", "-"))
 	resource_population_label.text = "人口：" + str(resource_data.get("population", "-"))
+
+
+func _on_test_month_button_pressed() -> void:
+	var player_sect: Dictionary = WorldDataManager.get_player_sect()
+	if player_sect.is_empty():
+		settlement_result_label.text = "模拟结算失败：未找到玩家宗门"
+		return
+
+	var sect_id: String = str(player_sect["sect_id"])
+	var resource_change: Dictionary = resource_calculator.calculate_sect_monthly_change(sect_id)
+	var resources_before: Dictionary = WorldDataManager.get_sect_resources(sect_id)
+	var applied_change: Dictionary = {}
+
+	for resource_key in resource_change:
+		var requested_amount: int = int(resource_change[resource_key])
+		if not WorldDataManager.update_sect_resource(sect_id, str(resource_key), requested_amount):
+			continue
+		var resources_after_update: Dictionary = WorldDataManager.get_sect_resources(sect_id)
+		var actual_amount: int = (
+			int(resources_after_update.get(resource_key, 0))
+			- int(resources_before.get(resource_key, 0))
+		)
+		if actual_amount != 0:
+			applied_change[resource_key] = actual_amount
+		resources_before = resources_after_update
+
+	_refresh_resource_panel()
+	_refresh_player_sect_info()
+	settlement_result_label.text = _build_settlement_result(sect_id, applied_change)
+
+
+func _build_settlement_result(sect_id: String, resource_change: Dictionary) -> String:
+	var training_count: int = 0
+	var gathering_count: int = 0
+	for disciple_data in WorldDataManager.get_disciples_by_sect_id(sect_id):
+		match str(disciple_data.get("assignment", "空闲")):
+			"修炼":
+				training_count += 1
+			"采集":
+				gathering_count += 1
+
+	var lines: PackedStringArray = PackedStringArray([
+		"本次结算：",
+		"修炼弟子：%d人" % training_count,
+		"采集弟子：%d人" % gathering_count,
+	])
+	if resource_change.is_empty():
+		lines.append("本次没有资源变化")
+		return "\n".join(lines)
+
+	lines.append("资源变化：")
+	var resource_names: Dictionary = {
+		"spirit_stone": "灵石",
+		"wood": "木材",
+		"stone": "石材",
+		"spirit_grass": "灵草",
+	}
+	for resource_key in ["spirit_stone", "wood", "stone", "spirit_grass"]:
+		if not resource_change.has(resource_key):
+			continue
+		var amount: int = int(resource_change[resource_key])
+		lines.append("%s %s%d" % [resource_names[resource_key], "+" if amount > 0 else "", amount])
+	return "\n".join(lines)
 
 
 func _on_back_button_pressed() -> void:

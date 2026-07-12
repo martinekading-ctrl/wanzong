@@ -1,5 +1,15 @@
 extends Node
 
+const ECONOMIC_RESOURCE_KEYS: Array[String] = [
+	"spirit_stone",
+	"food",
+	"wood",
+	"stone",
+	"spirit_grass",
+	"spirit_ore",
+	"population",
+]
+
 # 世界地图上的宗门数据。
 var sects: Array = []
 
@@ -24,53 +34,53 @@ func init_world_data() -> void:
 	sects = [
 		_create_sect_data(
 			"sect_001", "青玄宗", true, "orthodox", "玩家", "九品",
-			12, 1000, 100, 350, Vector2(2048, 2048), "self",
+			12, 100, 350, Vector2(2048, 2048), "self",
 			[], [1, 2, 3, 4, 5, 6],
 			"初立山门的小型修仙宗门，未来可统御万宗。", 450
 		),
 		_create_sect_data(
 			"sect_002", "凌霄剑派", false, "sword", "陆长风", "八品",
-			86, 5600, 430, 2100, Vector2(720, 900), "neutral",
+			86, 430, 2100, Vector2(720, 900), "neutral",
 			[], [], "以剑修闻名的山门，门人擅长攻伐。"
 		),
 		_create_sect_data(
 			"sect_003", "赤炉丹阁", false, "alchemy", "沈丹霞", "八品",
-			64, 7200, 510, 1680, Vector2(1500, 780), "friendly",
+			64, 510, 1680, Vector2(1500, 780), "friendly",
 			[], [], "精研丹火与药理，以灵丹妙药广结善缘。"
 		),
 		_create_sect_data(
 			"sect_004", "血煞魔门", false, "demonic", "厉无咎", "七品",
-			132, 9800, -260, 4200, Vector2(3050, 900), "hostile",
+			132, -260, 4200, Vector2(3050, 900), "hostile",
 			[], [], "盘踞荒野的魔道宗门，行事狠厉且崇尚强者。"
 		),
 		_create_sect_data(
 			"sect_005", "金莲寺", false, "buddhist", "慧明禅师", "七品",
-			118, 8400, 760, 3150, Vector2(3500, 1700), "friendly",
+			118, 760, 3150, Vector2(3500, 1700), "friendly",
 			[], [], "以金莲佛法护佑一方，门人善守亦善度化。"
 		),
 		_create_sect_data(
 			"sect_006", "寒月宫", false, "snow", "宫主苏寒月", "七品",
-			97, 7600, 580, 3380, Vector2(2840, 2700), "neutral",
+			97, 580, 3380, Vector2(2840, 2700), "neutral",
 			[], [], "坐落北境雪原，传承寒月一脉的冰系术法。"
 		),
 		_create_sect_data(
 			"sect_007", "黄沙门", false, "desert", "拓跋烈", "八品",
-			73, 4900, 280, 2260, Vector2(3400, 3300), "neutral",
+			73, 280, 2260, Vector2(3400, 3300), "neutral",
 			[], [], "扎根大漠商道，擅长御沙与追踪之术。"
 		),
 		_create_sect_data(
 			"sect_008", "沧海阁", false, "ocean", "洛沧澜", "七品",
-			105, 9100, 690, 3520, Vector2(1900, 3250), "friendly",
+			105, 690, 3520, Vector2(1900, 3250), "friendly",
 			[], [], "立于东海群岛，门下修士精通水法与舟阵。"
 		),
 		_create_sect_data(
 			"sect_009", "玄雷宗", false, "orthodox", "雷震岳", "六品",
-			168, 12800, 820, 5860, Vector2(760, 3050), "neutral",
+			168, 820, 5860, Vector2(760, 3050), "neutral",
 			[], [], "以玄雷淬体立宗，功法刚猛，声势显赫。"
 		),
 		_create_sect_data(
 			"sect_010", "万兽山", false, "orthodox", "岳千峰", "五品",
-			236, 18600, 960, 7450, Vector2(520, 1900), "hostile",
+			236, 960, 7450, Vector2(520, 1900), "hostile",
 			[], [], "雄踞群山并与灵兽共修，是实力深厚的古老宗门。"
 		),
 	]
@@ -184,7 +194,6 @@ func _create_sect_data(
 	master_name: String,
 	realm_rank: String,
 	disciple_count: int,
-	spirit_stone: int,
 	reputation: int,
 	combat_power: int,
 	location: Vector2,
@@ -202,7 +211,6 @@ func _create_sect_data(
 		"master_name": master_name,
 		"realm_rank": realm_rank,
 		"disciple_count": disciple_count,
-		"spirit_stone": spirit_stone,
 		"reputation": reputation,
 		"combat_power": combat_power,
 		"location": location,
@@ -304,6 +312,10 @@ func get_sect_by_id(sect_id: String) -> Dictionary:
 
 # 更新单个宗门字段；位置字段会同步兼容用的 position/location 别名。
 func update_sect_data(sect_id: String, key: String, value: Variant) -> bool:
+	if key in ECONOMIC_RESOURCE_KEYS:
+		push_warning("经济资源只能通过 update_sect_resource() 更新：" + key)
+		return false
+
 	for sect_index in range(sects.size()):
 		var sect_data: Dictionary = sects[sect_index]
 		if str(sect_data["sect_id"]) != sect_id:
@@ -348,10 +360,6 @@ func update_sect_resource(sect_id: String, resource_key: String, amount: int) ->
 
 	resource_data[resource_key] = maxi(0, int(resource_data[resource_key]) + amount)
 	sect_resources[sect_id] = resource_data
-
-	# 兼容宗门基础数据中已有的灵石字段，避免两处显示不一致。
-	if resource_key == "spirit_stone":
-		update_sect_data(sect_id, "spirit_stone", int(resource_data[resource_key]))
 	return true
 
 

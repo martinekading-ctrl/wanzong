@@ -353,6 +353,7 @@ func _on_enter_sect_button_pressed() -> void:
 func _on_sect_selected(node_data: Dictionary, sect_node: SectNode) -> void:
 	var selected_sect_id: String = str(node_data["sect_id"])
 	var sect_data: Dictionary = WorldDataManager.get_sect_by_id(selected_sect_id)
+	var sect_resource_data: Dictionary = WorldDataManager.get_sect_resources(selected_sect_id)
 	if sect_data.is_empty():
 		push_warning("未找到宗门完整数据，临时使用节点数据：" + selected_sect_id)
 		sect_data = node_data
@@ -373,7 +374,7 @@ func _on_sect_selected(node_data: Dictionary, sect_node: SectNode) -> void:
 	)
 	spirit_stone_label.text = (
 		"弟子数量：" + str(sect_data["disciple_count"])
-		+ "\n灵石：" + str(sect_data["spirit_stone"])
+		+ "\n灵石：" + str(sect_resource_data.get("spirit_stone", "-"))
 	)
 	power_label.text = (
 		"声望：" + str(sect_data["reputation"])

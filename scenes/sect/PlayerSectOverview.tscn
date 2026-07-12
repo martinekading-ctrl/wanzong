@@ -134,6 +134,21 @@ text = "灵矿：-"
 layout_mode = 2
 text = "人口：-"
 
+[node name="SettlementBox" type="HBoxContainer" parent="MarginContainer/RootBox/ResourcePanel/ResourceBox"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="TestMonthButton" type="Button" parent="MarginContainer/RootBox/ResourcePanel/ResourceBox/SettlementBox"]
+custom_minimum_size = Vector2(160, 40)
+layout_mode = 2
+text = "模拟结算一次"
+
+[node name="SettlementResultLabel" type="Label" parent="MarginContainer/RootBox/ResourcePanel/ResourceBox/SettlementBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "尚未进行模拟结算"
+autowrap_mode = 3
+
 [node name="FunctionPanel" type="PanelContainer" parent="MarginContainer/RootBox"]
 layout_mode = 2
 size_flags_vertical = 3
