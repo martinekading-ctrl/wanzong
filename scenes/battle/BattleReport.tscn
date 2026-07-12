@@ -53,6 +53,14 @@ layout_mode = 2
 layout_mode = 2
 text = "模拟宗门切磋"
 
+[node name="WarButton" type="Button" parent="Margin/RootBox/ControlBar"]
+layout_mode = 2
+text = "发起宗门进攻"
+
+[node name="AdvanceDayButton" type="Button" parent="Margin/RootBox/ControlBar"]
+layout_mode = 2
+text = "推进一天"
+
 [node name="PreviousButton" type="Button" parent="Margin/RootBox/ControlBar"]
 layout_mode = 2
 text = "上一份战报"
@@ -64,6 +72,10 @@ text = "下一份战报"
 [node name="SummaryLabel" type="Label" parent="Margin/RootBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
+autowrap_mode = 3
+
+[node name="CampaignLabel" type="Label" parent="Margin/RootBox"]
+layout_mode = 2
 autowrap_mode = 3
 
 [node name="TeamBox" type="HBoxContainer" parent="Margin/RootBox"]
@@ -100,4 +112,3 @@ autowrap_mode = 3
 [node name="ResultLabel" type="Label" parent="Margin/RootBox"]
 layout_mode = 2
 autowrap_mode = 3
-

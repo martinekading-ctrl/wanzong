@@ -185,6 +185,35 @@ func withdraw_garrison(resource_id: int, sect_id: String) -> bool:
 	return true
 
 
+func transfer_site_control(resource_id: int, new_owner_sect_id: String, new_garrison_ids: Array, date: Dictionary, reason: String = "war") -> Dictionary:
+	var index: int = _find_site_index(resource_id)
+	if index < 0 or WorldDataManager.get_sect_by_id(new_owner_sect_id).is_empty():
+		return _error("transfer_invalid", "资源点控制权转移参数无效。")
+	var site: Dictionary = WorldDataManager.resources[index]
+	var old_owner_id: String = str(site.get("owner_sect_id", ""))
+	_release_site_garrison(site)
+	if old_owner_id != "":
+		_remove_owned_resource_id(old_owner_id, resource_id)
+	site["owner_sect_id"] = new_owner_sect_id
+	site["garrison_disciple_ids"] = []
+	site["garrison_team_id"] = ""
+	site["status"] = "occupied_unsecured"
+	site["unsecured_days"] = 0
+	site["maintenance_shortage_days"] = 0
+	site["distance"] = _distance_from_sect(site, new_owner_sect_id)
+	WorldDataManager.resources[index] = site
+	_add_owned_resource_id(new_owner_sect_id, resource_id)
+	var garrison_result: Dictionary = {}
+	if not new_garrison_ids.is_empty():
+		garrison_result = assign_garrison(resource_id, new_owner_sect_id, new_garrison_ids)
+	else:
+		TerritoryManager.recalculate_all()
+	var result: Dictionary = {"success": true, "resource_id": resource_id, "old_owner_sect_id": old_owner_id, "new_owner_sect_id": new_owner_sect_id, "reason": reason, "garrison_result": garrison_result}
+	GameHistoryManager.record_entry("territory_transfer", "领地转移", "%s的控制权由%s转移至%s。" % [str(site.get("resource_name", "资源点")), str(WorldDataManager.get_sect_by_id(old_owner_id).get("sect_name", "无主")), str(WorldDataManager.get_sect_by_id(new_owner_sect_id).get("sect_name", new_owner_sect_id))], ["resource_%d" % resource_id, old_owner_id, new_owner_sect_id], result, date)
+	resource_site_updated.emit(get_site_by_id(resource_id))
+	return result
+
+
 func daily_update(date: Dictionary) -> Dictionary:
 	var production: Array[Dictionary] = []
 	var lost_sites: Array[Dictionary] = []

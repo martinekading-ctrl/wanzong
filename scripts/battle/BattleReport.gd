@@ -3,9 +3,12 @@ extends Control
 @onready var back_button: Button = $Margin/RootBox/TopBar/BackButton
 @onready var target_option: OptionButton = $Margin/RootBox/ControlBar/TargetOption
 @onready var spar_button: Button = $Margin/RootBox/ControlBar/SparButton
+@onready var war_button: Button = $Margin/RootBox/ControlBar/WarButton
+@onready var advance_day_button: Button = $Margin/RootBox/ControlBar/AdvanceDayButton
 @onready var previous_button: Button = $Margin/RootBox/ControlBar/PreviousButton
 @onready var next_button: Button = $Margin/RootBox/ControlBar/NextButton
 @onready var summary_label: Label = $Margin/RootBox/SummaryLabel
+@onready var campaign_label: Label = $Margin/RootBox/CampaignLabel
 @onready var attacker_list: VBoxContainer = $Margin/RootBox/TeamBox/AttackerPanel/AttackerList
 @onready var defender_list: VBoxContainer = $Margin/RootBox/TeamBox/DefenderPanel/DefenderList
 @onready var log_label: Label = $Margin/RootBox/LogPanel/LogScroll/LogLabel
@@ -19,10 +22,15 @@ var current_battle_index: int = -1
 func _ready() -> void:
 	back_button.pressed.connect(SceneManager.go_to_player_sect_overview)
 	spar_button.pressed.connect(_on_spar_pressed)
+	war_button.pressed.connect(_on_war_pressed)
+	advance_day_button.pressed.connect(_on_advance_day_pressed)
+	target_option.item_selected.connect(_on_target_selected)
 	previous_button.pressed.connect(_on_previous_pressed)
 	next_button.pressed.connect(_on_next_pressed)
 	_setup_targets()
 	_refresh_battle_catalog(true)
+	_refresh_campaigns()
+	_on_target_selected(target_option.selected)
 
 
 func _setup_targets() -> void:
@@ -59,6 +67,45 @@ func _on_spar_pressed() -> void:
 	var result: Dictionary = BattleManager.create_and_simulate("sect_001", player_ids, target_id, target_ids, {"battle_type": "sparring"})
 	result_label.text = "切磋已完成。" if bool(result.get("success", false)) else str(result.get("message", "切磋失败。"))
 	_refresh_battle_catalog(true)
+
+
+func _on_war_pressed() -> void:
+	if target_option.selected < 0 or target_option.selected >= target_sect_ids.size():
+		return
+	var target_id: String = target_sect_ids[target_option.selected]
+	var result: Dictionary = WarManager.start_sect_siege("sect_001", target_id, _select_team("sect_001", 6))
+	result_label.text = str(result.get("message", "战争行动发起失败。"))
+	_refresh_campaigns()
+
+
+func _on_advance_day_pressed() -> void:
+	GameState.next_day()
+	_refresh_campaigns()
+	_refresh_battle_catalog(true)
+
+
+func _on_target_selected(_index: int) -> void:
+	if target_option.selected < 0 or target_option.selected >= target_sect_ids.size():
+		war_button.disabled = true
+		return
+	war_button.disabled = str(DiplomacyManager.get_relation("sect_001", target_sect_ids[target_option.selected]).get("status", "")) != "war"
+
+
+func _refresh_campaigns() -> void:
+	var active: Array[Dictionary] = WarManager.get_active_campaigns("sect_001")
+	if active.is_empty():
+		campaign_label.text = "当前无进行中的战争行动。"
+		return
+	var lines := PackedStringArray(["进行中的战争行动："])
+	for campaign in active:
+		lines.append("%s｜目标%s｜阶段%s｜剩余行军%d日｜补给缺口%d日" % [
+			str(campaign.get("campaign_id", "")),
+			str(campaign.get("target_id", "")),
+			str(campaign.get("phase", "")),
+			int(campaign.get("remaining_march_days", 0)),
+			int(campaign.get("supply_shortage_days", 0)),
+		])
+	campaign_label.text = "\n".join(lines)
 
 
 func _select_team(sect_id: String, count: int) -> Array[String]:

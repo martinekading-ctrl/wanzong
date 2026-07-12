@@ -363,6 +363,7 @@ func _refresh_daily_report(report: Dictionary) -> void:
 	var resource_site_summary: Dictionary = report.get("resource_sites", {})
 	var territory_summary: Dictionary = report.get("territories", {})
 	var diplomacy_summary: Dictionary = report.get("diplomacy", {})
+	var war_summary: Dictionary = report.get("wars", {})
 	if not warnings.is_empty():
 		warning_text = "；".join(PackedStringArray(warnings))
 	settlement_result_label.text = "\n".join(PackedStringArray([
@@ -396,6 +397,7 @@ func _refresh_daily_report(report: Dictionary) -> void:
 			int(territory_summary.get("contested_points", 0)),
 		],
 		"外交关系：%d组｜有效契约：%d" % [int(diplomacy_summary.get("relation_count", 0)), int(diplomacy_summary.get("active_pacts", 0))],
+		"战争行动：%d项推进，%d项结束" % [war_summary.get("progressed", []).size(), war_summary.get("completed", []).size()],
 		"警告：" + warning_text,
 	]))
 
