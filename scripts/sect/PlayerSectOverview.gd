@@ -67,6 +67,16 @@ const SORT_OPTIONS: Array[String] = ["默认", "境界", "战力", "忠诚", "�
 @onready var available_disciple_list: VBoxContainer = $MarginContainer/RootBox/FunctionPanel/FunctionBox/MissionSection/MissionBody/AvailablePanel/AvailableScroll/AvailableDiscipleList
 @onready var active_mission_list: VBoxContainer = $MarginContainer/RootBox/FunctionPanel/FunctionBox/MissionSection/MissionBody/ActivePanel/ActiveScroll/ActiveMissionList
 @onready var mission_result_label: Label = $MarginContainer/RootBox/FunctionPanel/FunctionBox/MissionSection/MissionResultLabel
+@onready var resource_site_section: VBoxContainer = $MarginContainer/RootBox/FunctionPanel/FunctionBox/ResourceSiteSection
+@onready var resource_site_option: OptionButton = $MarginContainer/RootBox/FunctionPanel/FunctionBox/ResourceSiteSection/ControlBox/SiteOption
+@onready var resource_site_clear_button: Button = $MarginContainer/RootBox/FunctionPanel/FunctionBox/ResourceSiteSection/ControlBox/ClearButton
+@onready var resource_site_negotiate_button: Button = $MarginContainer/RootBox/FunctionPanel/FunctionBox/ResourceSiteSection/ControlBox/NegotiateButton
+@onready var resource_site_assign_button: Button = $MarginContainer/RootBox/FunctionPanel/FunctionBox/ResourceSiteSection/ControlBox/AssignButton
+@onready var resource_site_withdraw_button: Button = $MarginContainer/RootBox/FunctionPanel/FunctionBox/ResourceSiteSection/ControlBox/WithdrawButton
+@onready var resource_site_info_label: Label = $MarginContainer/RootBox/FunctionPanel/FunctionBox/ResourceSiteSection/SiteInfoLabel
+@onready var resource_site_disciple_list: VBoxContainer = $MarginContainer/RootBox/FunctionPanel/FunctionBox/ResourceSiteSection/Body/DisciplePanel/DiscipleScroll/DiscipleList
+@onready var owned_resource_site_list: VBoxContainer = $MarginContainer/RootBox/FunctionPanel/FunctionBox/ResourceSiteSection/Body/OwnedPanel/OwnedScroll/OwnedList
+@onready var resource_site_result_label: Label = $MarginContainer/RootBox/FunctionPanel/FunctionBox/ResourceSiteSection/ResultLabel
 @onready var disciple_section: VBoxContainer = $MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleSection
 @onready var search_line_edit: LineEdit = $MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleSection/DiscipleTopBar/SearchLineEdit
 @onready var assignment_filter_option: OptionButton = $MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleSection/DiscipleTopBar/AssignmentFilterOption
@@ -94,6 +104,8 @@ var current_selected_disciple_id: String = ""
 var selected_mission_disciple_ids: Array[String] = []
 var mission_definition_ids: Array[String] = []
 var secret_realm_ids: Array[String] = []
+var resource_site_ids: Array[int] = []
+var selected_resource_disciple_ids: Array[String] = []
 
 
 func _ready() -> void:
@@ -107,6 +119,11 @@ func _ready() -> void:
 	mission_button.pressed.connect(_on_mission_button_pressed)
 	start_mission_button.pressed.connect(_on_start_mission_pressed)
 	mission_option.item_selected.connect(_on_mission_option_selected)
+	resource_site_option.item_selected.connect(_on_resource_site_selected)
+	resource_site_clear_button.pressed.connect(_on_resource_site_capture.bind("clear"))
+	resource_site_negotiate_button.pressed.connect(_on_resource_site_capture.bind("negotiate"))
+	resource_site_assign_button.pressed.connect(_on_resource_site_assign_garrison)
+	resource_site_withdraw_button.pressed.connect(_on_resource_site_withdraw_garrison)
 	manual_slot_1_save.pressed.connect(_on_manual_save_pressed.bind(1))
 	manual_slot_1_load.pressed.connect(_on_manual_load_pressed.bind(1))
 	manual_slot_2_save.pressed.connect(_on_manual_save_pressed.bind(2))
@@ -270,6 +287,8 @@ func _refresh_all(report: Dictionary = GameState.last_daily_report) -> void:
 		_refresh_building_section()
 	if mission_section.visible:
 		_refresh_mission_section()
+	if resource_site_section.visible:
+		_refresh_resource_site_section()
 
 
 func _refresh_date_label() -> void:
@@ -306,6 +325,7 @@ func _refresh_daily_report(report: Dictionary) -> void:
 	var ai_summary: Dictionary = report.get("ai_summary", {})
 	var construction_summary: Dictionary = report.get("construction", {})
 	var mission_summary: Dictionary = report.get("missions", {})
+	var resource_site_summary: Dictionary = report.get("resource_sites", {})
 	if not warnings.is_empty():
 		warning_text = "；".join(PackedStringArray(warnings))
 	settlement_result_label.text = "\n".join(PackedStringArray([
@@ -329,6 +349,10 @@ func _refresh_daily_report(report: Dictionary) -> void:
 		"派遣任务：%d项推进，%d项完成" % [
 			mission_summary.get("progressed", []).size(),
 			mission_summary.get("completed", []).size(),
+		],
+		"资源据点：%d处产出，%d处失守" % [
+			resource_site_summary.get("production", []).size(),
+			resource_site_summary.get("lost_sites", []).size(),
 		],
 		"警告：" + warning_text,
 	]))
@@ -396,6 +420,7 @@ func _on_disciple_button_pressed() -> void:
 	save_load_section.visible = false
 	building_section.visible = false
 	mission_section.visible = false
+	resource_site_section.visible = false
 	disciple_section.visible = true
 	_refresh_disciple_roster()
 
@@ -406,6 +431,7 @@ func _on_building_button_pressed() -> void:
 	history_section.visible = false
 	save_load_section.visible = false
 	mission_section.visible = false
+	resource_site_section.visible = false
 	building_section.visible = true
 	building_result_label.text = ""
 	_refresh_building_section()
@@ -413,7 +439,15 @@ func _on_building_button_pressed() -> void:
 
 func _on_resource_button_pressed() -> void:
 	_refresh_resource_panel()
-	_show_placeholder("宗门资源仓库已刷新；当前版本仅展示库存。")
+	placeholder_label.visible = false
+	disciple_section.visible = false
+	history_section.visible = false
+	save_load_section.visible = false
+	building_section.visible = false
+	mission_section.visible = false
+	resource_site_section.visible = true
+	resource_site_result_label.text = ""
+	_refresh_resource_site_section()
 
 
 func _show_placeholder(message: String) -> void:
@@ -424,6 +458,7 @@ func _show_placeholder(message: String) -> void:
 	save_load_section.visible = false
 	building_section.visible = false
 	mission_section.visible = false
+	resource_site_section.visible = false
 
 
 func _on_history_button_pressed() -> void:
@@ -432,6 +467,7 @@ func _on_history_button_pressed() -> void:
 	save_load_section.visible = false
 	building_section.visible = false
 	mission_section.visible = false
+	resource_site_section.visible = false
 	history_section.visible = true
 	_refresh_history_list()
 
@@ -466,6 +502,7 @@ func _on_mission_button_pressed() -> void:
 	history_section.visible = false
 	save_load_section.visible = false
 	building_section.visible = false
+	resource_site_section.visible = false
 	mission_section.visible = true
 	mission_result_label.text = ""
 	_refresh_mission_section()
@@ -564,12 +601,156 @@ func _clear_dynamic_children(container: Node) -> void:
 		child.queue_free()
 
 
+func _refresh_resource_site_section() -> void:
+	var previous_id: int = _get_selected_resource_site_id()
+	resource_site_option.clear()
+	resource_site_ids.clear()
+	var sites: Array[Dictionary] = ResourceSiteManager.get_discovered_sites("sect_001")
+	for site in sites:
+		var resource_id: int = int(site.get("resource_id", 0))
+		resource_site_ids.append(resource_id)
+		resource_site_option.add_item("#%d %s Lv%d｜%s" % [
+			resource_id,
+			str(site.get("resource_name", "资源点")),
+			int(site.get("level", 1)),
+			_resource_site_status_text(str(site.get("status", "unclaimed"))),
+		])
+	var selected_index: int = 0
+	if previous_id in resource_site_ids:
+		selected_index = resource_site_ids.find(previous_id)
+	resource_site_option.select(selected_index)
+	_refresh_resource_site_detail()
+	_refresh_owned_resource_sites()
+
+
+func _refresh_resource_site_detail() -> void:
+	_clear_dynamic_children(resource_site_disciple_list)
+	var resource_id: int = _get_selected_resource_site_id()
+	var site: Dictionary = ResourceSiteManager.get_site_by_id(resource_id)
+	if site.is_empty():
+		resource_site_info_label.text = "暂无可管理资源点。"
+		return
+	var garrison_ids: Array = site.get("garrison_disciple_ids", [])
+	var valid_selection: Array[String] = []
+	for disciple_id in selected_resource_disciple_ids:
+		var data: Dictionary = WorldDataManager.get_disciple_by_id(disciple_id)
+		if not data.is_empty() and (not bool(data.get("is_deployed", false)) or disciple_id in garrison_ids):
+			valid_selection.append(disciple_id)
+	selected_resource_disciple_ids = valid_selection
+	for disciple_data in WorldDataManager.get_player_disciples():
+		var disciple_id: String = str(disciple_data.get("disciple_id", ""))
+		var is_current_garrison: bool = disciple_id in garrison_ids
+		var check_box := CheckBox.new()
+		check_box.text = "%s｜战力%d%s" % [
+			str(disciple_data.get("disciple_name", disciple_id)),
+			int(disciple_data.get("combat_power", 0)),
+			"｜当前驻守" if is_current_garrison else ("｜派遣中" if bool(disciple_data.get("is_deployed", false)) else ""),
+		]
+		check_box.button_pressed = disciple_id in selected_resource_disciple_ids
+		check_box.disabled = bool(disciple_data.get("is_deployed", false)) and not is_current_garrison
+		check_box.toggled.connect(_on_resource_disciple_toggled.bind(disciple_id))
+		resource_site_disciple_list.add_child(check_box)
+	var owner_id: String = str(site.get("owner_sect_id", ""))
+	resource_site_info_label.text = "储量%d｜距离%.0f｜风险%.0f%%｜归属%s｜驻守%d人｜维护缺口%d日" % [
+		int(site.get("amount", 0)),
+		float(site.get("distance", 0.0)),
+		float(site.get("risk", 0.0)) * 100.0,
+		"无主" if owner_id == "" else str(WorldDataManager.get_sect_by_id(owner_id).get("sect_name", owner_id)),
+		garrison_ids.size(),
+		int(site.get("maintenance_shortage_days", 0)),
+	]
+	var unclaimed: bool = owner_id == ""
+	resource_site_clear_button.disabled = not unclaimed
+	resource_site_negotiate_button.disabled = not unclaimed
+	resource_site_assign_button.disabled = owner_id != "sect_001"
+	resource_site_withdraw_button.disabled = owner_id != "sect_001" or garrison_ids.is_empty()
+
+
+func _refresh_owned_resource_sites() -> void:
+	_clear_dynamic_children(owned_resource_site_list)
+	var owned_sites: Array[Dictionary] = ResourceSiteManager.get_owned_sites("sect_001")
+	if owned_sites.is_empty():
+		var empty_label := Label.new()
+		empty_label.text = "尚未占领资源点。"
+		owned_resource_site_list.add_child(empty_label)
+		return
+	for site in owned_sites:
+		var label := Label.new()
+		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		label.text = "#%d %s｜%s｜储量%d｜驻守%d人" % [
+			int(site.get("resource_id", 0)),
+			str(site.get("resource_name", "资源点")),
+			_resource_site_status_text(str(site.get("status", ""))),
+			int(site.get("amount", 0)),
+			site.get("garrison_disciple_ids", []).size(),
+		]
+		owned_resource_site_list.add_child(label)
+
+
+func _on_resource_site_selected(_index: int) -> void:
+	selected_resource_disciple_ids.clear()
+	_refresh_resource_site_detail()
+
+
+func _on_resource_disciple_toggled(selected: bool, disciple_id: String) -> void:
+	if selected and disciple_id not in selected_resource_disciple_ids:
+		selected_resource_disciple_ids.append(disciple_id)
+	elif not selected:
+		selected_resource_disciple_ids.erase(disciple_id)
+
+
+func _on_resource_site_capture(approach: String) -> void:
+	if selected_resource_disciple_ids.is_empty():
+		resource_site_result_label.text = "请先选择执行占领任务的弟子。"
+		return
+	var result: Dictionary = ResourceSiteManager.start_capture(
+		_get_selected_resource_site_id(), "sect_001", selected_resource_disciple_ids, approach
+	)
+	resource_site_result_label.text = str(result.get("message", "占领任务派遣失败。"))
+	if bool(result.get("success", false)):
+		selected_resource_disciple_ids.clear()
+	_refresh_resource_site_section()
+
+
+func _on_resource_site_assign_garrison() -> void:
+	var result: Dictionary = ResourceSiteManager.assign_garrison(
+		_get_selected_resource_site_id(), "sect_001", selected_resource_disciple_ids
+	)
+	resource_site_result_label.text = str(result.get("message", "驻守指派失败。"))
+	if bool(result.get("success", false)):
+		selected_resource_disciple_ids.clear()
+	_refresh_resource_site_section()
+
+
+func _on_resource_site_withdraw_garrison() -> void:
+	var success: bool = ResourceSiteManager.withdraw_garrison(_get_selected_resource_site_id(), "sect_001")
+	resource_site_result_label.text = "驻守队伍已撤回。" if success else "驻守撤回失败。"
+	selected_resource_disciple_ids.clear()
+	_refresh_resource_site_section()
+
+
+func _get_selected_resource_site_id() -> int:
+	if resource_site_option.selected < 0 or resource_site_option.selected >= resource_site_ids.size():
+		return 0
+	return resource_site_ids[resource_site_option.selected]
+
+
+func _resource_site_status_text(status: String) -> String:
+	return {
+		"unclaimed": "无主",
+		"occupied_unsecured": "待驻守",
+		"occupied": "生产中",
+		"depleted": "已枯竭",
+	}.get(status, status)
+
+
 func _on_save_load_button_pressed() -> void:
 	placeholder_label.visible = false
 	disciple_section.visible = false
 	history_section.visible = false
 	building_section.visible = false
 	mission_section.visible = false
+	resource_site_section.visible = false
 	save_load_section.visible = true
 	save_load_result_label.text = ""
 	_refresh_save_slots()

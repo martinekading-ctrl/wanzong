@@ -16,8 +16,8 @@ var resource_type: String = ""
 # 资源储量。
 var amount: int = 0
 
-# 当前归属宗门编号，0 表示无主。
-var owner_sect_id: int = 0
+# 当前归属宗门ID，空字符串表示无主。
+var owner_sect_id: String = ""
 
 # 资源点等级。
 var level: int = 1
@@ -48,7 +48,7 @@ func setup(data: Dictionary, texture: Texture2D = null, display_size: float = 36
 	resource_name = str(data["resource_name"])
 	resource_type = str(data["resource_type"])
 	amount = int(data["amount"])
-	owner_sect_id = int(data["owner_sect_id"])
+	owner_sect_id = str(data["owner_sect_id"])
 	position = data["position"]
 	level = int(data["level"])
 	icon_display_size = display_size

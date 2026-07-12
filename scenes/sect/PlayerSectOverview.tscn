@@ -460,6 +460,78 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 15
 autowrap_mode = 3
 
+[node name="ResourceSiteSection" type="VBoxContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox"]
+visible = false
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 8
+
+[node name="Title" type="Label" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/ResourceSiteSection"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "资源点占领与驻守"
+
+[node name="ControlBox" type="HBoxContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/ResourceSiteSection"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="SiteOption" type="OptionButton" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/ResourceSiteSection/ControlBox"]
+custom_minimum_size = Vector2(300, 36)
+layout_mode = 2
+
+[node name="ClearButton" type="Button" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/ResourceSiteSection/ControlBox"]
+layout_mode = 2
+text = "清理占领"
+
+[node name="NegotiateButton" type="Button" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/ResourceSiteSection/ControlBox"]
+layout_mode = 2
+text = "谈判占领"
+
+[node name="AssignButton" type="Button" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/ResourceSiteSection/ControlBox"]
+layout_mode = 2
+text = "指派驻守"
+
+[node name="WithdrawButton" type="Button" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/ResourceSiteSection/ControlBox"]
+layout_mode = 2
+text = "撤回驻守"
+
+[node name="SiteInfoLabel" type="Label" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/ResourceSiteSection"]
+layout_mode = 2
+autowrap_mode = 3
+
+[node name="Body" type="HBoxContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/ResourceSiteSection"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 12
+
+[node name="DisciplePanel" type="PanelContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/ResourceSiteSection/Body"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="DiscipleScroll" type="ScrollContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/ResourceSiteSection/Body/DisciplePanel"]
+layout_mode = 2
+
+[node name="DiscipleList" type="VBoxContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/ResourceSiteSection/Body/DisciplePanel/DiscipleScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="OwnedPanel" type="PanelContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/ResourceSiteSection/Body"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="OwnedScroll" type="ScrollContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/ResourceSiteSection/Body/OwnedPanel"]
+layout_mode = 2
+
+[node name="OwnedList" type="VBoxContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/ResourceSiteSection/Body/OwnedPanel/OwnedScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ResultLabel" type="Label" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/ResourceSiteSection"]
+layout_mode = 2
+autowrap_mode = 3
+
 [node name="DiscipleSection" type="VBoxContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox"]
 visible = false
 layout_mode = 2

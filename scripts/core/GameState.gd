@@ -34,6 +34,7 @@ func new_game() -> void:
 	ConstructionManager.rebuild_runtime_state()
 	MissionManager.rebuild_runtime_state()
 	SecretRealmManager.initialize_world_state()
+	ResourceSiteManager.initialize_world_state()
 
 
 func random_int(minimum: int, maximum: int) -> int:
@@ -58,6 +59,7 @@ func next_day() -> Dictionary:
 	var ai_summary: Dictionary = AISimulationManager.daily_update(date_before)
 	var construction_summary: Dictionary = ConstructionManager.daily_update(date_before)
 	var mission_summary: Dictionary = MissionManager.daily_update(date_before)
+	var resource_site_summary: Dictionary = ResourceSiteManager.daily_update(date_before)
 	var event_results: Array[Dictionary] = EventManager.daily_update({
 		"sect_id": player_sect.id,
 		"date": date_before,
@@ -75,6 +77,7 @@ func next_day() -> Dictionary:
 		"ai_summary": ai_summary,
 		"construction": construction_summary,
 		"missions": mission_summary,
+		"resource_sites": resource_site_summary,
 		"events": event_results,
 		"warnings": economy_result.get("warnings", []),
 	}

@@ -224,6 +224,8 @@ func _resolve_mission(instance: MissionInstance, date: Dictionary) -> Dictionary
 	}
 	if definition.mission_type == "secret_realm":
 		result["secret_realm_update"] = SecretRealmManager.record_mission_result(result, date)
+	if instance.context.has("resource_site_id"):
+		result["resource_site_update"] = ResourceSiteManager.record_mission_result(result, date)
 	result["events"] = EventManager.daily_update({
 		"sect_id": instance.sect_id,
 		"date": date,
