@@ -15,6 +15,7 @@ func _ready() -> void:
 
 # 点击“开始游戏”后，进入俯视大地图。
 func _on_start_button_pressed() -> void:
+	GameState.new_game()
 	SceneManager.go_to_world_map()
 
 

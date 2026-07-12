@@ -52,42 +52,42 @@ theme_override_constants/separation = 8
 [node name="SectNameLabel" type="Label" parent="MarginContainer/RootBox/SummaryPanel/SummaryBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
-text = "宗门名称：青玄宗"
+text = "宗门名称：-"
 
 [node name="MasterLabel" type="Label" parent="MarginContainer/RootBox/SummaryPanel/SummaryBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
-text = "宗主：玩家"
+text = "宗主：-"
 
 [node name="RankLabel" type="Label" parent="MarginContainer/RootBox/SummaryPanel/SummaryBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
-text = "宗门品阶：九品"
+text = "宗门品阶：-"
 
 [node name="DiscipleCountLabel" type="Label" parent="MarginContainer/RootBox/SummaryPanel/SummaryBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
-text = "弟子数量：12"
+text = "弟子数量：-"
 
 [node name="SpiritStoneLabel" type="Label" parent="MarginContainer/RootBox/SummaryPanel/SummaryBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
-text = "灵石：1000"
+text = "灵石：-"
 
 [node name="ReputationLabel" type="Label" parent="MarginContainer/RootBox/SummaryPanel/SummaryBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
-text = "声望：100"
+text = "声望：-"
 
 [node name="CombatPowerLabel" type="Label" parent="MarginContainer/RootBox/SummaryPanel/SummaryBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
-text = "战力：350"
+text = "战力：-"
 
 [node name="DescriptionLabel" type="Label" parent="MarginContainer/RootBox/SummaryPanel/SummaryBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 16
-text = "介绍：初立山门的小型修仙宗门，未来可统御万宗。"
+text = "介绍：-"
 autowrap_mode = 3
 
 [node name="ResourcePanel" type="PanelContainer" parent="MarginContainer/RootBox"]

@@ -19,6 +19,10 @@ config/icon="res://icon.svg"
 
 SceneManager="*res://scripts/managers/SceneManager.gd"
 WorldDataManager="*res://scripts/managers/WorldDataManager.gd"
+SectManager="*res://scripts/managers/SectManager.gd"
+DiscipleManager="*res://scripts/managers/DiscipleManager.gd"
+EconomyManager="*res://scripts/managers/EconomyManager.gd"
+GameState="*res://scripts/core/GameState.gd"
 
 [display]
 
