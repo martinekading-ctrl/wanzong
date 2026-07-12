@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="RegionDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/data/RegionDefinition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "herbal"
+display_name = "百草谷地"
+terrain = "forest"
+climate = "humid"
+market_modifiers = {"spirit_grass": 0.8}
+risks = ["poison"]
+tags = ["herb", "alchemy"]

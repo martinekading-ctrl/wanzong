@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="EventDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/data/EventDefinition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "story_ancient_map_02"
+title = "古图中的线索"
+description = "典籍中的地名与古图吻合，门人找到了通往旧洞府的线索。"
+category = "world"
+trigger = {"day": 15, "month": 1, "type": "fixed_date", "year": 1}
+conditions = []
+options = [{"costs": {"food": 30}, "effects": [{"amount": 40, "key": "spirit_stone", "type": "resource_delta"}, {"amount": 10, "key": "spirit_ore", "type": "resource_delta"}], "id": "investigate", "label": "派人查探", "result_text": "门人从旧洞府带回了灵石和灵矿。"}, {"costs": {}, "effects": [], "id": "archive", "label": "封存古图", "result_text": "宗门决定暂时封存这条线索。"}]
+trigger_once = true
+chain_id = "ancient_map_chain"
+prerequisite_event_ids = ["story_ancient_map_01"]

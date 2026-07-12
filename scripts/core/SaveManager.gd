@@ -139,6 +139,7 @@ func apply_snapshot(raw_snapshot: Dictionary) -> bool:
 	InventoryManager.rebuild_runtime_state()
 	CraftingManager.rebuild_runtime_state()
 	MarketManager.rebuild_runtime_state()
+	StoryGoalManager.rebuild_runtime_state()
 	GameState.year = int(game_state_data.get("year", 1))
 	GameState.month = int(game_state_data.get("month", 1))
 	GameState.day = int(game_state_data.get("day", 1))

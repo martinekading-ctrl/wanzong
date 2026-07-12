@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="StoryGoalDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/data/StoryGoalDefinition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "goal_foundation"
+display_name = "稳固山门"
+description = "将宗门提升至二级。"
+order = 1
+conditions = [{"key": "territory_level", "type": "sect_field", "value": 2}]
+rewards = {"spirit_stone": 200}

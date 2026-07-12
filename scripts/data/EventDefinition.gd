@@ -9,3 +9,5 @@ extends Resource
 @export var conditions: Array[Dictionary] = []
 @export var options: Array[Dictionary] = []
 @export var trigger_once: bool = false
+@export var chain_id: String = ""
+@export var prerequisite_event_ids: Array[String] = []

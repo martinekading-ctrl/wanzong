@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="RegionDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/data/RegionDefinition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "snow"
+display_name = "北境雪原"
+terrain = "snow"
+climate = "cold"
+market_modifiers = {"food": 1.2}
+risks = ["blizzard"]
+tags = ["ice", "spirit_vein"]

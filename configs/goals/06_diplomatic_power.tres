@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="StoryGoalDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/data/StoryGoalDefinition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "goal_diplomatic_power"
+display_name = "合纵连横"
+description = "同时拥有三个联盟或附属契约。"
+order = 6
+conditions = [{"types": ["alliance", "vassal"], "type": "active_pacts", "value": 3}]
+rewards = {"spirit_stone": 800}

@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="StoryGoalDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/data/StoryGoalDefinition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "goal_influence"
+display_name = "一方强宗"
+description = "宗门影响力达到一千。"
+order = 5
+conditions = [{"type": "influence", "value": 1000}]
+rewards = {"spirit_stone": 500}

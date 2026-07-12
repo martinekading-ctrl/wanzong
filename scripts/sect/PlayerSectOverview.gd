@@ -278,15 +278,33 @@ func _refresh_player_sect_info() -> void:
 	reputation_label.text = "声望：" + str(player_sect["reputation"])
 	combat_power_label.text = "战力：" + str(player_sect["combat_power"])
 	var territory: Dictionary = TerritoryManager.get_territory(str(player_sect["sect_id"]))
-	description_label.text = "介绍：%s\n影响力：%d｜控制点：%d｜邻接宗门：%d｜争议点：%d" % [
+	description_label.text = "介绍：%s\n影响力：%d｜控制点：%d｜邻接宗门：%d｜争议点：%d\n%s" % [
 		str(player_sect["description"]),
 		int(territory.get("influence", 0)),
 		territory.get("control_point_ids", []).size(),
 		territory.get("neighbors", []).size(),
 		territory.get("contested_point_ids", []).size(),
+		_get_active_goal_summary(),
 	]
 	var resource_data: Dictionary = WorldDataManager.get_sect_resources(str(player_sect["sect_id"]))
 	spirit_stone_label.text = "灵石：" + str(resource_data.get("spirit_stone", "-"))
+
+
+func _get_active_goal_summary() -> String:
+	var active_goals: Array[Dictionary] = StoryGoalManager.get_active_goals()
+	if active_goals.is_empty():
+		return "长期目标：全部完成"
+	var goal: Dictionary = active_goals[0]
+	var progress_parts := PackedStringArray()
+	for progress in goal.get("progress", []):
+		progress_parts.append("%d/%d" % [
+			int(progress.get("current", 0)),
+			int(progress.get("required", 0)),
+		])
+	return "长期目标：%s（%s）" % [
+		str(goal.get("display_name", "未命名目标")),
+		"，".join(progress_parts),
+	]
 
 
 func _refresh_resource_panel() -> void:
@@ -384,6 +402,7 @@ func _refresh_daily_report(report: Dictionary) -> void:
 	var diplomacy_summary: Dictionary = report.get("diplomacy", {})
 	var war_summary: Dictionary = report.get("wars", {})
 	var market_summary: Dictionary = report.get("market", {})
+	var goal_summary: Dictionary = report.get("goals", {})
 	if not warnings.is_empty():
 		warning_text = "；".join(PackedStringArray(warnings))
 	settlement_result_label.text = "\n".join(PackedStringArray([
@@ -420,6 +439,7 @@ func _refresh_daily_report(report: Dictionary) -> void:
 		"外交关系：%d组｜有效契约：%d" % [int(diplomacy_summary.get("relation_count", 0)), int(diplomacy_summary.get("active_pacts", 0))],
 		"战争行动：%d项推进，%d项结束" % [war_summary.get("progressed", []).size(), war_summary.get("completed", []).size()],
 		"市场刷新：%d处" % int(market_summary.get("markets_updated", 0)),
+		"长期目标：%d项完成，%d项进行中" % [goal_summary.get("completed", []).size(), int(goal_summary.get("active_count", 0))],
 		"警告：" + warning_text,
 	]))
 

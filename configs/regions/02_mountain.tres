@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="RegionDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/data/RegionDefinition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "mountain"
+display_name = "凌霄山脉"
+terrain = "mountain"
+climate = "cool"
+market_modifiers = {"spirit_ore": 0.85}
+risks = ["beast", "landslide"]
+tags = ["ore", "sword"]

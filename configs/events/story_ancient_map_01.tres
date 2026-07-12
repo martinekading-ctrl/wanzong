@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="EventDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/data/EventDefinition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "story_ancient_map_01"
+title = "残缺古图"
+description = "一名游方修士献上一张残缺古图，声称图中记载着前人洞府。"
+category = "world"
+trigger = {"day": 10, "month": 1, "type": "fixed_date", "year": 1}
+conditions = []
+options = [{"costs": {"spirit_stone": 20}, "effects": [{"amount": 5, "key": "reputation", "type": "sect_field_delta"}], "id": "study", "label": "收下研究", "result_text": "宗门收下古图，开始查阅典籍。"}, {"costs": {}, "effects": [], "id": "decline", "label": "婉拒", "result_text": "宗门没有接纳这份来历不明的古图。"}]
+trigger_once = true
+chain_id = "ancient_map_chain"
+

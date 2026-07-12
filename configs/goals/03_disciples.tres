@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="StoryGoalDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/data/StoryGoalDefinition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "goal_disciples"
+display_name = "门人兴盛"
+description = "宗门弟子达到二十人。"
+order = 3
+conditions = [{"type": "disciple_count", "value": 20}]
+rewards = {"spirit_stone": 300}

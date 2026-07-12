@@ -42,6 +42,7 @@ func new_game() -> void:
 	InventoryManager.initialize_world_state()
 	CraftingManager.rebuild_runtime_state()
 	MarketManager.initialize_world_state()
+	StoryGoalManager.initialize_world_state()
 
 
 func random_int(minimum: int, maximum: int) -> int:
@@ -72,6 +73,7 @@ func next_day() -> Dictionary:
 	var diplomacy_summary: Dictionary = DiplomacyManager.daily_update(date_before)
 	var war_summary: Dictionary = WarManager.daily_update(date_before)
 	var market_summary: Dictionary = MarketManager.daily_update(date_before)
+	var goal_summary: Dictionary = StoryGoalManager.daily_update(date_before)
 	var event_results: Array[Dictionary] = EventManager.daily_update({
 		"sect_id": player_sect.id,
 		"date": date_before,
@@ -95,6 +97,7 @@ func next_day() -> Dictionary:
 		"diplomacy": diplomacy_summary,
 		"wars": war_summary,
 		"market": market_summary,
+		"goals": goal_summary,
 		"events": event_results,
 		"warnings": economy_result.get("warnings", []),
 	}

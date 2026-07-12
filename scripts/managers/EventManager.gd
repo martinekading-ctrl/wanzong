@@ -66,6 +66,8 @@ func daily_update(context: Dictionary = {}) -> Array[Dictionary]:
 	for definition in get_all_definitions():
 		if definition.trigger_once and definition.id in WorldDataManager.triggered_event_ids:
 			continue
+		if not _prerequisite_events_resolved(definition.prerequisite_event_ids):
+			continue
 		if _has_pending_instance(definition.id):
 			continue
 		var trigger_result: Dictionary = _evaluate_trigger(definition, context)
@@ -81,6 +83,18 @@ func daily_update(context: Dictionary = {}) -> Array[Dictionary]:
 		triggered.append(event_data)
 		event_triggered.emit(event_data)
 	return triggered
+
+
+func _prerequisite_events_resolved(required_ids: Array[String]) -> bool:
+	for required_id in required_ids:
+		var resolved: bool = false
+		for instance in WorldDataManager.event_instances:
+			if str(instance.get("definition_id", "")) == required_id and str(instance.get("status", "")) == "resolved":
+				resolved = true
+				break
+		if not resolved:
+			return false
+	return true
 
 
 func get_pending_events() -> Array[Dictionary]:
