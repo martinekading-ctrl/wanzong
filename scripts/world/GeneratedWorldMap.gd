@@ -6,6 +6,7 @@ const MAX_SEARCH_RADIUS: int = 128
 
 @export var safe_land_source_ids: Array[int] = []
 @onready var terrain_layer: TileMapLayer = $TerrainLayer
+@onready var nature_objects: Node2D = $NatureObjects
 
 var _load_started_at: int = 0
 
@@ -15,7 +16,40 @@ func _enter_tree() -> void:
 
 
 func _ready() -> void:
+	visible = true
+	terrain_layer.visible = true
+	terrain_layer.z_index = -10
+	nature_objects.visible = true
+	nature_objects.z_index = 0
 	print("[WorldPerf] Generated map scene ready: %d ms" % (Time.get_ticks_msec() - _load_started_at))
+	print(
+		"[WorldMap] root=%s terrain_cells=%d nature_instances=%d used_rect=%s" % [
+			name,
+			terrain_layer.get_used_cells().size(),
+			get_nature_instance_count(),
+			terrain_layer.get_used_rect(),
+		]
+	)
+
+
+func is_baked_map_valid() -> bool:
+	var terrain: TileMapLayer = get_node_or_null("TerrainLayer") as TileMapLayer
+	var nature: Node = get_node_or_null("NatureObjects")
+	if terrain == null or nature == null:
+		return false
+	return not terrain.get_used_cells().is_empty() and get_nature_instance_count() > 0
+
+
+func get_nature_instance_count() -> int:
+	var nature: Node = get_node_or_null("NatureObjects")
+	if nature == null:
+		return 0
+	var count: int = 0
+	for child in nature.get_children():
+		var batch := child as MultiMeshInstance2D
+		if batch != null and batch.multimesh != null:
+			count += batch.multimesh.instance_count
+	return count
 
 
 # 直接查询烘焙后的 TileMap，不重建 terrain_map 或陆地索引。

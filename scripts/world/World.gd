@@ -15,6 +15,8 @@ const BuildSlotNodeScript := preload("res://scripts/world/BuildSlotNode.gd")
 const USE_RUNTIME_WORLD_GENERATION := false
 const GENERATED_WORLD_MAP_PATH := "res://scenes/world/GeneratedWorldMap.tscn"
 const SIMPLE_WORLD_FALLBACK_PATH := "res://scenes/world/SimpleWorldFallback.tscn"
+const WORLD_READY_WARNING_MS: int = 2000
+const MAP_INSTANTIATE_WARNING_MS: int = 1000
 
 # 像素世界扩大为 6144 x 6144，旧世界坐标按比例映射显示。
 const MAP_SIZE: Vector2 = Vector2(6144, 6144)
@@ -121,14 +123,19 @@ func _ready() -> void:
 	var resource_started_at: int = Time.get_ticks_msec()
 	_create_resource_nodes()
 	print("[WorldPerf] Resource nodes: %d ms" % (Time.get_ticks_msec() - resource_started_at))
+	var build_slot_started_at: int = Time.get_ticks_msec()
 	_create_build_slot_nodes()
+	print("[WorldPerf] Build slot nodes: %d ms" % (Time.get_ticks_msec() - build_slot_started_at))
 	build_slot_layer.visible = false
 	var sect_started_at: int = Time.get_ticks_msec()
 	_create_sect_nodes()
 	print("[WorldPerf] Sect nodes: %d ms" % (Time.get_ticks_msec() - sect_started_at))
 	enter_sect_button.pressed.connect(_on_enter_sect_button_pressed)
 	_show_empty_panel()
-	print("[WorldPerf] World ready total: %d ms" % (Time.get_ticks_msec() - ready_started_at))
+	var ready_elapsed: int = Time.get_ticks_msec() - ready_started_at
+	print("[WorldPerf] World ready total: %d ms" % ready_elapsed)
+	if ready_elapsed > WORLD_READY_WARNING_MS:
+		push_warning("[WorldPerf][WARNING] 世界地图加载超过2秒")
 
 
 func _load_runtime_world_map() -> void:
@@ -140,14 +147,35 @@ func _load_runtime_world_map() -> void:
 		map_path = SIMPLE_WORLD_FALLBACK_PATH
 	var load_started_at: int = Time.get_ticks_msec()
 	var map_scene := load(map_path) as PackedScene
+	print("[WorldPerf] Map resource load: %d ms" % (Time.get_ticks_msec() - load_started_at))
 	if map_scene == null and map_path != SIMPLE_WORLD_FALLBACK_PATH:
 		push_error("预生成地图加载失败，当前使用简化地图。")
 		map_scene = load(SIMPLE_WORLD_FALLBACK_PATH) as PackedScene
 	if map_scene == null:
 		push_error("简化地图也无法加载。")
 		return
+	var instantiate_started_at: int = Time.get_ticks_msec()
 	pixel_world = map_scene.instantiate() as Node2D
+	if (
+		map_path == GENERATED_WORLD_MAP_PATH
+		and pixel_world != null
+		and pixel_world.has_method("is_baked_map_valid")
+		and not bool(pixel_world.call("is_baked_map_valid"))
+	):
+		push_error("预生成地图内容无效，当前使用简化地图。")
+		pixel_world.free()
+		map_scene = load(SIMPLE_WORLD_FALLBACK_PATH) as PackedScene
+		pixel_world = map_scene.instantiate() as Node2D if map_scene != null else null
+	var instantiate_elapsed: int = Time.get_ticks_msec() - instantiate_started_at
+	print("[WorldPerf] Map instantiate: %d ms" % instantiate_elapsed)
+	if instantiate_elapsed > MAP_INSTANTIATE_WARNING_MS:
+		push_warning("[WorldPerf][WARNING] 烘焙地图实例化过慢")
+	if pixel_world == null:
+		push_error("世界地图实例化失败。")
+		return
+	var add_child_started_at: int = Time.get_ticks_msec()
 	map_layer.add_child(pixel_world)
+	print("[WorldPerf] Map add child: %d ms" % (Time.get_ticks_msec() - add_child_started_at))
 	print("[WorldPerf] Generated map load: %d ms" % (Time.get_ticks_msec() - load_started_at))
 
 

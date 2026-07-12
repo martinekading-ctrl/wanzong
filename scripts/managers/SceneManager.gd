@@ -60,7 +60,10 @@ func _change_page(scene_path: String) -> void:
 		current_page.remove_child(child)
 		child.queue_free()
 
+	var resource_load_started_at: int = Time.get_ticks_msec()
 	var scene_resource: Resource = load(scene_path)
+	if scene_path == WORLD_SCENE:
+		print("[WorldPerf] World page resource load: %d ms" % (Time.get_ticks_msec() - resource_load_started_at))
 	if scene_resource == null:
 		push_error("SceneManager：找不到页面场景：" + scene_path)
 		return
@@ -71,8 +74,14 @@ func _change_page(scene_path: String) -> void:
 		return
 
 	# 实例化新页面，并放入 CurrentPage。
+	var instantiate_started_at: int = Time.get_ticks_msec()
 	var new_page: Node = packed_scene.instantiate()
+	if scene_path == WORLD_SCENE:
+		print("[WorldPerf] World page instantiate: %d ms" % (Time.get_ticks_msec() - instantiate_started_at))
+	var add_child_started_at: int = Time.get_ticks_msec()
 	current_page.add_child(new_page)
+	if scene_path == WORLD_SCENE:
+		print("[WorldPerf] World page add child: %d ms" % (Time.get_ticks_msec() - add_child_started_at))
 	_fit_page_to_current_page(new_page)
 
 
