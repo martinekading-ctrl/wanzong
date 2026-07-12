@@ -13,6 +13,7 @@ var player_sect: SectData
 var world_seed: int = 0
 var game_speed: float = 1.0
 var last_daily_report: Dictionary = {}
+var world_rng: RandomNumberGenerator = RandomNumberGenerator.new()
 
 
 func new_game() -> void:
@@ -20,6 +21,7 @@ func new_game() -> void:
 	month = 1
 	day = 1
 	world_seed = randi()
+	world_rng.seed = world_seed
 	game_speed = 1.0
 	last_daily_report = {}
 	WorldDataManager.reset_world_data()
@@ -29,6 +31,14 @@ func new_game() -> void:
 	GameHistoryManager.reset()
 	player_sect = SectManager.create_player_sect()
 	AISimulationManager.initialize_from_world_data()
+
+
+func random_int(minimum: int, maximum: int) -> int:
+	return world_rng.randi_range(minimum, maximum)
+
+
+func random_float() -> float:
+	return world_rng.randf()
 
 
 func next_day() -> Dictionary:

@@ -31,6 +31,12 @@ var history_entries: Array[Dictionary] = []
 
 var ai_states: Dictionary = {}
 
+var mission_instances: Array[Dictionary] = []
+var battle_instances: Array[Dictionary] = []
+var expedition_teams: Array[Dictionary] = []
+var game_settings: Dictionary = {}
+var ui_state: Dictionary = {}
+
 var _sect_index_by_id: Dictionary = {}
 var _disciple_index_by_id: Dictionary = {}
 var _disciple_indexes_by_sect: Dictionary = {}
@@ -168,6 +174,11 @@ func init_world_data() -> void:
 	event_instances = []
 	triggered_event_ids = []
 	history_entries = []
+	mission_instances = []
+	battle_instances = []
+	expedition_teams = []
+	game_settings = {"master_volume": 1.0, "music_volume": 1.0, "effects_volume": 1.0}
+	ui_state = {}
 	_rebuild_runtime_indexes()
 
 	is_initialized = true
@@ -184,6 +195,11 @@ func reset_world_data() -> void:
 	triggered_event_ids.clear()
 	history_entries.clear()
 	ai_states.clear()
+	mission_instances.clear()
+	battle_instances.clear()
+	expedition_teams.clear()
+	game_settings.clear()
+	ui_state.clear()
 	_sect_index_by_id.clear()
 	_disciple_index_by_id.clear()
 	_disciple_indexes_by_sect.clear()
@@ -456,6 +472,48 @@ func add_ai_sect_data(sect_data: Dictionary, resources_data: Dictionary, ai_stat
 	sect_resources[sect_id] = resources_data.duplicate(true)
 	ai_states[sect_id] = ai_state.duplicate(true)
 	_disciple_indexes_by_sect[sect_id] = []
+	return true
+
+
+func export_world_state() -> Dictionary:
+	return {
+		"sects": sects.duplicate(true),
+		"resources": resources.duplicate(true),
+		"build_slots": build_slots.duplicate(true),
+		"disciples": disciples.duplicate(true),
+		"sect_resources": sect_resources.duplicate(true),
+		"ai_states": ai_states.duplicate(true),
+		"event_instances": event_instances.duplicate(true),
+		"triggered_event_ids": triggered_event_ids.duplicate(),
+		"history_entries": history_entries.duplicate(true),
+		"mission_instances": mission_instances.duplicate(true),
+		"battle_instances": battle_instances.duplicate(true),
+		"expedition_teams": expedition_teams.duplicate(true),
+		"game_settings": game_settings.duplicate(true),
+		"ui_state": ui_state.duplicate(true),
+	}
+
+
+func restore_world_state(state: Dictionary) -> bool:
+	if not state.has("sects") or not state.has("disciples") or not state.has("sect_resources"):
+		push_warning("世界存档缺少必要数据域。")
+		return false
+	sects.assign(state.get("sects", []))
+	resources.assign(state.get("resources", []))
+	build_slots.assign(state.get("build_slots", []))
+	disciples.assign(state.get("disciples", []))
+	sect_resources = state.get("sect_resources", {}).duplicate(true)
+	ai_states = state.get("ai_states", {}).duplicate(true)
+	event_instances.assign(state.get("event_instances", []))
+	triggered_event_ids.assign(state.get("triggered_event_ids", []))
+	history_entries.assign(state.get("history_entries", []))
+	mission_instances.assign(state.get("mission_instances", []))
+	battle_instances.assign(state.get("battle_instances", []))
+	expedition_teams.assign(state.get("expedition_teams", []))
+	game_settings = state.get("game_settings", {}).duplicate(true)
+	ui_state = state.get("ui_state", {}).duplicate(true)
+	is_initialized = true
+	_rebuild_runtime_indexes()
 	return true
 
 

@@ -35,7 +35,7 @@ func attempt_breakthrough(disciple_id: String, modifiers: Dictionary = {}) -> Di
 		return rejected
 
 	var chance: float = calculate_success_rate(disciple, current, modifiers)
-	var roll: float = randf()
+	var roll: float = GameState.random_float()
 	# 仅供自动回归使用；发布构建不接受外部强制随机值。
 	if OS.is_debug_build() and modifiers.has("_test_roll"):
 		roll = clampf(float(modifiers["_test_roll"]), 0.0, 1.0)

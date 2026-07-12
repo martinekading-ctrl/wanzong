@@ -19,6 +19,15 @@ func reset() -> void:
 	WorldDataManager.triggered_event_ids.clear()
 
 
+func rebuild_runtime_state() -> void:
+	var highest_number: int = 0
+	for instance in WorldDataManager.event_instances:
+		var number_text: String = str(instance.get("instance_id", "")).trim_prefix("event_instance_")
+		if number_text.is_valid_int():
+			highest_number = maxi(highest_number, number_text.to_int())
+	_next_instance_number = highest_number + 1
+
+
 func reload_definitions() -> void:
 	_definitions.clear()
 	var directory := DirAccess.open(EVENT_DIRECTORY)
@@ -141,7 +150,7 @@ func _evaluate_trigger(definition: EventDefinition, context: Dictionary) -> Dict
 	var trigger_type: String = str(trigger.get("type", ""))
 	match trigger_type:
 		"daily_probability":
-			var roll: float = randf()
+			var roll: float = GameState.random_float()
 			var test_rolls: Dictionary = context.get("_test_rolls", {})
 			if OS.is_debug_build() and test_rolls.has(definition.id):
 				roll = float(test_rolls[definition.id])

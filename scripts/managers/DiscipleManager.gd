@@ -331,7 +331,7 @@ func _normalize_assignment(assignment: String) -> String:
 
 
 func _get_daily_variation(min_value: int, max_value: int) -> int:
-	return randi_range(min_value, max_value)
+	return GameState.random_int(min_value, max_value)
 
 
 func sync_disciple_state(disciple: DiscipleData) -> void:
