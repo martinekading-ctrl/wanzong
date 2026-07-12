@@ -15,6 +15,7 @@ var potential: int = 50
 var personality: String = "沉稳"
 var health: int = 100
 var loyalty: int = 50
+var assignment: String = "空闲"
 
 
 func cultivate(amount: int = 10) -> void:
@@ -43,7 +44,7 @@ func to_world_dictionary() -> Dictionary:
 		"comprehension": talent,
 		"loyalty": loyalty,
 		"mood": health,
-		"assignment": "空闲",
+		"assignment": assignment,
 		"combat_power": maxi(10, cultivation + talent),
 		"status": "正常",
 		"description": "由弟子数据系统创建的宗门弟子。",

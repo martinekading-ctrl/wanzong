@@ -1,5 +1,17 @@
 extends Node
 
+const ASSIGNMENT_IDLE := "空闲"
+const ASSIGNMENT_CULTIVATE := "修炼"
+const ASSIGNMENT_FARM := "灵田"
+const ASSIGNMENT_LOGGING := "伐木"
+const ASSIGNMENT_MINING := "采矿"
+const ASSIGNMENT_HERB := "采药"
+
+const DAILY_FOOD_COST: int = 1
+const IDLE_HEALTH_RECOVERY: int = 2
+const CULTIVATION_BASE_GAIN: int = 5
+const MINIMUM_PRODUCTION: int = 1
+
 var disciples: Array[DiscipleData] = []
 var _next_disciple_number: int = 1
 
@@ -22,6 +34,7 @@ func create_disciple(
 	disciple.sect_id = sect_id
 	disciple.name = disciple_name
 	disciple.gender = gender
+	disciple.assignment = ASSIGNMENT_IDLE
 	disciples.append(disciple)
 	WorldDataManager.disciples.append(disciple.to_world_dictionary())
 	_sync_disciple_count(sect_id)
@@ -52,6 +65,89 @@ func cultivate_all(amount: int = 10) -> void:
 		WorldDataManager.update_disciple_data(disciple.id, "cultivation", disciple.cultivation)
 
 
+func update_assignment(disciple_id: String, assignment: String) -> bool:
+	if assignment not in get_supported_assignments():
+		push_warning("不支持的弟子分工：" + assignment)
+		return false
+	var disciple: DiscipleData = get_disciple_by_id(disciple_id)
+	if disciple == null:
+		push_warning("未找到弟子：" + disciple_id)
+		return false
+	disciple.assignment = assignment
+	return WorldDataManager.update_disciple_data(disciple_id, "assignment", assignment)
+
+
+func get_disciple_by_id(disciple_id: String) -> DiscipleData:
+	for disciple in disciples:
+		if disciple.id == disciple_id:
+			return disciple
+	return null
+
+
+func get_disciples_by_sect_id(sect_id: String) -> Array[DiscipleData]:
+	var result: Array[DiscipleData] = []
+	for disciple in disciples:
+		if disciple.sect_id == sect_id:
+			result.append(disciple)
+	return result
+
+
+func get_supported_assignments() -> Array[String]:
+	return [
+		ASSIGNMENT_IDLE,
+		ASSIGNMENT_CULTIVATE,
+		ASSIGNMENT_FARM,
+		ASSIGNMENT_LOGGING,
+		ASSIGNMENT_MINING,
+		ASSIGNMENT_HERB,
+	]
+
+
+# 只生成每日行动计划，不在此阶段修改资源或弟子状态。
+func prepare_daily_actions(sect_id: String) -> Array[Dictionary]:
+	var actions: Array[Dictionary] = []
+	for disciple in get_disciples_by_sect_id(sect_id):
+		var assignment: String = _normalize_assignment(disciple.assignment)
+		var action: Dictionary = _create_base_daily_result(disciple, assignment)
+		match assignment:
+			ASSIGNMENT_IDLE:
+				action["health_change"] = IDLE_HEALTH_RECOVERY
+				action["message"] = "休息恢复健康。"
+			ASSIGNMENT_CULTIVATE:
+				action["cultivation_gain"] = CULTIVATION_BASE_GAIN + int(disciple.talent / 25.0)
+				action["cost"]["spirit_stone"] = EconomyManager.DAILY_CULTIVATION_COST_PER_DISCIPLE
+				action["message"] = "等待分配修炼灵石。"
+			ASSIGNMENT_FARM:
+				_set_production(action, "food", 8 + int(disciple.talent / 20.0) + _get_daily_variation(-1, 2))
+			ASSIGNMENT_LOGGING:
+				_set_production(action, "wood", 6 + int(disciple.potential / 25.0) + _get_daily_variation(-1, 2))
+			ASSIGNMENT_MINING:
+				_set_production(action, "ore", 4 + int(disciple.talent / 30.0) + _get_daily_variation(-1, 1))
+			ASSIGNMENT_HERB:
+				_set_production(action, "herb", 4 + int(disciple.talent / 25.0) + _get_daily_variation(-1, 2))
+		actions.append(action)
+	return actions
+
+
+# 经济系统完成支付后，只应用实际获批的修为与健康变化。
+func apply_daily_results(results: Array[Dictionary]) -> void:
+	for result in results:
+		var disciple_id: String = str(result.get("disciple_id", ""))
+		var disciple: DiscipleData = get_disciple_by_id(disciple_id)
+		if disciple == null:
+			continue
+		disciple.cultivate(int(result.get("cultivation_gain", 0)))
+		disciple.health = clampi(disciple.health + int(result.get("health_change", 0)), 0, 100)
+		WorldDataManager.update_disciple_data(disciple_id, "cultivation", disciple.cultivation)
+		WorldDataManager.update_disciple_data(disciple_id, "spiritual_power", disciple.cultivation)
+		WorldDataManager.update_disciple_data(disciple_id, "health", disciple.health)
+		WorldDataManager.update_disciple_data(
+			disciple_id,
+			"combat_power",
+			maxi(10, disciple.talent + disciple.cultivation)
+		)
+
+
 func load_from_world_data() -> void:
 	reset()
 	for world_disciple in WorldDataManager.get_all_disciples():
@@ -68,6 +164,7 @@ func load_from_world_data() -> void:
 		disciple.personality = str(world_disciple.get("personality", "沉稳"))
 		disciple.health = int(world_disciple.get("health", 100))
 		disciple.loyalty = int(world_disciple.get("loyalty", 50))
+		disciple.assignment = str(world_disciple.get("assignment", ASSIGNMENT_IDLE))
 		disciples.append(disciple)
 	_update_next_disciple_number()
 
@@ -88,3 +185,44 @@ func _update_next_disciple_number() -> void:
 		if number_text.is_valid_int():
 			highest_number = maxi(highest_number, number_text.to_int())
 	_next_disciple_number = highest_number + 1
+
+
+func _create_base_daily_result(disciple: DiscipleData, assignment: String) -> Dictionary:
+	return {
+		"disciple_id": disciple.id,
+		"disciple_name": disciple.name,
+		"assignment": assignment,
+		"resource_type": "",
+		"resource_amount": 0,
+		"cultivation_gain": 0,
+		"health_change": 0,
+		"cost": {
+			"spirit_stone": 0,
+			"food": DAILY_FOOD_COST,
+		},
+		"success": true,
+		"message": "",
+	}
+
+
+func _set_production(action: Dictionary, resource_type: String, amount: int) -> void:
+	action["resource_type"] = resource_type
+	action["resource_amount"] = maxi(MINIMUM_PRODUCTION, amount)
+	action["message"] = "完成今日生产。"
+
+
+func _normalize_assignment(assignment: String) -> String:
+	# 兼容 Task-0033 时期的旧分工值，不建立第二个分工字段。
+	match assignment:
+		"采集":
+			return ASSIGNMENT_HERB
+		"闭关":
+			return ASSIGNMENT_CULTIVATE
+		"巡山":
+			return ASSIGNMENT_IDLE
+		_:
+			return assignment if assignment in get_supported_assignments() else ASSIGNMENT_IDLE
+
+
+func _get_daily_variation(min_value: int, max_value: int) -> int:
+	return randi_range(min_value, max_value)

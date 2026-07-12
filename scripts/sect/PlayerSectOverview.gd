@@ -1,8 +1,6 @@
 extends Control
 
-const ResourceCalculatorScript = preload("res://scripts/economy/ResourceCalculator.gd")
-const ASSIGNMENT_FILTERS: Array[String] = ["全部", "空闲", "修炼", "巡山", "采集", "闭关"]
-const DISCIPLE_ASSIGNMENTS: Array[String] = ["空闲", "修炼", "巡山", "采集", "闭关"]
+const LEGACY_ASSIGNMENT_FILTERS: Array[String] = ["巡山", "采集", "闭关"]
 const SORT_OPTIONS: Array[String] = ["默认", "境界", "战力", "忠诚", "年龄"]
 const REALM_ORDER: Dictionary = {
 	"凡人": 0,
@@ -14,6 +12,8 @@ const REALM_ORDER: Dictionary = {
 }
 
 @onready var title_label: Label = $MarginContainer/RootBox/TopBar/TitleLabel
+@onready var date_label: Label = $MarginContainer/RootBox/TopBar/DateLabel
+@onready var next_day_button: Button = $MarginContainer/RootBox/TopBar/NextDayButton
 @onready var back_button: Button = $MarginContainer/RootBox/TopBar/BackButton
 @onready var sect_name_label: Label = $MarginContainer/RootBox/SummaryPanel/SummaryBox/SectNameLabel
 @onready var master_label: Label = $MarginContainer/RootBox/SummaryPanel/SummaryBox/MasterLabel
@@ -57,12 +57,11 @@ const REALM_ORDER: Dictionary = {
 @onready var detail_hint_label: Label = $MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleSection/DiscipleBody/DiscipleDetailPanel/DiscipleDetailBox/DetailHintLabel
 
 var current_selected_disciple_id: String = ""
-var resource_calculator: Node = ResourceCalculatorScript.new()
 
 
 func _ready() -> void:
-	add_child(resource_calculator)
 	back_button.pressed.connect(_on_back_button_pressed)
+	next_day_button.pressed.connect(_on_next_day_button_pressed)
 	disciple_button.pressed.connect(_on_disciple_button_pressed)
 	building_button.pressed.connect(_on_building_button_pressed)
 	resource_button.pressed.connect(_on_resource_button_pressed)
@@ -70,17 +69,22 @@ func _ready() -> void:
 	assignment_filter_option.item_selected.connect(_on_disciple_option_changed)
 	sort_option.item_selected.connect(_on_disciple_option_changed)
 	apply_assignment_button.pressed.connect(_on_apply_assignment_button_pressed)
-	test_month_button.pressed.connect(_on_test_month_button_pressed)
+	test_month_button.pressed.connect(_on_next_day_button_pressed)
 	_setup_roster_options()
 	_setup_assignment_options()
 	_refresh_player_sect_info()
 	_refresh_resource_panel()
+	_refresh_date_label()
+	_refresh_daily_report(GameState.last_daily_report)
 	_clear_disciple_detail()
 
 
 func _setup_roster_options() -> void:
 	assignment_filter_option.clear()
-	for filter_text in ASSIGNMENT_FILTERS:
+	assignment_filter_option.add_item("全部")
+	for filter_text in DiscipleManager.get_supported_assignments():
+		assignment_filter_option.add_item(filter_text)
+	for filter_text in LEGACY_ASSIGNMENT_FILTERS:
 		assignment_filter_option.add_item(filter_text)
 	assignment_filter_option.select(0)
 
@@ -92,7 +96,7 @@ func _setup_roster_options() -> void:
 
 func _setup_assignment_options() -> void:
 	assignment_option.clear()
-	for assignment_text in DISCIPLE_ASSIGNMENTS:
+	for assignment_text in DiscipleManager.get_supported_assignments():
 		assignment_option.add_item(assignment_text)
 	assignment_option.select(0)
 
@@ -148,67 +152,75 @@ func _set_resource_labels(resource_data: Dictionary) -> void:
 	resource_population_label.text = "人口：" + str(resource_data.get("population", "-"))
 
 
-func _on_test_month_button_pressed() -> void:
-	var player_sect: Dictionary = WorldDataManager.get_player_sect()
-	if player_sect.is_empty():
-		settlement_result_label.text = "模拟结算失败：未找到玩家宗门"
+func _on_next_day_button_pressed() -> void:
+	var report: Dictionary = GameState.next_day()
+	if report.is_empty():
+		settlement_result_label.text = "推进失败：尚未初始化玩家宗门。"
 		return
+	_refresh_all(report)
 
-	var sect_id: String = str(player_sect["sect_id"])
-	var resource_change: Dictionary = resource_calculator.calculate_sect_monthly_change(sect_id)
-	var resources_before: Dictionary = WorldDataManager.get_sect_resources(sect_id)
-	var applied_change: Dictionary = {}
 
-	for resource_key in resource_change:
-		var requested_amount: int = int(resource_change[resource_key])
-		if not WorldDataManager.update_sect_resource(sect_id, str(resource_key), requested_amount):
-			continue
-		var resources_after_update: Dictionary = WorldDataManager.get_sect_resources(sect_id)
-		var actual_amount: int = (
-			int(resources_after_update.get(resource_key, 0))
-			- int(resources_before.get(resource_key, 0))
-		)
-		if actual_amount != 0:
-			applied_change[resource_key] = actual_amount
-		resources_before = resources_after_update
-
-	_refresh_resource_panel()
+func _refresh_all(report: Dictionary = GameState.last_daily_report) -> void:
+	_refresh_date_label()
 	_refresh_player_sect_info()
-	settlement_result_label.text = _build_settlement_result(sect_id, applied_change)
+	_refresh_resource_panel()
+	_refresh_daily_report(report)
+	if disciple_section.visible:
+		_refresh_disciple_roster()
 
 
-func _build_settlement_result(sect_id: String, resource_change: Dictionary) -> String:
-	var training_count: int = 0
-	var gathering_count: int = 0
-	for disciple_data in WorldDataManager.get_disciples_by_sect_id(sect_id):
-		match str(disciple_data.get("assignment", "空闲")):
-			"修炼":
-				training_count += 1
-			"采集":
-				gathering_count += 1
+func _refresh_date_label() -> void:
+	date_label.text = "第%d年 %d月 %d日" % [GameState.year, GameState.month, GameState.day]
 
-	var lines: PackedStringArray = PackedStringArray([
-		"本次结算：",
-		"修炼弟子：%d人" % training_count,
-		"采集弟子：%d人" % gathering_count,
-	])
-	if resource_change.is_empty():
-		lines.append("本次没有资源变化")
-		return "\n".join(lines)
 
-	lines.append("资源变化：")
-	var resource_names: Dictionary = {
-		"spirit_stone": "灵石",
-		"wood": "木材",
-		"stone": "石材",
-		"spirit_grass": "灵草",
-	}
-	for resource_key in ["spirit_stone", "wood", "stone", "spirit_grass"]:
-		if not resource_change.has(resource_key):
+func _refresh_daily_report(report: Dictionary) -> void:
+	if report.is_empty():
+		settlement_result_label.text = "最近结算：尚未推进日期"
+		return
+	var production: Dictionary = report.get("production", {})
+	var expenses: Dictionary = report.get("expenses", {})
+	var shortages: Dictionary = report.get("shortages", {})
+	var cultivation_success: int = 0
+	var cultivation_failed: int = 0
+	for result in report.get("disciple_results", []):
+		if str(result.get("assignment", "")) != DiscipleManager.ASSIGNMENT_CULTIVATE:
 			continue
-		var amount: int = int(resource_change[resource_key])
-		lines.append("%s %s%d" % [resource_names[resource_key], "+" if amount > 0 else "", amount])
-	return "\n".join(lines)
+		if bool(result.get("success", false)):
+			cultivation_success += 1
+		else:
+			cultivation_failed += 1
+	var maintenance: Dictionary = expenses.get("maintenance", {})
+	var cultivation: Dictionary = expenses.get("cultivation", {})
+	var food: Dictionary = expenses.get("food", {})
+	var warning_text: String = "无"
+	var warnings: Array = report.get("warnings", [])
+	if not warnings.is_empty():
+		warning_text = "；".join(PackedStringArray(warnings))
+	settlement_result_label.text = "\n".join(PackedStringArray([
+		"最近结算：",
+		"今日产出：%s" % _format_production(production),
+		"今日灵石消耗：%d" % (int(maintenance.get("paid", 0)) + int(cultivation.get("paid", 0))),
+		"今日食物消耗：%d" % int(food.get("paid", 0)),
+		"资源缺口：灵石%d，食物%d" % [int(shortages.get("spirit_stone", 0)), int(shortages.get("food", 0))],
+		"修炼成功：%d人；修炼失败：%d人" % [cultivation_success, cultivation_failed],
+		"警告：" + warning_text,
+	]))
+
+
+func _format_production(production: Dictionary) -> String:
+	if production.is_empty():
+		return "无"
+	var resource_names: Dictionary = {
+		"food": "粮食",
+		"wood": "木材",
+		"ore": "灵矿",
+		"herb": "灵草",
+	}
+	var parts: PackedStringArray = PackedStringArray()
+	for resource_key in ["food", "wood", "ore", "herb"]:
+		if production.has(resource_key):
+			parts.append("%s+%d" % [resource_names[resource_key], int(production[resource_key])])
+	return "，".join(parts)
 
 
 func _on_back_button_pressed() -> void:
@@ -252,11 +264,7 @@ func _on_apply_assignment_button_pressed() -> void:
 
 	var selected_assignment: String = _get_selected_assignment_text()
 	var updated_disciple_id: String = current_selected_disciple_id
-	var update_success: bool = WorldDataManager.update_disciple_data(
-		updated_disciple_id,
-		"assignment",
-		selected_assignment
-	)
+	var update_success: bool = DiscipleManager.update_assignment(updated_disciple_id, selected_assignment)
 
 	if not update_success:
 		assignment_result_label.text = "安排更新失败"
@@ -456,7 +464,7 @@ func _select_assignment_option(assignment: String) -> void:
 
 func _get_selected_assignment_text() -> String:
 	if assignment_option.selected < 0:
-		return DISCIPLE_ASSIGNMENTS[0]
+		return DiscipleManager.ASSIGNMENT_IDLE
 	return assignment_option.get_item_text(assignment_option.selected)
 
 

@@ -37,6 +37,17 @@ size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 30
 text = "玩家宗门详情"
 
+[node name="DateLabel" type="Label" parent="MarginContainer/RootBox/TopBar"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "第1年 1月 1日"
+vertical_alignment = 1
+
+[node name="NextDayButton" type="Button" parent="MarginContainer/RootBox/TopBar"]
+custom_minimum_size = Vector2(140, 44)
+layout_mode = 2
+text = "推进一天"
+
 [node name="BackButton" type="Button" parent="MarginContainer/RootBox/TopBar"]
 custom_minimum_size = Vector2(160, 44)
 layout_mode = 2
@@ -139,6 +150,7 @@ layout_mode = 2
 theme_override_constants/separation = 12
 
 [node name="TestMonthButton" type="Button" parent="MarginContainer/RootBox/ResourcePanel/ResourceBox/SettlementBox"]
+visible = false
 custom_minimum_size = Vector2(160, 40)
 layout_mode = 2
 text = "模拟结算一次"
@@ -146,7 +158,7 @@ text = "模拟结算一次"
 [node name="SettlementResultLabel" type="Label" parent="MarginContainer/RootBox/ResourcePanel/ResourceBox/SettlementBox"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "尚未进行模拟结算"
+text = "最近结算：尚未推进日期"
 autowrap_mode = 3
 
 [node name="FunctionPanel" type="PanelContainer" parent="MarginContainer/RootBox"]
