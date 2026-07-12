@@ -25,6 +25,7 @@ func new_game() -> void:
 	WorldDataManager.reset_world_data()
 	SectManager.reset()
 	DiscipleManager.load_from_world_data()
+	EventManager.reset()
 	player_sect = SectManager.create_player_sect()
 
 
@@ -39,6 +40,10 @@ func next_day() -> Dictionary:
 	var disciple_results: Array[Dictionary] = economy_result.get("disciple_results", [])
 	DiscipleManager.apply_daily_results(disciple_results)
 	var sect_result: Dictionary = SectManager.daily_update(player_sect, economy_result)
+	var event_results: Array[Dictionary] = EventManager.daily_update({
+		"sect_id": player_sect.id,
+		"date": date_before,
+	})
 	_advance_date()
 
 	last_daily_report = {
@@ -49,6 +54,7 @@ func next_day() -> Dictionary:
 		"shortages": economy_result.get("shortages", {}),
 		"disciple_results": disciple_results,
 		"sect_result": sect_result,
+		"events": event_results,
 		"warnings": economy_result.get("warnings", []),
 	}
 	daily_simulation_completed.emit(last_daily_report)

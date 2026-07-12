@@ -27,6 +27,11 @@ const SORT_OPTIONS: Array[String] = ["默认", "境界", "战力", "忠诚", "�
 @onready var disciple_button: Button = $MarginContainer/RootBox/FunctionPanel/FunctionBox/ButtonBar/DiscipleButton
 @onready var building_button: Button = $MarginContainer/RootBox/FunctionPanel/FunctionBox/ButtonBar/BuildingButton
 @onready var resource_button: Button = $MarginContainer/RootBox/FunctionPanel/FunctionBox/ButtonBar/ResourceButton
+@onready var pending_event_panel: PanelContainer = $MarginContainer/RootBox/FunctionPanel/FunctionBox/PendingEventPanel
+@onready var event_title_label: Label = $MarginContainer/RootBox/FunctionPanel/FunctionBox/PendingEventPanel/EventBox/EventTitleLabel
+@onready var event_description_label: Label = $MarginContainer/RootBox/FunctionPanel/FunctionBox/PendingEventPanel/EventBox/EventDescriptionLabel
+@onready var event_option_box: HBoxContainer = $MarginContainer/RootBox/FunctionPanel/FunctionBox/PendingEventPanel/EventBox/EventOptionBox
+@onready var event_result_label: Label = $MarginContainer/RootBox/FunctionPanel/FunctionBox/PendingEventPanel/EventBox/EventResultLabel
 @onready var placeholder_label: Label = $MarginContainer/RootBox/FunctionPanel/FunctionBox/PlaceholderLabel
 @onready var disciple_section: VBoxContainer = $MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleSection
 @onready var search_line_edit: LineEdit = $MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleSection/DiscipleTopBar/SearchLineEdit
@@ -72,6 +77,7 @@ func _ready() -> void:
 	_refresh_resource_panel()
 	_refresh_date_label()
 	_refresh_daily_report(GameState.last_daily_report)
+	_refresh_pending_event_panel()
 	_clear_disciple_detail()
 
 
@@ -161,6 +167,7 @@ func _refresh_all(report: Dictionary = GameState.last_daily_report) -> void:
 	_refresh_player_sect_info()
 	_refresh_resource_panel()
 	_refresh_daily_report(report)
+	_refresh_pending_event_panel()
 	if disciple_section.visible:
 		_refresh_disciple_roster()
 
@@ -195,6 +202,7 @@ func _refresh_daily_report(report: Dictionary) -> void:
 	var food: Dictionary = expenses.get("food", {})
 	var warning_text: String = "无"
 	var warnings: Array = report.get("warnings", [])
+	var new_events: Array = report.get("events", [])
 	if not warnings.is_empty():
 		warning_text = "；".join(PackedStringArray(warnings))
 	settlement_result_label.text = "\n".join(PackedStringArray([
@@ -205,6 +213,7 @@ func _refresh_daily_report(report: Dictionary) -> void:
 		"资源缺口：灵石%d，食物%d" % [int(shortages.get("spirit_stone", 0)), int(shortages.get("food", 0))],
 		"修炼成功：%d人；修炼失败：%d人" % [cultivation_success, cultivation_failed],
 		"修为增长：%d；瓶颈弟子：%d人" % [cultivation_gain, bottleneck_count],
+		"新触发事件：%d件" % new_events.size(),
 		"警告：" + warning_text,
 	]))
 
@@ -223,6 +232,42 @@ func _format_production(production: Dictionary) -> String:
 		if production.has(resource_key):
 			parts.append("%s+%d" % [resource_names[resource_key], int(production[resource_key])])
 	return "，".join(parts)
+
+
+func _refresh_pending_event_panel(result_message: String = "") -> void:
+	for child in event_option_box.get_children():
+		event_option_box.remove_child(child)
+		child.queue_free()
+	var pending_events: Array[Dictionary] = EventManager.get_pending_events()
+	if pending_events.is_empty():
+		pending_event_panel.visible = result_message != ""
+		event_title_label.text = "事件结果" if result_message != "" else ""
+		event_description_label.text = ""
+		event_result_label.text = result_message
+		return
+	var event_data: Dictionary = pending_events[0]
+	pending_event_panel.visible = true
+	event_title_label.text = "待处理事件：" + str(event_data.get("title", "未命名事件"))
+	event_description_label.text = str(event_data.get("description", ""))
+	event_result_label.text = result_message
+	for option in event_data.get("options", []):
+		var option_button := Button.new()
+		option_button.text = str(option.get("label", "选择"))
+		option_button.pressed.connect(_on_event_option_pressed.bind(
+			str(event_data.get("instance_id", "")),
+			str(option.get("id", ""))
+		))
+		event_option_box.add_child(option_button)
+
+
+func _on_event_option_pressed(instance_id: String, option_id: String) -> void:
+	var result: Dictionary = EventManager.resolve_event(instance_id, option_id)
+	var result_message: String = str(result.get("message", "事件处理失败。"))
+	_refresh_player_sect_info()
+	_refresh_resource_panel()
+	if disciple_section.visible:
+		_refresh_disciple_roster()
+	_refresh_pending_event_panel(result_message)
 
 
 func _on_back_button_pressed() -> void:

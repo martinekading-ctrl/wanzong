@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="EventDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/EventDefinition.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "disciple_bottleneck_guidance"
+title = "瓶颈前的指点"
+description = "一名弟子修炼已至瓶颈，正在等待宗门指点。"
+category = "disciple"
+trigger = {"field": "at_bottleneck", "minimum_count": 1, "operator": "==", "type": "disciple_state", "value": true}
+conditions = []
+options = [{"costs": {"spirit_stone": 5}, "effects": [{"amount": 3, "key": "loyalty", "type": "disciple_field_delta"}], "id": "personal_guidance", "label": "亲自指点", "result_text": "弟子得到指点，对宗门更加忠诚。"}, {"costs": {}, "effects": [], "id": "wait", "label": "暂且等待", "result_text": "宗门决定稍后再处理此事。"}]
+trigger_once = true

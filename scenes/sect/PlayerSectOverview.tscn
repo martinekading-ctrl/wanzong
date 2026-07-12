@@ -188,6 +188,32 @@ custom_minimum_size = Vector2(160, 44)
 layout_mode = 2
 text = "资源"
 
+[node name="PendingEventPanel" type="PanelContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox"]
+visible = false
+layout_mode = 2
+
+[node name="EventBox" type="VBoxContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/PendingEventPanel"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="EventTitleLabel" type="Label" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/PendingEventPanel/EventBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+
+[node name="EventDescriptionLabel" type="Label" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/PendingEventPanel/EventBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 15
+autowrap_mode = 3
+
+[node name="EventOptionBox" type="HBoxContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/PendingEventPanel/EventBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="EventResultLabel" type="Label" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/PendingEventPanel/EventBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 15
+autowrap_mode = 3
+
 [node name="PlaceholderLabel" type="Label" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18

@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="EventDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/EventDefinition.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "resource_food_shortage"
+title = "粮仓告急"
+description = "宗门粮食库存已降至警戒线，需要尽快调整安排。"
+category = "resource"
+trigger = {"operator": "<=", "resource_key": "food", "type": "resource_threshold", "value": 100}
+conditions = []
+options = [{"costs": {"spirit_stone": 20}, "effects": [{"amount": 100, "key": "food", "type": "resource_delta"}], "id": "purchase_food", "label": "购买粮食", "result_text": "宗门购入了一批应急粮食。"}, {"costs": {}, "effects": [], "id": "ration", "label": "暂行配给", "result_text": "宗门开始实行粮食配给。"}]
+trigger_once = false

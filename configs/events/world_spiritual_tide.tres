@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="EventDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/EventDefinition.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "world_spiritual_tide"
+title = "灵气潮汐"
+description = "天地灵气短暂涌动，各宗门都感受到了异常。"
+category = "world"
+trigger = {"chance": 0.01, "type": "daily_probability"}
+conditions = []
+options = [{"costs": {}, "effects": [{"amount": 2, "key": "spirit_grass", "type": "resource_delta"}], "id": "collect_aura", "label": "采集逸散灵气", "result_text": "门人借机收集了少量灵草。"}]
+trigger_once = false

@@ -23,6 +23,10 @@ var disciples: Array = []
 
 var sect_resources: Dictionary = {}
 
+var event_instances: Array = []
+
+var triggered_event_ids: Array[String] = []
+
 var is_initialized: bool = false
 
 
@@ -151,6 +155,8 @@ func init_world_data() -> void:
 		"sect_009": _create_sect_resource_data(12800, 17500, 1200, 980, 420, 360, 2100),
 		"sect_010": _create_sect_resource_data(18600, 24000, 1800, 1500, 520, 460, 3200),
 	}
+	event_instances = []
+	triggered_event_ids = []
 
 	is_initialized = true
 
@@ -162,6 +168,8 @@ func reset_world_data() -> void:
 	build_slots.clear()
 	disciples.clear()
 	sect_resources.clear()
+	event_instances.clear()
+	triggered_event_ids.clear()
 	init_world_data()
 
 

@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="EventDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/EventDefinition.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "sect_first_council"
+title = "初次宗门议事"
+description = "宗门初立，门人请求确立近期的发展方向。"
+category = "sect"
+trigger = {"day": 3, "month": 1, "type": "fixed_date", "year": 1}
+conditions = []
+options = [{"costs": {}, "effects": [{"amount": 5, "key": "reputation", "type": "sect_field_delta"}], "id": "steady_growth", "label": "稳固根基", "result_text": "宗门上下明确了稳健发展的方向。"}]
+trigger_once = true

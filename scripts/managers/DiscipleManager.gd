@@ -286,6 +286,7 @@ func sync_disciple_state(disciple: DiscipleData) -> void:
 	WorldDataManager.update_disciple_data(disciple.id, "spiritual_power", disciple.cultivation)
 	WorldDataManager.update_disciple_data(disciple.id, "at_bottleneck", disciple.at_bottleneck)
 	WorldDataManager.update_disciple_data(disciple.id, "health", disciple.health)
+	WorldDataManager.update_disciple_data(disciple.id, "loyalty", disciple.loyalty)
 	WorldDataManager.update_disciple_data(disciple.id, "combat_power", disciple.combat_power)
 	WorldDataManager.update_disciple_data(
 		disciple.id,
