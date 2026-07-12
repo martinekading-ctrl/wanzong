@@ -12,6 +12,10 @@ const ResourceNodeScript := preload("res://scripts/world/ResourceNode.gd")
 # 建设点脚本，用来显示青云宗的可建设空地。
 const BuildSlotNodeScript := preload("res://scripts/world/BuildSlotNode.gd")
 
+const USE_RUNTIME_WORLD_GENERATION := false
+const GENERATED_WORLD_MAP_PATH := "res://scenes/world/GeneratedWorldMap.tscn"
+const SIMPLE_WORLD_FALLBACK_PATH := "res://scenes/world/SimpleWorldFallback.tscn"
+
 # 像素世界扩大为 6144 x 6144，旧世界坐标按比例映射显示。
 const MAP_SIZE: Vector2 = Vector2(6144, 6144)
 const MAP_ORIGIN: Vector2 = Vector2.ZERO
@@ -46,6 +50,7 @@ var active_sect_icon_directory: String = SECT_ICON_DIRECTORY
 # 按资源类型保存扫描到的图片路径；缺失类型会回退到 ResourceNode 的代码绘制。
 var resource_icon_paths_by_type: Dictionary = {}
 var resource_icon_rng: RandomNumberGenerator = RandomNumberGenerator.new()
+var texture_cache: Dictionary = {}
 
 # 当前地图对象选中状态，由 World 统一管理。
 var current_selected_type: String = "none"
@@ -55,8 +60,8 @@ var current_selected_node: Node = null
 # 地图层，只放已经通过的修仙像素世界实例。
 @onready var map_layer: Node2D = $MapLayer
 
-# 正式地图复用的像素世界生成器。
-@onready var pixel_world: Node2D = $MapLayer/PixelWorldMap
+# 正式地图只引用预生成结果或简化回退，不引用程序化生成器。
+var pixel_world: Node2D
 
 # 领地层，只放宗门领地范围。
 @onready var territory_layer: Node2D = $TerritoryLayer
@@ -101,6 +106,8 @@ var current_selected_node: Node = null
 
 # 地图启动时，初始化世界数据，并生成宗门和资源点。
 func _ready() -> void:
+	var ready_started_at: int = Time.get_ticks_msec()
+	_load_runtime_world_map()
 	world_camera.map_size = MAP_SIZE
 	world_camera.map_origin = MAP_ORIGIN
 	world_camera.position = MAP_ORIGIN + MAP_SIZE * 0.5
@@ -111,12 +118,37 @@ func _ready() -> void:
 	_validate_resource_positions()
 	# Task-0014：暂时隐藏领地圈，后续改成护山大阵视觉。
 	# _create_territory_areas()
+	var resource_started_at: int = Time.get_ticks_msec()
 	_create_resource_nodes()
+	print("[WorldPerf] Resource nodes: %d ms" % (Time.get_ticks_msec() - resource_started_at))
 	_create_build_slot_nodes()
 	build_slot_layer.visible = false
+	var sect_started_at: int = Time.get_ticks_msec()
 	_create_sect_nodes()
+	print("[WorldPerf] Sect nodes: %d ms" % (Time.get_ticks_msec() - sect_started_at))
 	enter_sect_button.pressed.connect(_on_enter_sect_button_pressed)
 	_show_empty_panel()
+	print("[WorldPerf] World ready total: %d ms" % (Time.get_ticks_msec() - ready_started_at))
+
+
+func _load_runtime_world_map() -> void:
+	if USE_RUNTIME_WORLD_GENERATION:
+		push_error("正式运行禁止启用完整程序化地图生成。")
+	var map_path: String = GENERATED_WORLD_MAP_PATH
+	if not ResourceLoader.exists(map_path):
+		push_error("预生成地图缺失，当前使用简化地图。")
+		map_path = SIMPLE_WORLD_FALLBACK_PATH
+	var load_started_at: int = Time.get_ticks_msec()
+	var map_scene := load(map_path) as PackedScene
+	if map_scene == null and map_path != SIMPLE_WORLD_FALLBACK_PATH:
+		push_error("预生成地图加载失败，当前使用简化地图。")
+		map_scene = load(SIMPLE_WORLD_FALLBACK_PATH) as PackedScene
+	if map_scene == null:
+		push_error("简化地图也无法加载。")
+		return
+	pixel_world = map_scene.instantiate() as Node2D
+	map_layer.add_child(pixel_world)
+	print("[WorldPerf] Generated map load: %d ms" % (Time.get_ticks_msec() - load_started_at))
 
 
 # ESC 取消当前选择、隐藏建设点并恢复地图概况。
@@ -195,7 +227,7 @@ func _get_sect_icon_texture(sect_index: int, is_player: bool) -> Texture2D:
 		if not ai_icon_paths.is_empty():
 			selected_path = ai_icon_paths[(sect_index - 1) % ai_icon_paths.size()]
 
-	return load(selected_path) as Texture2D
+	return _load_texture_cached(selected_path)
 
 
 # 启动时扫描四类资源点图片；目录缺失或为空时只发出 warning。
@@ -240,9 +272,18 @@ func _get_resource_icon_texture(resource_type: String) -> Texture2D:
 
 	var selected_index: int = resource_icon_rng.randi_range(0, icon_paths.size() - 1)
 	var selected_path: String = str(icon_paths[selected_index])
-	var texture: Texture2D = load(selected_path) as Texture2D
+	var texture: Texture2D = _load_texture_cached(selected_path)
 	if texture == null:
 		push_warning("资源点图片加载失败，将使用代码绘制 fallback：" + selected_path)
+	return texture
+
+
+func _load_texture_cached(path: String) -> Texture2D:
+	if texture_cache.has(path):
+		return texture_cache[path] as Texture2D
+	var texture := load(path) as Texture2D
+	if texture != null:
+		texture_cache[path] = texture
 	return texture
 
 

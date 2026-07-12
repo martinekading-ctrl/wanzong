@@ -1,3 +1,4 @@
+@tool
 extends Node2D
 
 # 独立修仙像素世界视觉样张，不读取正式 World 数据，也不包含玩法交互。
@@ -69,6 +70,11 @@ const ISLAND_SPECS: Array = [
 @onready var preview_camera: Camera2D = $PreviewCamera
 
 @export var preview_mode: bool = true
+@export var regenerate_preview_now: bool = false:
+	set(value):
+		regenerate_preview_now = false
+		if value and Engine.is_editor_hint():
+			call_deferred("generate_for_bake")
 
 var terrain_map: Array = []
 var terrain_sources: Dictionary = {}
@@ -103,6 +109,14 @@ var zoom_step: float = 0.12
 
 
 func _ready() -> void:
+	if Engine.is_editor_hint():
+		preview_camera.enabled = false
+		return
+	generate_for_bake()
+
+
+func generate_for_bake() -> void:
+	var ready_started_at: int = Time.get_ticks_msec()
 	_setup_noises()
 	_load_world_object_textures()
 	_create_tile_set()
@@ -118,6 +132,7 @@ func _ready() -> void:
 		resource_cells.clear()
 		preview_camera.enabled = false
 	queue_redraw()
+	print("[WorldPerf] PixelWorldPreview ready total: %d ms" % (Time.get_ticks_msec() - ready_started_at))
 
 
 func _process(delta: float) -> void:
@@ -257,6 +272,7 @@ func _setup_noises() -> void:
 
 # 每类地形使用八个同色系变体，保持细节但不形成规则纹路。
 func _create_tile_set() -> void:
+	var started_at: int = Time.get_ticks_msec()
 	terrain_layer.tile_set = TileSet.new()
 	terrain_layer.tile_set.tile_size = TILE_SIZE
 	terrain_sources.clear()
@@ -282,6 +298,7 @@ func _create_tile_set() -> void:
 			source_ids.append(terrain_layer.tile_set.add_source(source))
 
 		terrain_sources[terrain_type] = source_ids
+	print("[WorldPerf] create_tile_set: %d ms" % (Time.get_ticks_msec() - started_at))
 
 
 # 地表 Tile 只画细小像素纹理，大型树木和山峰作为独立对象绘制。
@@ -323,6 +340,7 @@ func _create_tile_texture(
 
 # 先生成修仙大陆，再添加海岸和深浅水过渡。
 func _generate_world() -> void:
+	var started_at: int = Time.get_ticks_msec()
 	var raw_map: Array = []
 	for cell_y in range(GRID_SIZE.y):
 		var row: Array[String] = []
@@ -343,6 +361,7 @@ func _generate_world() -> void:
 			final_row[cell_x] = terrain_type
 			_set_terrain_cell(cell, terrain_type)
 		terrain_map.append(final_row)
+	print("[WorldPerf] generate_world: %d ms" % (Time.get_ticks_msec() - started_at))
 
 
 # 大陆轮廓独立生成，内部按修仙地域划分寒域、剑山、荒土和灵州。
@@ -512,6 +531,7 @@ func _set_terrain_cell(cell: Vector2i, terrain_type: String) -> void:
 
 # 根据地形收集稀疏自然物，避免把每一格都塞满图标。
 func _collect_nature_markers() -> void:
+	var started_at: int = Time.get_ticks_msec()
 	tree_markers.clear()
 	mountain_markers.clear()
 	snow_markers.clear()
@@ -554,6 +574,7 @@ func _collect_nature_markers() -> void:
 					wasteland_markers.append(cell)
 				elif hash_value % 100 < 5:
 					rock_markers.append(cell)
+	print("[WorldPerf] collect_nature_markers: %d ms" % (Time.get_ticks_msec() - started_at))
 
 
 func _add_tree_marker(cell: Vector2i, kind: String, hash_value: int) -> void:
