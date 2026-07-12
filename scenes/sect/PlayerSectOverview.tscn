@@ -564,6 +564,30 @@ layout_mode = 2
 layout_mode = 2
 text = "执行外交行动"
 
+[node name="PactControlBox" type="HBoxContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/DiplomacySection"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="AllianceButton" type="Button" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/DiplomacySection/PactControlBox"]
+layout_mode = 2
+text = "提议结盟"
+
+[node name="NonAggressionButton" type="Button" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/DiplomacySection/PactControlBox"]
+layout_mode = 2
+text = "互不侵犯"
+
+[node name="VassalButton" type="Button" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/DiplomacySection/PactControlBox"]
+layout_mode = 2
+text = "要求附属"
+
+[node name="WarButton" type="Button" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/DiplomacySection/PactControlBox"]
+layout_mode = 2
+text = "宣战"
+
+[node name="PeaceButton" type="Button" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/DiplomacySection/PactControlBox"]
+layout_mode = 2
+text = "议和"
+
 [node name="RelationInfoLabel" type="Label" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/DiplomacySection"]
 layout_mode = 2
 autowrap_mode = 3

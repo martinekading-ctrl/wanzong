@@ -82,6 +82,11 @@ const SORT_OPTIONS: Array[String] = ["默认", "境界", "战力", "忠诚", "�
 @onready var diplomacy_target_option: OptionButton = $MarginContainer/RootBox/FunctionPanel/FunctionBox/DiplomacySection/ControlBox/TargetOption
 @onready var diplomacy_action_option: OptionButton = $MarginContainer/RootBox/FunctionPanel/FunctionBox/DiplomacySection/ControlBox/ActionOption
 @onready var diplomacy_execute_button: Button = $MarginContainer/RootBox/FunctionPanel/FunctionBox/DiplomacySection/ControlBox/ExecuteButton
+@onready var diplomacy_alliance_button: Button = $MarginContainer/RootBox/FunctionPanel/FunctionBox/DiplomacySection/PactControlBox/AllianceButton
+@onready var diplomacy_non_aggression_button: Button = $MarginContainer/RootBox/FunctionPanel/FunctionBox/DiplomacySection/PactControlBox/NonAggressionButton
+@onready var diplomacy_vassal_button: Button = $MarginContainer/RootBox/FunctionPanel/FunctionBox/DiplomacySection/PactControlBox/VassalButton
+@onready var diplomacy_war_button: Button = $MarginContainer/RootBox/FunctionPanel/FunctionBox/DiplomacySection/PactControlBox/WarButton
+@onready var diplomacy_peace_button: Button = $MarginContainer/RootBox/FunctionPanel/FunctionBox/DiplomacySection/PactControlBox/PeaceButton
 @onready var diplomacy_relation_info_label: Label = $MarginContainer/RootBox/FunctionPanel/FunctionBox/DiplomacySection/RelationInfoLabel
 @onready var diplomacy_relation_list: VBoxContainer = $MarginContainer/RootBox/FunctionPanel/FunctionBox/DiplomacySection/RelationScroll/RelationList
 @onready var diplomacy_result_label: Label = $MarginContainer/RootBox/FunctionPanel/FunctionBox/DiplomacySection/ResultLabel
@@ -138,6 +143,11 @@ func _ready() -> void:
 	diplomacy_target_option.item_selected.connect(_on_diplomacy_selection_changed)
 	diplomacy_action_option.item_selected.connect(_on_diplomacy_selection_changed)
 	diplomacy_execute_button.pressed.connect(_on_diplomacy_execute_pressed)
+	diplomacy_alliance_button.pressed.connect(_on_diplomacy_pact_pressed.bind("alliance"))
+	diplomacy_non_aggression_button.pressed.connect(_on_diplomacy_pact_pressed.bind("non_aggression"))
+	diplomacy_vassal_button.pressed.connect(_on_diplomacy_pact_pressed.bind("vassal"))
+	diplomacy_war_button.pressed.connect(_on_diplomacy_pact_pressed.bind("war"))
+	diplomacy_peace_button.pressed.connect(_on_diplomacy_pact_pressed.bind("peace"))
 	manual_slot_1_save.pressed.connect(_on_manual_save_pressed.bind(1))
 	manual_slot_1_load.pressed.connect(_on_manual_load_pressed.bind(1))
 	manual_slot_2_save.pressed.connect(_on_manual_save_pressed.bind(2))
@@ -383,7 +393,7 @@ func _refresh_daily_report(report: Dictionary) -> void:
 			int(territory_summary.get("sect_count", 0)),
 			int(territory_summary.get("contested_points", 0)),
 		],
-		"外交关系：%d组" % int(diplomacy_summary.get("relation_count", 0)),
+		"外交关系：%d组｜有效契约：%d" % [int(diplomacy_summary.get("relation_count", 0)), int(diplomacy_summary.get("active_pacts", 0))],
 		"警告：" + warning_text,
 	]))
 
@@ -828,6 +838,12 @@ func _refresh_diplomacy_section() -> void:
 		int(relation.get("tension", 0)),
 		acceptance * 100.0,
 	]
+	var status: String = str(relation.get("status", "neutral"))
+	diplomacy_alliance_button.disabled = status in ["alliance", "vassal", "war"] or int(relation.get("value", 0)) < 50 or int(relation.get("trust", 0)) < 60
+	diplomacy_non_aggression_button.disabled = status in ["alliance", "vassal", "war", "truce"] or int(relation.get("value", 0)) < 0
+	diplomacy_vassal_button.disabled = status in ["alliance", "vassal", "war"]
+	diplomacy_war_button.disabled = status == "war"
+	diplomacy_peace_button.disabled = status != "war"
 	for relation_view in DiplomacyManager.get_relations_for_sect("sect_001"):
 		var other_id: String = str(relation_view.get("other_sect_id", ""))
 		var label := Label.new()
@@ -857,6 +873,19 @@ func _on_diplomacy_execute_pressed() -> void:
 	_refresh_diplomacy_section()
 
 
+func _on_diplomacy_pact_pressed(pact_action: String) -> void:
+	var target_id: String = _get_selected_diplomacy_target()
+	var result: Dictionary = {}
+	match pact_action:
+		"alliance": result = DiplomacyManager.propose_alliance("sect_001", target_id)
+		"non_aggression": result = DiplomacyManager.sign_non_aggression("sect_001", target_id)
+		"vassal": result = DiplomacyManager.establish_vassal("sect_001", target_id)
+		"war": result = DiplomacyManager.declare_war("sect_001", target_id, "player_declaration")
+		"peace": result = DiplomacyManager.offer_peace("sect_001", target_id)
+	diplomacy_result_label.text = str(result.get("message", "外交契约操作失败。"))
+	_refresh_diplomacy_section()
+
+
 func _get_selected_diplomacy_target() -> String:
 	if diplomacy_target_option.selected < 0 or diplomacy_target_option.selected >= diplomacy_target_ids.size():
 		return ""
@@ -876,6 +905,10 @@ func _diplomacy_status_text(status: String) -> String:
 		"neutral": "中立",
 		"tense": "紧张",
 		"hostile": "敌对",
+		"alliance": "联盟",
+		"vassal": "附属",
+		"war": "战争",
+		"truce": "停战",
 	}.get(status, status)
 
 
