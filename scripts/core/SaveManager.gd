@@ -132,6 +132,7 @@ func apply_snapshot(raw_snapshot: Dictionary) -> bool:
 	MissionManager.rebuild_runtime_state()
 	SecretRealmManager.rebuild_runtime_state()
 	ResourceSiteManager.rebuild_runtime_state()
+	TerritoryManager.rebuild_runtime_state()
 	GameState.year = int(game_state_data.get("year", 1))
 	GameState.month = int(game_state_data.get("month", 1))
 	GameState.day = int(game_state_data.get("day", 1))

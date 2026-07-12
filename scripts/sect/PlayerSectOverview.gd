@@ -237,7 +237,14 @@ func _refresh_player_sect_info() -> void:
 	disciple_count_label.text = "弟子数量：" + str(player_sect["disciple_count"])
 	reputation_label.text = "声望：" + str(player_sect["reputation"])
 	combat_power_label.text = "战力：" + str(player_sect["combat_power"])
-	description_label.text = "介绍：" + str(player_sect["description"])
+	var territory: Dictionary = TerritoryManager.get_territory(str(player_sect["sect_id"]))
+	description_label.text = "介绍：%s\n影响力：%d｜控制点：%d｜邻接宗门：%d｜争议点：%d" % [
+		str(player_sect["description"]),
+		int(territory.get("influence", 0)),
+		territory.get("control_point_ids", []).size(),
+		territory.get("neighbors", []).size(),
+		territory.get("contested_point_ids", []).size(),
+	]
 	var resource_data: Dictionary = WorldDataManager.get_sect_resources(str(player_sect["sect_id"]))
 	spirit_stone_label.text = "灵石：" + str(resource_data.get("spirit_stone", "-"))
 
@@ -326,6 +333,7 @@ func _refresh_daily_report(report: Dictionary) -> void:
 	var construction_summary: Dictionary = report.get("construction", {})
 	var mission_summary: Dictionary = report.get("missions", {})
 	var resource_site_summary: Dictionary = report.get("resource_sites", {})
+	var territory_summary: Dictionary = report.get("territories", {})
 	if not warnings.is_empty():
 		warning_text = "；".join(PackedStringArray(warnings))
 	settlement_result_label.text = "\n".join(PackedStringArray([
@@ -353,6 +361,10 @@ func _refresh_daily_report(report: Dictionary) -> void:
 		"资源据点：%d处产出，%d处失守" % [
 			resource_site_summary.get("production", []).size(),
 			resource_site_summary.get("lost_sites", []).size(),
+		],
+		"领地刷新：%d宗门，%d处争议点" % [
+			int(territory_summary.get("sect_count", 0)),
+			int(territory_summary.get("contested_points", 0)),
 		],
 		"警告：" + warning_text,
 	]))

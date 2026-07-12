@@ -131,6 +131,7 @@ func record_mission_result(result: Dictionary, date: Dictionary) -> Dictionary:
 		date
 	)
 	resource_site_updated.emit(site.duplicate(true))
+	TerritoryManager.recalculate_all()
 	return capture_result
 
 
@@ -162,6 +163,7 @@ func assign_garrison(resource_id: int, sect_id: String, disciple_ids: Array) -> 
 	for disciple_id in normalized:
 		_set_disciple_garrison(disciple_id, resource_id, true)
 	resource_site_updated.emit(site.duplicate(true))
+	TerritoryManager.recalculate_all()
 	return {"success": true, "message": "驻守队伍已指派。", "site": site.duplicate(true)}
 
 
@@ -179,6 +181,7 @@ func withdraw_garrison(resource_id: int, sect_id: String) -> bool:
 	site["unsecured_days"] = 0
 	WorldDataManager.resources[index] = site
 	resource_site_updated.emit(site.duplicate(true))
+	TerritoryManager.recalculate_all()
 	return true
 
 
@@ -256,6 +259,7 @@ func _lose_site(site: Dictionary, date: Dictionary) -> Dictionary:
 	var result: Dictionary = {"resource_id": resource_id, "former_owner": owner_id, "reason": "unsecured"}
 	GameHistoryManager.record_entry("resource_lost", "资源点失守", "%s因长期无人驻守而失守。" % str(site.get("resource_name", "资源点")), [owner_id, "resource_%d" % resource_id], result, date)
 	resource_site_updated.emit(site.duplicate(true))
+	TerritoryManager.recalculate_all()
 	return result
 
 

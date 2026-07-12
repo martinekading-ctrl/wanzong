@@ -118,8 +118,8 @@ func _ready() -> void:
 	_load_sect_icon_paths()
 	_load_resource_icon_paths()
 	_validate_resource_positions()
-	# Task-0014：暂时隐藏领地圈，后续改成护山大阵视觉。
-	# _create_territory_areas()
+	TerritoryManager.recalculate_all()
+	_create_territory_areas()
 	var resource_started_at: int = Time.get_ticks_msec()
 	_create_resource_nodes()
 	print("[WorldPerf] Resource nodes: %d ms" % (Time.get_ticks_msec() - resource_started_at))
@@ -326,7 +326,7 @@ func _get_resource_icon_size(resource_type: String) -> float:
 func _create_territory_areas() -> void:
 	for sect_data in WorldDataManager.get_all_sects():
 		var territory_area: TerritoryArea = TerritoryAreaScript.new()
-		territory_area.setup(sect_data)
+		territory_area.setup(sect_data, TerritoryManager.get_territory(str(sect_data.get("sect_id", ""))))
 		territory_layer.add_child(territory_area)
 
 
@@ -451,6 +451,7 @@ func _on_sect_selected(node_data: Dictionary, sect_node: SectNode) -> void:
 	)
 	tip_label.text = (
 		"关系：" + str(sect_data["relation_to_player"])
+		+ "\n影响力：" + str(TerritoryManager.get_territory(str(sect_data["sect_id"])).get("influence", 0))
 		+ "\n介绍：" + str(sect_data["description"])
 	)
 
