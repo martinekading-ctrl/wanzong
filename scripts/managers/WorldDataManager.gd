@@ -11,6 +11,8 @@ var build_slots: Array = []
 
 var disciples: Array = []
 
+var sect_resources: Dictionary = {}
+
 var is_initialized: bool = false
 
 
@@ -127,6 +129,19 @@ func init_world_data() -> void:
 	]
 	update_sect_data("sect_001", "disciple_count", disciples.size())
 
+	sect_resources = {
+		"sect_001": _create_sect_resource_data(1000, 5000, 300, 200, 50, 20, 500),
+		"sect_002": _create_sect_resource_data(5000, 10000, 800, 600, 200, 100, 1200),
+		"sect_003": _create_sect_resource_data(7200, 8600, 520, 430, 680, 80, 960),
+		"sect_004": _create_sect_resource_data(9800, 13200, 1100, 900, 160, 420, 1750),
+		"sect_005": _create_sect_resource_data(8400, 15000, 700, 760, 360, 140, 1680),
+		"sect_006": _create_sect_resource_data(7600, 9200, 460, 820, 240, 190, 1050),
+		"sect_007": _create_sect_resource_data(4900, 11800, 380, 540, 90, 75, 1380),
+		"sect_008": _create_sect_resource_data(9100, 12600, 950, 500, 310, 130, 1420),
+		"sect_009": _create_sect_resource_data(12800, 17500, 1200, 980, 420, 360, 2100),
+		"sect_010": _create_sect_resource_data(18600, 24000, 1800, 1500, 520, 460, 3200),
+	}
+
 	is_initialized = true
 
 
@@ -136,7 +151,28 @@ func reset_world_data() -> void:
 	resources.clear()
 	build_slots.clear()
 	disciples.clear()
+	sect_resources.clear()
 	init_world_data()
+
+
+func _create_sect_resource_data(
+	spirit_stone: int,
+	food: int,
+	wood: int,
+	stone: int,
+	spirit_grass: int,
+	spirit_ore: int,
+	population: int
+) -> Dictionary:
+	return {
+		"spirit_stone": spirit_stone,
+		"food": food,
+		"wood": wood,
+		"stone": stone,
+		"spirit_grass": spirit_grass,
+		"spirit_ore": spirit_ore,
+		"population": population,
+	}
 
 
 # 统一创建宗门数据，确保十个宗门拥有完全一致的字段结构。
@@ -291,6 +327,32 @@ func get_player_sect() -> Dictionary:
 		if bool(sect_data.get("is_player", false)):
 			return sect_data
 	return {}
+
+
+func get_sect_resources(sect_id: String) -> Dictionary:
+	if not sect_resources.has(sect_id):
+		push_warning("未找到宗门资源数据：" + sect_id)
+		return {}
+	return (sect_resources[sect_id] as Dictionary).duplicate()
+
+
+func update_sect_resource(sect_id: String, resource_key: String, amount: int) -> bool:
+	if not sect_resources.has(sect_id):
+		push_warning("无法更新资源，未找到宗门资源数据：" + sect_id)
+		return false
+
+	var resource_data: Dictionary = sect_resources[sect_id]
+	if not resource_data.has(resource_key):
+		push_warning("无法更新资源，未知资源字段：" + resource_key)
+		return false
+
+	resource_data[resource_key] = maxi(0, int(resource_data[resource_key]) + amount)
+	sect_resources[sect_id] = resource_data
+
+	# 兼容宗门基础数据中已有的灵石字段，避免两处显示不一致。
+	if resource_key == "spirit_stone":
+		update_sect_data(sect_id, "spirit_stone", int(resource_data[resource_key]))
+	return true
 
 
 # 获取全部 AI 宗门。

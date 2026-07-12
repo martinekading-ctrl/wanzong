@@ -90,6 +90,50 @@ theme_override_font_sizes/font_size = 16
 text = "介绍：初立山门的小型修仙宗门，未来可统御万宗。"
 autowrap_mode = 3
 
+[node name="ResourcePanel" type="PanelContainer" parent="MarginContainer/RootBox"]
+layout_mode = 2
+
+[node name="ResourceBox" type="VBoxContainer" parent="MarginContainer/RootBox/ResourcePanel"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="ResourceTitleLabel" type="Label" parent="MarginContainer/RootBox/ResourcePanel/ResourceBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "宗门资源"
+
+[node name="ResourceGrid" type="GridContainer" parent="MarginContainer/RootBox/ResourcePanel/ResourceBox"]
+layout_mode = 2
+columns = 4
+
+[node name="SpiritStoneLabel" type="Label" parent="MarginContainer/RootBox/ResourcePanel/ResourceBox/ResourceGrid"]
+layout_mode = 2
+text = "灵石：-"
+
+[node name="FoodLabel" type="Label" parent="MarginContainer/RootBox/ResourcePanel/ResourceBox/ResourceGrid"]
+layout_mode = 2
+text = "粮食：-"
+
+[node name="WoodLabel" type="Label" parent="MarginContainer/RootBox/ResourcePanel/ResourceBox/ResourceGrid"]
+layout_mode = 2
+text = "木材：-"
+
+[node name="StoneLabel" type="Label" parent="MarginContainer/RootBox/ResourcePanel/ResourceBox/ResourceGrid"]
+layout_mode = 2
+text = "石材：-"
+
+[node name="SpiritGrassLabel" type="Label" parent="MarginContainer/RootBox/ResourcePanel/ResourceBox/ResourceGrid"]
+layout_mode = 2
+text = "灵草：-"
+
+[node name="SpiritOreLabel" type="Label" parent="MarginContainer/RootBox/ResourcePanel/ResourceBox/ResourceGrid"]
+layout_mode = 2
+text = "灵矿：-"
+
+[node name="PopulationLabel" type="Label" parent="MarginContainer/RootBox/ResourcePanel/ResourceBox/ResourceGrid"]
+layout_mode = 2
+text = "人口：-"
+
 [node name="FunctionPanel" type="PanelContainer" parent="MarginContainer/RootBox"]
 layout_mode = 2
 size_flags_vertical = 3
@@ -220,6 +264,33 @@ autowrap_mode = 3
 layout_mode = 2
 theme_override_font_sizes/font_size = 16
 autowrap_mode = 3
+
+[node name="AssignmentBox" type="VBoxContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleSection/DiscipleBody/DiscipleDetailPanel/DiscipleDetailBox"]
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="AssignmentTitleLabel" type="Label" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleSection/DiscipleBody/DiscipleDetailPanel/DiscipleDetailBox/AssignmentBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 17
+text = "弟子安排"
+
+[node name="AssignmentControlBox" type="HBoxContainer" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleSection/DiscipleBody/DiscipleDetailPanel/DiscipleDetailBox/AssignmentBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="AssignmentOption" type="OptionButton" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleSection/DiscipleBody/DiscipleDetailPanel/DiscipleDetailBox/AssignmentBox/AssignmentControlBox"]
+custom_minimum_size = Vector2(140, 36)
+layout_mode = 2
+
+[node name="ApplyAssignmentButton" type="Button" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleSection/DiscipleBody/DiscipleDetailPanel/DiscipleDetailBox/AssignmentBox/AssignmentControlBox"]
+custom_minimum_size = Vector2(120, 36)
+layout_mode = 2
+text = "确认安排"
+
+[node name="AssignmentResultLabel" type="Label" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleSection/DiscipleBody/DiscipleDetailPanel/DiscipleDetailBox/AssignmentBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 15
 
 [node name="DetailDescriptionLabel" type="Label" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleSection/DiscipleBody/DiscipleDetailPanel/DiscipleDetailBox"]
 layout_mode = 2

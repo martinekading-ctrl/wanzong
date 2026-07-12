@@ -1,6 +1,7 @@
 extends Control
 
 const ASSIGNMENT_FILTERS: Array[String] = ["全部", "空闲", "修炼", "巡山", "采集", "闭关"]
+const DISCIPLE_ASSIGNMENTS: Array[String] = ["空闲", "修炼", "巡山", "采集", "闭关"]
 const SORT_OPTIONS: Array[String] = ["默认", "境界", "战力", "忠诚", "年龄"]
 const REALM_ORDER: Dictionary = {
 	"凡人": 0,
@@ -21,6 +22,14 @@ const REALM_ORDER: Dictionary = {
 @onready var reputation_label: Label = $MarginContainer/RootBox/SummaryPanel/SummaryBox/ReputationLabel
 @onready var combat_power_label: Label = $MarginContainer/RootBox/SummaryPanel/SummaryBox/CombatPowerLabel
 @onready var description_label: Label = $MarginContainer/RootBox/SummaryPanel/SummaryBox/DescriptionLabel
+@onready var resource_panel: PanelContainer = $MarginContainer/RootBox/ResourcePanel
+@onready var resource_spirit_stone_label: Label = $MarginContainer/RootBox/ResourcePanel/ResourceBox/ResourceGrid/SpiritStoneLabel
+@onready var resource_food_label: Label = $MarginContainer/RootBox/ResourcePanel/ResourceBox/ResourceGrid/FoodLabel
+@onready var resource_wood_label: Label = $MarginContainer/RootBox/ResourcePanel/ResourceBox/ResourceGrid/WoodLabel
+@onready var resource_stone_label: Label = $MarginContainer/RootBox/ResourcePanel/ResourceBox/ResourceGrid/StoneLabel
+@onready var resource_spirit_grass_label: Label = $MarginContainer/RootBox/ResourcePanel/ResourceBox/ResourceGrid/SpiritGrassLabel
+@onready var resource_spirit_ore_label: Label = $MarginContainer/RootBox/ResourcePanel/ResourceBox/ResourceGrid/SpiritOreLabel
+@onready var resource_population_label: Label = $MarginContainer/RootBox/ResourcePanel/ResourceBox/ResourceGrid/PopulationLabel
 @onready var disciple_button: Button = $MarginContainer/RootBox/FunctionPanel/FunctionBox/ButtonBar/DiscipleButton
 @onready var building_button: Button = $MarginContainer/RootBox/FunctionPanel/FunctionBox/ButtonBar/BuildingButton
 @onready var resource_button: Button = $MarginContainer/RootBox/FunctionPanel/FunctionBox/ButtonBar/ResourceButton
@@ -37,6 +46,10 @@ const REALM_ORDER: Dictionary = {
 @onready var battle_info_label: Label = $MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleSection/DiscipleBody/DiscipleDetailPanel/DiscipleDetailBox/BattleInfoLabel
 @onready var appearance_info_label: Label = $MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleSection/DiscipleBody/DiscipleDetailPanel/DiscipleDetailBox/AppearanceInfoLabel
 @onready var assignment_info_label: Label = $MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleSection/DiscipleBody/DiscipleDetailPanel/DiscipleDetailBox/AssignmentInfoLabel
+@onready var assignment_box: VBoxContainer = $MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleSection/DiscipleBody/DiscipleDetailPanel/DiscipleDetailBox/AssignmentBox
+@onready var assignment_option: OptionButton = $MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleSection/DiscipleBody/DiscipleDetailPanel/DiscipleDetailBox/AssignmentBox/AssignmentControlBox/AssignmentOption
+@onready var apply_assignment_button: Button = $MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleSection/DiscipleBody/DiscipleDetailPanel/DiscipleDetailBox/AssignmentBox/AssignmentControlBox/ApplyAssignmentButton
+@onready var assignment_result_label: Label = $MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleSection/DiscipleBody/DiscipleDetailPanel/DiscipleDetailBox/AssignmentBox/AssignmentResultLabel
 @onready var detail_description_label: Label = $MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleSection/DiscipleBody/DiscipleDetailPanel/DiscipleDetailBox/DetailDescriptionLabel
 @onready var detail_hint_label: Label = $MarginContainer/RootBox/FunctionPanel/FunctionBox/DiscipleSection/DiscipleBody/DiscipleDetailPanel/DiscipleDetailBox/DetailHintLabel
 
@@ -51,8 +64,11 @@ func _ready() -> void:
 	search_line_edit.text_changed.connect(_on_disciple_filter_changed)
 	assignment_filter_option.item_selected.connect(_on_disciple_option_changed)
 	sort_option.item_selected.connect(_on_disciple_option_changed)
+	apply_assignment_button.pressed.connect(_on_apply_assignment_button_pressed)
 	_setup_roster_options()
+	_setup_assignment_options()
 	_refresh_player_sect_info()
+	_refresh_resource_panel()
 	_clear_disciple_detail()
 
 
@@ -66,6 +82,13 @@ func _setup_roster_options() -> void:
 	for option_text in SORT_OPTIONS:
 		sort_option.add_item(option_text)
 	sort_option.select(0)
+
+
+func _setup_assignment_options() -> void:
+	assignment_option.clear()
+	for assignment_text in DISCIPLE_ASSIGNMENTS:
+		assignment_option.add_item(assignment_text)
+	assignment_option.select(0)
 
 
 func _refresh_player_sect_info() -> void:
@@ -97,6 +120,27 @@ func _refresh_player_sect_info() -> void:
 	description_label.text = "介绍：" + str(player_sect["description"])
 
 
+func _refresh_resource_panel() -> void:
+	var player_sect: Dictionary = WorldDataManager.get_player_sect()
+	if player_sect.is_empty():
+		_set_resource_labels({})
+		return
+
+	var sect_id: String = str(player_sect.get("sect_id", ""))
+	var resource_data: Dictionary = WorldDataManager.get_sect_resources(sect_id)
+	_set_resource_labels(resource_data)
+
+
+func _set_resource_labels(resource_data: Dictionary) -> void:
+	resource_spirit_stone_label.text = "灵石：" + str(resource_data.get("spirit_stone", "-"))
+	resource_food_label.text = "粮食：" + str(resource_data.get("food", "-"))
+	resource_wood_label.text = "木材：" + str(resource_data.get("wood", "-"))
+	resource_stone_label.text = "石材：" + str(resource_data.get("stone", "-"))
+	resource_spirit_grass_label.text = "灵草：" + str(resource_data.get("spirit_grass", "-"))
+	resource_spirit_ore_label.text = "灵矿：" + str(resource_data.get("spirit_ore", "-"))
+	resource_population_label.text = "人口：" + str(resource_data.get("population", "-"))
+
+
 func _on_back_button_pressed() -> void:
 	SceneManager.go_to_world_map()
 
@@ -112,7 +156,8 @@ func _on_building_button_pressed() -> void:
 
 
 func _on_resource_button_pressed() -> void:
-	_show_placeholder("资源系统后续开放")
+	_refresh_resource_panel()
+	_show_placeholder("宗门资源仓库已刷新；当前版本仅展示库存。")
 
 
 func _show_placeholder(message: String) -> void:
@@ -127,6 +172,33 @@ func _on_disciple_filter_changed(_new_text: String) -> void:
 
 func _on_disciple_option_changed(_index: int) -> void:
 	_refresh_disciple_roster()
+
+
+func _on_apply_assignment_button_pressed() -> void:
+	if current_selected_disciple_id == "":
+		assignment_box.visible = true
+		assignment_result_label.text = "请先选择弟子"
+		return
+
+	var selected_assignment: String = _get_selected_assignment_text()
+	var updated_disciple_id: String = current_selected_disciple_id
+	var update_success: bool = WorldDataManager.update_disciple_data(
+		updated_disciple_id,
+		"assignment",
+		selected_assignment
+	)
+
+	if not update_success:
+		assignment_result_label.text = "安排更新失败"
+		return
+
+	var selected_still_visible: bool = _is_disciple_visible_in_current_filter(updated_disciple_id)
+	_refresh_disciple_roster()
+
+	if selected_still_visible:
+		assignment_result_label.text = "安排已更新"
+	else:
+		detail_hint_label.text = "安排已更新；当前筛选条件下该弟子已隐藏。"
 
 
 func _refresh_disciple_roster() -> void:
@@ -174,6 +246,13 @@ func _get_visible_disciples() -> Array:
 
 	_sort_disciples(result)
 	return result
+
+
+func _is_disciple_visible_in_current_filter(disciple_id: String) -> bool:
+	for disciple_data in _get_visible_disciples():
+		if str(disciple_data["disciple_id"]) == disciple_id:
+			return true
+	return false
 
 
 func _sort_disciples(disciples: Array) -> void:
@@ -232,6 +311,8 @@ func _on_disciple_selected(disciple_id: String) -> void:
 
 func _clear_disciple_detail() -> void:
 	current_selected_disciple_id = ""
+	assignment_box.visible = false
+	assignment_result_label.text = ""
 	model_preview_label.text = "人物模型预览\n共享模板后续接入"
 	disciple_name_label.text = "请选择弟子"
 	basic_info_label.text = ""
@@ -244,6 +325,9 @@ func _clear_disciple_detail() -> void:
 
 
 func _show_disciple_detail(disciple_data: Dictionary) -> void:
+	assignment_box.visible = true
+	assignment_result_label.text = ""
+	_select_assignment_option(str(disciple_data["assignment"]))
 	model_preview_label.text = "人物模型预览\n共享模板后续接入"
 	disciple_name_label.text = str(disciple_data["disciple_name"])
 	basic_info_label.text = "\n".join(PackedStringArray([
@@ -289,6 +373,21 @@ func _show_disciple_detail(disciple_data: Dictionary) -> void:
 	assignment_info_label.text = "当前安排：" + str(disciple_data["assignment"])
 	detail_description_label.text = "介绍：" + str(disciple_data["description"])
 	detail_hint_label.text = "本页只展示弟子名册、共享模板 ID 与战斗预留字段；不生成头像、不创建战斗单位。"
+
+
+func _select_assignment_option(assignment: String) -> void:
+	var selected_index: int = 0
+	for index in range(assignment_option.item_count):
+		if assignment_option.get_item_text(index) == assignment:
+			selected_index = index
+			break
+	assignment_option.select(selected_index)
+
+
+func _get_selected_assignment_text() -> String:
+	if assignment_option.selected < 0:
+		return DISCIPLE_ASSIGNMENTS[0]
+	return assignment_option.get_item_text(assignment_option.selected)
 
 
 func _format_tags(tags: Variant) -> String:
