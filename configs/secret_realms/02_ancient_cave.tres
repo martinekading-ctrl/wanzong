@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="SecretRealmDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/data/SecretRealmDefinition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "secret_realm_ancient_cave"
+display_name = "玄石古洞"
+description = "石壁中残留古修士禁制，深处可能藏有灵矿与传承碎片。"
+map_resource_id = 24
+level = 2
+total_depth = 3
+base_risk = 0.4
+terrain = "underground"
+recommended_power = 900
+

@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="SecretRealmDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/data/SecretRealmDefinition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "secret_realm_misty_valley"
+display_name = "雾隐灵谷"
+description = "常年被灵雾覆盖的低阶秘境，谷中生长着大量灵草。"
+map_resource_id = 26
+level = 1
+total_depth = 2
+base_risk = 0.2
+terrain = "misty_forest"
+recommended_power = 400
+

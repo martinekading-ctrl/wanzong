@@ -29,6 +29,7 @@ AISimulationManager="*res://scripts/managers/AISimulationManager.gd"
 ConstructionManager="*res://scripts/managers/ConstructionManager.gd"
 ModifierManager="*res://scripts/managers/ModifierManager.gd"
 MissionManager="*res://scripts/managers/MissionManager.gd"
+SecretRealmManager="*res://scripts/managers/SecretRealmManager.gd"
 SaveManager="*res://scripts/core/SaveManager.gd"
 GameState="*res://scripts/core/GameState.gd"
 

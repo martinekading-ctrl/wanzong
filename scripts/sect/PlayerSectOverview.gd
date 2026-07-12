@@ -61,6 +61,7 @@ const SORT_OPTIONS: Array[String] = ["默认", "境界", "战力", "忠诚", "�
 @onready var building_result_label: Label = $MarginContainer/RootBox/FunctionPanel/FunctionBox/BuildingSection/BuildingResultLabel
 @onready var mission_section: VBoxContainer = $MarginContainer/RootBox/FunctionPanel/FunctionBox/MissionSection
 @onready var mission_option: OptionButton = $MarginContainer/RootBox/FunctionPanel/FunctionBox/MissionSection/MissionControlBox/MissionOption
+@onready var secret_realm_option: OptionButton = $MarginContainer/RootBox/FunctionPanel/FunctionBox/MissionSection/MissionControlBox/SecretRealmOption
 @onready var start_mission_button: Button = $MarginContainer/RootBox/FunctionPanel/FunctionBox/MissionSection/MissionControlBox/StartMissionButton
 @onready var selected_team_label: Label = $MarginContainer/RootBox/FunctionPanel/FunctionBox/MissionSection/SelectedTeamLabel
 @onready var available_disciple_list: VBoxContainer = $MarginContainer/RootBox/FunctionPanel/FunctionBox/MissionSection/MissionBody/AvailablePanel/AvailableScroll/AvailableDiscipleList
@@ -92,6 +93,7 @@ const SORT_OPTIONS: Array[String] = ["默认", "境界", "战力", "忠诚", "�
 var current_selected_disciple_id: String = ""
 var selected_mission_disciple_ids: Array[String] = []
 var mission_definition_ids: Array[String] = []
+var secret_realm_ids: Array[String] = []
 
 
 func _ready() -> void:
@@ -104,6 +106,7 @@ func _ready() -> void:
 	save_load_button.pressed.connect(_on_save_load_button_pressed)
 	mission_button.pressed.connect(_on_mission_button_pressed)
 	start_mission_button.pressed.connect(_on_start_mission_pressed)
+	mission_option.item_selected.connect(_on_mission_option_selected)
 	manual_slot_1_save.pressed.connect(_on_manual_save_pressed.bind(1))
 	manual_slot_1_load.pressed.connect(_on_manual_load_pressed.bind(1))
 	manual_slot_2_save.pressed.connect(_on_manual_save_pressed.bind(2))
@@ -123,6 +126,7 @@ func _ready() -> void:
 	_setup_roster_options()
 	_setup_assignment_options()
 	_setup_mission_options()
+	_setup_secret_realm_options()
 	_refresh_player_sect_info()
 	_refresh_resource_panel()
 	_refresh_date_label()
@@ -166,6 +170,29 @@ func _setup_mission_options() -> void:
 			definition.max_team_size,
 		])
 	mission_option.select(0)
+	_on_mission_option_selected(0)
+
+
+func _setup_secret_realm_options() -> void:
+	secret_realm_option.clear()
+	secret_realm_ids.clear()
+	for realm in SecretRealmManager.get_available_realms():
+		secret_realm_ids.append(str(realm.get("realm_id", "")))
+		secret_realm_option.add_item("%s｜%d/%d层｜建议战力%d" % [
+			str(realm.get("display_name", "秘境")),
+			int(realm.get("current_depth", 0)),
+			int(realm.get("total_depth", 0)),
+			int(realm.get("recommended_power", 0)),
+		])
+	secret_realm_option.select(0)
+
+
+func _on_mission_option_selected(_index: int) -> void:
+	if mission_option.selected < 0 or mission_option.selected >= mission_definition_ids.size():
+		secret_realm_option.visible = false
+		return
+	var definition: MissionDefinition = MissionRegistry.get_by_id(mission_definition_ids[mission_option.selected])
+	secret_realm_option.visible = definition != null and definition.mission_type == "secret_realm"
 
 
 func _refresh_player_sect_info() -> void:
@@ -445,6 +472,8 @@ func _on_mission_button_pressed() -> void:
 
 
 func _refresh_mission_section() -> void:
+	_setup_secret_realm_options()
+	_on_mission_option_selected(mission_option.selected)
 	_clear_dynamic_children(available_disciple_list)
 	_clear_dynamic_children(active_mission_list)
 	var player_sect: Dictionary = WorldDataManager.get_player_sect()
@@ -511,13 +540,22 @@ func _on_start_mission_pressed() -> void:
 	var result: Dictionary = MissionManager.create_and_start_mission(
 		str(player_sect.get("sect_id", "")),
 		selected_mission_disciple_ids,
-		mission_definition_ids[mission_option.selected]
+		mission_definition_ids[mission_option.selected],
+		_get_selected_mission_context()
 	)
 	mission_result_label.text = str(result.get("message", "任务派遣失败。"))
 	if bool(result.get("success", false)):
 		selected_mission_disciple_ids.clear()
 	_refresh_resource_panel()
 	_refresh_mission_section()
+
+
+func _get_selected_mission_context() -> Dictionary:
+	if not secret_realm_option.visible:
+		return {}
+	if secret_realm_option.selected < 0 or secret_realm_option.selected >= secret_realm_ids.size():
+		return {}
+	return {"secret_realm_id": secret_realm_ids[secret_realm_option.selected]}
 
 
 func _clear_dynamic_children(container: Node) -> void:

@@ -11,6 +11,7 @@ var started_date: Dictionary = {}
 var completed_date: Dictionary = {}
 var success_chance: float = 0.0
 var test_roll: float = -1.0
+var context: Dictionary = {}
 var result: Dictionary = {}
 
 
@@ -26,6 +27,7 @@ func to_dictionary() -> Dictionary:
 		"completed_date": completed_date.duplicate(true),
 		"success_chance": success_chance,
 		"test_roll": test_roll,
+		"context": context.duplicate(true),
 		"result": result.duplicate(true),
 	}
 
@@ -42,5 +44,6 @@ static func from_dictionary(data: Dictionary) -> MissionInstance:
 	instance.completed_date = data.get("completed_date", {}).duplicate(true)
 	instance.success_chance = float(data.get("success_chance", 0.0))
 	instance.test_roll = float(data.get("test_roll", -1.0))
+	instance.context = data.get("context", {}).duplicate(true)
 	instance.result = data.get("result", {}).duplicate(true)
 	return instance

@@ -174,7 +174,9 @@ func _evaluate_trigger(definition: EventDefinition, context: Dictionary) -> Dict
 			return {"matched": str(sect.get("relation_to_player", "")) == str(trigger.get("relation", "")), "context": {"entity_id": str(sect.get("sect_id", ""))}}
 		"mission_result":
 			var mission: Dictionary = context.get("mission_result", {})
-			return {"matched": str(mission.get("result", "")) == str(trigger.get("result", "")), "context": {"mission_id": str(mission.get("mission_id", ""))}}
+			var mission_context: Dictionary = mission.duplicate(true)
+			mission_context["mission_id"] = str(mission.get("mission_id", ""))
+			return {"matched": str(mission.get("result", "")) == str(trigger.get("result", "")), "context": mission_context}
 	return {"matched": false, "context": {}}
 
 
@@ -258,6 +260,10 @@ func _apply_effect(effect: Dictionary, context: Dictionary) -> Dictionary:
 				elif key == "loyalty":
 					runtime.loyalty = value
 				DiscipleManager.sync_disciple_state(runtime)
+		"secret_realm_exploration":
+			var exploration_result: Dictionary = SecretRealmManager.apply_exploration_choice(context, effect)
+			result["success"] = bool(exploration_result.get("success", false))
+			result["exploration_result"] = exploration_result
 	result["effect"] = effect.duplicate(true)
 	return result
 

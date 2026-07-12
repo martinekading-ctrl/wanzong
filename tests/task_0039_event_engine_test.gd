@@ -34,7 +34,7 @@ func _run() -> void:
 func _test_definition_catalog_and_trigger_types() -> void:
 	_event_manager.reload_definitions()
 	var definitions: Array[EventDefinition] = _event_manager.get_all_definitions()
-	_expect(definitions.size() == 4, "第一版应加载4种事件配置。")
+	_expect(definitions.size() >= 4, "事件目录应至少保留第一版4种基础配置。")
 	var categories: Array[String] = []
 	for definition in definitions:
 		categories.append(definition.category)

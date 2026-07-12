@@ -413,6 +413,11 @@ theme_override_constants/separation = 8
 custom_minimum_size = Vector2(220, 36)
 layout_mode = 2
 
+[node name="SecretRealmOption" type="OptionButton" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/MissionSection/MissionControlBox"]
+visible = false
+custom_minimum_size = Vector2(220, 36)
+layout_mode = 2
+
 [node name="StartMissionButton" type="Button" parent="MarginContainer/RootBox/FunctionPanel/FunctionBox/MissionSection/MissionControlBox"]
 layout_mode = 2
 text = "组队并出发"

@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="SecretRealmDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/data/SecretRealmDefinition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "secret_realm_fallen_palace"
+display_name = "坠星遗宫"
+description = "从上古遗留下来的破碎宫阙，禁制强大但机缘丰厚。"
+map_resource_id = 25
+level = 3
+total_depth = 4
+base_risk = 0.6
+terrain = "ancient_ruins"
+recommended_power = 1800
+

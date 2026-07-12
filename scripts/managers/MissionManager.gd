@@ -45,6 +45,18 @@ func start_mission(team_id: String, mission_id: String, options: Dictionary = {}
 	var definition: MissionDefinition = MissionRegistry.get_by_id(mission_id)
 	if definition == null:
 		return _error("mission_not_found", "任务配置不存在。")
+	var mission_context: Dictionary = options.duplicate(true)
+	mission_context.erase("_test_roll")
+	var success_options: Dictionary = options.duplicate(true)
+	if definition.mission_type == "secret_realm":
+		var secret_realm_id: String = str(mission_context.get("secret_realm_id", ""))
+		if secret_realm_id == "":
+			secret_realm_id = SecretRealmManager.get_default_target_id()
+		if not SecretRealmManager.can_explore(secret_realm_id):
+			return _error("secret_realm_unavailable", "没有可探索的秘境目标。")
+		mission_context["secret_realm_id"] = secret_realm_id
+		var realm: Dictionary = SecretRealmManager.get_realm_by_id(secret_realm_id)
+		success_options["terrain_bonus"] = float(success_options.get("terrain_bonus", 0.0)) - float(realm.get("base_risk", 0.0)) * 0.2
 	if team.disciple_ids.size() < definition.min_team_size or team.disciple_ids.size() > definition.max_team_size:
 		return _error("team_size", "队伍人数不符合任务要求。")
 	if _count_active_missions(team.sect_id) >= ModifierManager.get_mission_capacity(team.sect_id):
@@ -65,7 +77,8 @@ func start_mission(team_id: String, mission_id: String, options: Dictionary = {}
 	instance.team_id = team.team_id
 	instance.remaining_days = definition.duration_days
 	instance.started_date = _current_date()
-	instance.success_chance = calculate_success_chance(team, definition, options)
+	instance.success_chance = calculate_success_chance(team, definition, success_options)
+	instance.context = mission_context
 	if OS.is_debug_build() and options.has("_test_roll"):
 		instance.test_roll = clampf(float(options["_test_roll"]), 0.0, 1.0)
 	team.status = "deployed"
@@ -205,12 +218,28 @@ func _resolve_mission(instance: MissionInstance, date: Dictionary) -> Dictionary
 		"effects": effect_results,
 		"discoveries": discoveries,
 		"relation_changes": [],
+		"mission_context": instance.context.duplicate(true),
+		"secret_realm_id": str(instance.context.get("secret_realm_id", "")),
 		"message": "%s成功完成。" % definition.display_name if success else "%s执行失败，队伍带伤返回。" % definition.display_name,
 	}
+	if definition.mission_type == "secret_realm":
+		result["secret_realm_update"] = SecretRealmManager.record_mission_result(result, date)
+	result["events"] = EventManager.daily_update({
+		"sect_id": instance.sect_id,
+		"date": date,
+		"mission_result": {
+			"mission_id": definition.id,
+			"mission_type": definition.mission_type,
+			"result": "success" if success else "failed",
+			"instance_id": instance.instance_id,
+			"team_id": team.team_id,
+			"disciple_ids": team.disciple_ids.duplicate(),
+			"secret_realm_id": str(instance.context.get("secret_realm_id", "")),
+		},
+	})
 	GameHistoryManager.record_entry(
 		"mission_result", "任务结果", str(result["message"]), [instance.sect_id, instance.instance_id] + team.disciple_ids, result, date
 	)
-	EventManager.daily_update({"sect_id": instance.sect_id, "date": date, "mission_result": {"mission_id": definition.id, "result": "success" if success else "failed", "instance_id": instance.instance_id}})
 	return result
 
 

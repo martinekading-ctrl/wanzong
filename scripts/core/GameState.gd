@@ -33,6 +33,7 @@ func new_game() -> void:
 	AISimulationManager.initialize_from_world_data()
 	ConstructionManager.rebuild_runtime_state()
 	MissionManager.rebuild_runtime_state()
+	SecretRealmManager.initialize_world_state()
 
 
 func random_int(minimum: int, maximum: int) -> int:
