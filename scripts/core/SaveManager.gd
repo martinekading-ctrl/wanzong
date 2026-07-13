@@ -13,6 +13,8 @@ const MANUAL_SLOT_COUNT: int = 3
 const QUICK_SAVE_PATH := SAVE_DIRECTORY + "/quick.save"
 const AUTOSAVE_PATH := SAVE_DIRECTORY + "/autosave.save"
 
+var last_skipped_invalid_paths: Array[String] = []
+
 
 func get_manual_slot_path(slot_index: int) -> String:
 	if slot_index < 1 or slot_index > MANUAL_SLOT_COUNT:
@@ -60,23 +62,32 @@ func get_slot_summaries() -> Array[Dictionary]:
 
 
 func get_latest_save_path() -> String:
-	var latest_path: String = ""
-	var latest_timestamp: int = -1
-	for summary in get_slot_summaries():
-		if not bool(summary.get("exists", false)):
-			continue
-		var timestamp: int = int(summary.get("modified_time", 0))
-		if timestamp >= latest_timestamp:
-			latest_timestamp = timestamp
-			latest_path = str(summary.get("path", ""))
-	return latest_path
+	return str(get_latest_valid_save_info().get("path", ""))
 
 
 func load_latest_save() -> Dictionary:
-	var path: String = get_latest_save_path()
-	if path == "":
-		return _load_error(path, "没有可继续的存档。")
-	return load_from_path(path)
+	var candidates := _get_valid_save_candidates()
+	if candidates.is_empty():
+		return _load_error("", "没有可继续的有效存档。")
+	for candidate in candidates:
+		var path: String = str(candidate["path"])
+		var result := load_from_path(path)
+		if bool(result.get("success", false)):
+			result["skipped_invalid_paths"] = last_skipped_invalid_paths.duplicate()
+			return result
+		# 文件在检查后又被破坏时，继续尝试下一份候选，不让一次失败终止继续游戏。
+		last_skipped_invalid_paths.append(path)
+		push_warning("继续游戏已跳过无法读取的存档：" + path)
+	return _load_error("", "所有可用存档均无法读取。")
+
+
+func get_latest_valid_save_info() -> Dictionary:
+	var candidates := _get_valid_save_candidates()
+	if candidates.is_empty():
+		return {"path": "", "skipped_invalid_paths": last_skipped_invalid_paths.duplicate()}
+	var latest: Dictionary = candidates[0]
+	latest["skipped_invalid_paths"] = last_skipped_invalid_paths.duplicate()
+	return latest
 
 
 func create_snapshot() -> Dictionary:
@@ -279,6 +290,31 @@ func get_save_metadata(path: String) -> Dictionary:
 	}
 
 
+## 只读验证：不调用 apply_snapshot，不会污染当前游戏状态。
+func inspect_save_path(path: String) -> Dictionary:
+	if not FileAccess.file_exists(path):
+		return {"valid": false, "path": path, "message": "存档不存在。"}
+	var file := FileAccess.open(path, FileAccess.READ)
+	if file == null:
+		return {"valid": false, "path": path, "message": "无法读取存档。"}
+	var decoded: Variant = _read_snapshot_from_file(file)
+	file.close()
+	if not (decoded is Dictionary):
+		return {"valid": false, "path": path, "message": "存档格式无效或已损坏。"}
+	var migration: Dictionary = migrate_snapshot(decoded)
+	if not bool(migration.get("success", false)):
+		return {"valid": false, "path": path, "message": str(migration.get("message", "存档版本无效。"))}
+	var validation_error: String = validate_snapshot(migration["snapshot"])
+	if validation_error != "":
+		return {"valid": false, "path": path, "message": validation_error}
+	return {
+		"valid": true,
+		"path": path,
+		"metadata": get_save_metadata(path),
+		"modified_time": FileAccess.get_modified_time(path),
+	}
+
+
 func _create_file_header(snapshot: Dictionary) -> Dictionary:
 	var state: Dictionary = snapshot.get("game_state", {})
 	return {
@@ -296,7 +332,8 @@ func _create_file_header(snapshot: Dictionary) -> Dictionary:
 
 func _build_slot_summary(slot_id: String, path: String) -> Dictionary:
 	var exists: bool = FileAccess.file_exists(path)
-	var metadata: Dictionary = get_save_metadata(path) if exists else {}
+	var inspection: Dictionary = inspect_save_path(path) if exists else {}
+	var metadata: Dictionary = inspection.get("metadata", {})
 	return {
 		"slot_id": slot_id,
 		"path": path,
@@ -304,7 +341,27 @@ func _build_slot_summary(slot_id: String, path: String) -> Dictionary:
 		"modified_time": FileAccess.get_modified_time(path) if exists else 0,
 		"metadata": metadata.get("metadata", {}),
 		"game_state": metadata.get("game_state", {}),
+		"valid": bool(inspection.get("valid", false)),
+		"validation_message": str(inspection.get("message", "")),
 	}
+
+
+func _get_valid_save_candidates() -> Array[Dictionary]:
+	last_skipped_invalid_paths.clear()
+	var candidates: Array[Dictionary] = []
+	for summary in get_slot_summaries():
+		if not bool(summary.get("exists", false)):
+			continue
+		if not bool(summary.get("valid", false)):
+			var invalid_path: String = str(summary.get("path", ""))
+			last_skipped_invalid_paths.append(invalid_path)
+			push_warning("继续游戏已跳过损坏或不兼容的存档：" + invalid_path)
+			continue
+		candidates.append(summary)
+	candidates.sort_custom(func(left: Dictionary, right: Dictionary) -> bool:
+		return int(left.get("modified_time", 0)) > int(right.get("modified_time", 0))
+	)
+	return candidates
 
 
 func _read_snapshot_from_file(file: FileAccess) -> Variant:
