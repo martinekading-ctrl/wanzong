@@ -43,6 +43,7 @@ func new_game() -> void:
 	CraftingManager.rebuild_runtime_state()
 	MarketManager.initialize_world_state()
 	StoryGoalManager.initialize_world_state()
+	TutorialManager.initialize_world_state()
 
 
 func random_int(minimum: int, maximum: int) -> int:

@@ -1,5 +1,7 @@
 extends Node
 
+signal disciple_data_updated(disciple_id: String, key: String, value: Variant)
+
 const ECONOMIC_RESOURCE_KEYS: Array[String] = [
 	"spirit_stone",
 	"food",
@@ -708,6 +710,7 @@ func update_disciple_fields(disciple_id: String, values: Dictionary) -> bool:
 		var disciple_data: Dictionary = disciples[disciple_index]
 		for key in values:
 			disciple_data[key] = values[key]
+			disciple_data_updated.emit(disciple_id, str(key), values[key])
 		disciples[disciple_index] = disciple_data
 		return true
 

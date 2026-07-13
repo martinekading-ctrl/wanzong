@@ -5,6 +5,7 @@ const SORT_OPTIONS: Array[String] = ["默认", "境界", "战力", "忠诚", "�
 @onready var title_label: Label = $MarginContainer/RootBox/TopBar/TitleLabel
 @onready var date_label: Label = $MarginContainer/RootBox/TopBar/DateLabel
 @onready var next_day_button: Button = $MarginContainer/RootBox/TopBar/NextDayButton
+@onready var tutorial_button: Button = $MarginContainer/RootBox/TopBar/TutorialButton
 @onready var back_button: Button = $MarginContainer/RootBox/TopBar/BackButton
 @onready var sect_name_label: Label = $MarginContainer/RootBox/SummaryPanel/SummaryBox/SectNameLabel
 @onready var master_label: Label = $MarginContainer/RootBox/SummaryPanel/SummaryBox/MasterLabel
@@ -138,6 +139,7 @@ var market_ids: Array[String] = []
 func _ready() -> void:
 	back_button.pressed.connect(_on_back_button_pressed)
 	next_day_button.pressed.connect(_on_next_day_button_pressed)
+	tutorial_button.pressed.connect(TutorialManager.show_tutorial)
 	disciple_button.pressed.connect(_on_disciple_button_pressed)
 	building_button.pressed.connect(_on_building_button_pressed)
 	resource_button.pressed.connect(_on_resource_button_pressed)

@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scripts/sect/PlayerSectOverview.gd" id="1_player_sect_overview"]
+[ext_resource type="PackedScene" path="res://scenes/ui/TutorialOverlay.tscn" id="2_tutorial_overlay"]
 
 [node name="PlayerSectOverview" type="Control"]
 layout_mode = 3
@@ -47,6 +48,11 @@ vertical_alignment = 1
 custom_minimum_size = Vector2(140, 44)
 layout_mode = 2
 text = "推进一天"
+
+[node name="TutorialButton" type="Button" parent="MarginContainer/RootBox/TopBar"]
+custom_minimum_size = Vector2(90, 44)
+layout_mode = 2
+text = "教程"
 
 [node name="BackButton" type="Button" parent="MarginContainer/RootBox/TopBar"]
 custom_minimum_size = Vector2(160, 44)
@@ -834,3 +840,6 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 14
 text = "当前只展示名册与预留数据，不生成独立头像或战斗单位。"
 autowrap_mode = 3
+
+[node name="TutorialOverlay" parent="." instance=ExtResource("2_tutorial_overlay")]
+layout_mode = 1

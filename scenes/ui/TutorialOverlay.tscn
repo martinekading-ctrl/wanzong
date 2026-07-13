@@ -1,0 +1,48 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/TutorialOverlay.gd" id="1"]
+
+[node name="TutorialOverlay" type="PanelContainer"]
+custom_minimum_size = Vector2(390, 0)
+offset_left = -414.0
+offset_top = 96.0
+offset_right = -24.0
+offset_bottom = 248.0
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+grow_horizontal = 0
+mouse_filter = 1
+script = ExtResource("1")
+
+[node name="Content" type="VBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="ProgressLabel" type="Label" parent="Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.82, 0.66, 0.31, 1)
+text = "新手引导 1/5"
+
+[node name="TitleLabel" type="Label" parent="Content"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "安排第一名弟子"
+
+[node name="DescriptionLabel" type="Label" parent="Content"]
+layout_mode = 2
+text = "进入弟子名册，选择弟子并确认一项安排。"
+autowrap_mode = 3
+
+[node name="ButtonBar" type="HBoxContainer" parent="Content"]
+layout_mode = 2
+alignment = 2
+theme_override_constants/separation = 8
+
+[node name="ResetButton" type="Button" parent="Content/ButtonBar"]
+layout_mode = 2
+text = "重新引导"
+
+[node name="DismissButton" type="Button" parent="Content/ButtonBar"]
+layout_mode = 2
+text = "暂时隐藏"

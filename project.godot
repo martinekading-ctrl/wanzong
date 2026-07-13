@@ -39,6 +39,7 @@ InventoryManager="*res://scripts/managers/InventoryManager.gd"
 CraftingManager="*res://scripts/managers/CraftingManager.gd"
 MarketManager="*res://scripts/managers/MarketManager.gd"
 StoryGoalManager="*res://scripts/managers/StoryGoalManager.gd"
+TutorialManager="*res://scripts/managers/TutorialManager.gd"
 SaveManager="*res://scripts/core/SaveManager.gd"
 GameState="*res://scripts/core/GameState.gd"
 
@@ -48,6 +49,10 @@ window/size/viewport_width=1920
 window/size/viewport_height=1080
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
+
+[gui]
+
+theme/custom="res://assets/ui/wanzong_theme.tres"
 
 [physics]
 
