@@ -52,12 +52,12 @@ func load_autosave() -> Dictionary:
 	return load_from_path(AUTOSAVE_PATH)
 
 
-func get_slot_summaries() -> Array[Dictionary]:
+func get_slot_summaries(validate_contents: bool = false) -> Array[Dictionary]:
 	var summaries: Array[Dictionary] = []
 	for slot_index in range(1, MANUAL_SLOT_COUNT + 1):
-		summaries.append(_build_slot_summary("manual_%d" % slot_index, get_manual_slot_path(slot_index)))
-	summaries.append(_build_slot_summary("quick", QUICK_SAVE_PATH))
-	summaries.append(_build_slot_summary("autosave", AUTOSAVE_PATH))
+		summaries.append(_build_slot_summary("manual_%d" % slot_index, get_manual_slot_path(slot_index), validate_contents))
+	summaries.append(_build_slot_summary("quick", QUICK_SAVE_PATH, validate_contents))
+	summaries.append(_build_slot_summary("autosave", AUTOSAVE_PATH, validate_contents))
 	return summaries
 
 
@@ -330,10 +330,10 @@ func _create_file_header(snapshot: Dictionary) -> Dictionary:
 	}
 
 
-func _build_slot_summary(slot_id: String, path: String) -> Dictionary:
+func _build_slot_summary(slot_id: String, path: String, validate_contents: bool = false) -> Dictionary:
 	var exists: bool = FileAccess.file_exists(path)
-	var inspection: Dictionary = inspect_save_path(path) if exists else {}
-	var metadata: Dictionary = inspection.get("metadata", {})
+	var inspection: Dictionary = inspect_save_path(path) if exists and validate_contents else {}
+	var metadata: Dictionary = inspection.get("metadata", {}) if validate_contents else get_save_metadata(path) if exists else {}
 	return {
 		"slot_id": slot_id,
 		"path": path,
@@ -341,7 +341,7 @@ func _build_slot_summary(slot_id: String, path: String) -> Dictionary:
 		"modified_time": FileAccess.get_modified_time(path) if exists else 0,
 		"metadata": metadata.get("metadata", {}),
 		"game_state": metadata.get("game_state", {}),
-		"valid": bool(inspection.get("valid", false)),
+		"valid": bool(inspection.get("valid", false)) if validate_contents else exists,
 		"validation_message": str(inspection.get("message", "")),
 	}
 
@@ -349,7 +349,7 @@ func _build_slot_summary(slot_id: String, path: String) -> Dictionary:
 func _get_valid_save_candidates() -> Array[Dictionary]:
 	last_skipped_invalid_paths.clear()
 	var candidates: Array[Dictionary] = []
-	for summary in get_slot_summaries():
+	for summary in get_slot_summaries(true):
 		if not bool(summary.get("exists", false)):
 			continue
 		if not bool(summary.get("valid", false)):
