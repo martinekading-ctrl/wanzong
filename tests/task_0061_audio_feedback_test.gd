@@ -40,7 +40,7 @@ func _test_audio_pipeline_and_settings() -> void:
 	_expect(not _audio.play_ui("unknown"), "未知提示音应安全返回失败。")
 	_expect(_audio.play_music("missing_track") and str(_audio.current_music_id) == "missing_track", "缺失背景音乐时应使用程序化环境乐安全降级。")
 	_expect(_audio.set_volume("effects", 0.35), "效果音音量应可修改。")
-	_expect(is_equal_approx(float(SettingsManager.get_volume("effects")), 0.35), "音量设置必须写入独立的全局用户设置。")
+	_expect(is_equal_approx(float(root.get_node("SettingsManager").call("get_volume", "effects")), 0.35), "音量设置必须写入独立的全局用户设置。")
 	var snapshot: Dictionary = _save.create_snapshot()
 	_audio.set_volume("effects", 0.1)
 	_expect(_save.apply_snapshot(snapshot), "音量设置应可随完整存档恢复。")
