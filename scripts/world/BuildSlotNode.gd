@@ -55,8 +55,15 @@ func _draw() -> void:
 func _input_event(_viewport: Viewport, event: InputEvent, _shape_idx: int) -> void:
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+			_play_select_sound()
 			selected.emit(slot_data)
 			get_viewport().set_input_as_handled()
+
+
+func _play_select_sound() -> void:
+	var audio_manager: Node = get_tree().root.get_node_or_null("AudioManager")
+	if audio_manager != null:
+		audio_manager.call("play_ui", "select")
 
 
 # 创建点击范围。

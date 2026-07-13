@@ -70,6 +70,7 @@ func complete_step(step_id: String) -> bool:
 	state["completed_steps"] = completed
 	state["current_index"] = mini(expected_index + 1, STEPS.size())
 	WorldDataManager.ui_state["tutorial"] = state
+	AudioManager.play_ui("confirm")
 	tutorial_updated.emit(state.duplicate(true))
 	return true
 

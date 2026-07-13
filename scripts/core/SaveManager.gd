@@ -141,6 +141,7 @@ func apply_snapshot(raw_snapshot: Dictionary) -> bool:
 	MarketManager.rebuild_runtime_state()
 	StoryGoalManager.rebuild_runtime_state()
 	TutorialManager.rebuild_runtime_state()
+	AudioManager.apply_settings()
 	GameState.year = int(game_state_data.get("year", 1))
 	GameState.month = int(game_state_data.get("month", 1))
 	GameState.day = int(game_state_data.get("day", 1))

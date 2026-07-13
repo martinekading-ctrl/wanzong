@@ -44,6 +44,7 @@ func new_game() -> void:
 	MarketManager.initialize_world_state()
 	StoryGoalManager.initialize_world_state()
 	TutorialManager.initialize_world_state()
+	AudioManager.apply_settings()
 
 
 func random_int(minimum: int, maximum: int) -> int:

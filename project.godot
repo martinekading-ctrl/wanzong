@@ -40,6 +40,8 @@ CraftingManager="*res://scripts/managers/CraftingManager.gd"
 MarketManager="*res://scripts/managers/MarketManager.gd"
 StoryGoalManager="*res://scripts/managers/StoryGoalManager.gd"
 TutorialManager="*res://scripts/managers/TutorialManager.gd"
+AudioManager="*res://scripts/managers/AudioManager.gd"
+FeedbackManager="*res://scripts/managers/FeedbackManager.gd"
 SaveManager="*res://scripts/core/SaveManager.gd"
 GameState="*res://scripts/core/GameState.gd"
 
