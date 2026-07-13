@@ -1,0 +1,68 @@
+name: Godot Regression
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+    inputs:
+      include_slow:
+        description: Run the ten-year release simulation
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache Godot imports
+        uses: actions/cache@v4
+        with:
+          path: .godot/imported
+          key: godot-4.7-${{ runner.os }}-${{ hashFiles('project.godot', 'scenes/**', 'assets/**') }}
+
+      - name: Install Godot 4.7
+        shell: bash
+        run: |
+          curl -L --fail --retry 3 -o godot.zip https://github.com/godotengine/godot/releases/download/4.7-stable/Godot_v4.7-stable_linux.x86_64.zip
+          unzip -q godot.zip -d "$HOME/godot"
+          chmod +x "$HOME/godot/Godot_v4.7-stable_linux.x86_64"
+          echo "$HOME/godot" >> "$GITHUB_PATH"
+
+      - name: Import project resources
+        run: Godot_v4.7-stable_linux.x86_64 --headless --editor --path . --quit
+
+      - name: Run fast regression suite
+        shell: bash
+        run: |
+          set -o pipefail
+          Godot_v4.7-stable_linux.x86_64 --headless --path . --script scripts/tools/RunAllTests.gd 2>&1 | tee godot-regression.log
+
+      - name: Run main entry smoke test
+        shell: bash
+        run: |
+          set -o pipefail
+          Godot_v4.7-stable_linux.x86_64 --headless --path . --quit-after 120 2>&1 | tee godot-smoke.log
+
+      - name: Run ten-year release simulation
+        if: github.event_name == 'workflow_dispatch' && inputs.include_slow
+        shell: bash
+        run: |
+          set -o pipefail
+          Godot_v4.7-stable_linux.x86_64 --headless --path . --script scripts/tools/RunAllTests.gd -- --include-slow 2>&1 | tee godot-slow.log
+
+      - name: Upload Godot logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: godot-test-logs
+          path: |
+            godot-regression.log
+            godot-smoke.log
+            godot-slow.log
+          if-no-files-found: ignore
