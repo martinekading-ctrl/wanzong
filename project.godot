@@ -11,15 +11,16 @@ config_version=5
 [application]
 
 config/name="WanZong"
+config/version="1.0.0"
 run/main_scene="res://scenes/main/Main.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 config/icon="res://icon.svg"
-config/version="1.0.0"
 
 [autoload]
 
 SceneManager="*res://scripts/managers/SceneManager.gd"
 WorldDataManager="*res://scripts/managers/WorldDataManager.gd"
+SettingsManager="*res://scripts/core/SettingsManager.gd"
 SectManager="*res://scripts/managers/SectManager.gd"
 DiscipleManager="*res://scripts/managers/DiscipleManager.gd"
 EconomyManager="*res://scripts/managers/EconomyManager.gd"

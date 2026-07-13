@@ -40,23 +40,22 @@ func _exit_tree() -> void:
 
 
 func apply_settings() -> void:
-	var settings: Dictionary = WorldDataManager.game_settings
-	_set_bus_linear("Master", float(settings.get("master_volume", 1.0)))
-	_set_bus_linear(MUSIC_BUS, float(settings.get("music_volume", 1.0)))
-	_set_bus_linear(EFFECTS_BUS, float(settings.get("effects_volume", 1.0)))
+	_set_bus_linear("Master", SettingsManager.get_volume("master"))
+	_set_bus_linear(MUSIC_BUS, SettingsManager.get_volume("music"))
+	_set_bus_linear(EFFECTS_BUS, SettingsManager.get_volume("effects"))
 
 
 func set_volume(channel: String, value: float) -> bool:
 	var clamped: float = clampf(value, 0.0, 1.0)
 	match channel:
 		"master":
-			WorldDataManager.game_settings["master_volume"] = clamped
+			SettingsManager.set_volume("master", clamped)
 			_set_bus_linear("Master", clamped)
 		"music":
-			WorldDataManager.game_settings["music_volume"] = clamped
+			SettingsManager.set_volume("music", clamped)
 			_set_bus_linear(MUSIC_BUS, clamped)
 		"effects":
-			WorldDataManager.game_settings["effects_volume"] = clamped
+			SettingsManager.set_volume("effects", clamped)
 			_set_bus_linear(EFFECTS_BUS, clamped)
 		_:
 			return false
@@ -64,7 +63,7 @@ func set_volume(channel: String, value: float) -> bool:
 
 
 func get_volume(channel: String) -> float:
-	return float(WorldDataManager.game_settings.get(channel + "_volume", 1.0))
+	return SettingsManager.get_volume(channel)
 
 
 func play_ui(sfx_id: String) -> bool:

@@ -141,6 +141,8 @@ func apply_snapshot(raw_snapshot: Dictionary) -> bool:
 	MarketManager.rebuild_runtime_state()
 	StoryGoalManager.rebuild_runtime_state()
 	TutorialManager.rebuild_runtime_state()
+	# game_settings 仍会被 WorldDataManager 读取，以兼容旧存档；音量已改由
+	# user://settings.cfg 管理，因此读档不能覆盖玩家当前的全局偏好。
 	AudioManager.apply_settings()
 	GameState.year = int(game_state_data.get("year", 1))
 	GameState.month = int(game_state_data.get("month", 1))
