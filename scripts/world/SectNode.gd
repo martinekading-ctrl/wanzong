@@ -135,6 +135,17 @@ func _create_icon() -> void:
 	icon_sprite = icon
 
 
+func set_icon_texture(texture: Texture2D, display_size: int = 72) -> void:
+	if icon_sprite != null:
+		remove_child(icon_sprite)
+		icon_sprite.free()
+		icon_sprite = null
+	icon_texture = texture
+	icon_size = display_size
+	_create_icon()
+	_update_visual_state()
+
+
 # 创建宗门名字和战力文本。
 func _create_info_label() -> void:
 	info_label = Label.new()

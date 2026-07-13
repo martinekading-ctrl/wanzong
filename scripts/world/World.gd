@@ -13,7 +13,7 @@ const ResourceNodeScript := preload("res://scripts/world/ResourceNode.gd")
 const BuildSlotNodeScript := preload("res://scripts/world/BuildSlotNode.gd")
 
 const USE_RUNTIME_WORLD_GENERATION := false
-const GENERATED_WORLD_MAP_PATH := "res://scenes/world/GeneratedWorldMap.tscn"
+const GENERATED_WORLD_MAP_PATH := "res://scenes/world/GeneratedWorldMap.scn"
 const SIMPLE_WORLD_FALLBACK_PATH := "res://scenes/world/SimpleWorldFallback.tscn"
 const WORLD_READY_WARNING_MS: int = 2000
 const MAP_INSTANTIATE_WARNING_MS: int = 1000
@@ -53,6 +53,9 @@ var active_sect_icon_directory: String = SECT_ICON_DIRECTORY
 var resource_icon_paths_by_type: Dictionary = {}
 var resource_icon_rng: RandomNumberGenerator = RandomNumberGenerator.new()
 var texture_cache: Dictionary = {}
+var pending_texture_paths: Dictionary = {}
+var texture_bindings: Array[Dictionary] = []
+var visual_assets_started_at: int = 0
 
 # 当前地图对象选中状态，由 World 统一管理。
 var current_selected_type: String = "none"
@@ -109,6 +112,7 @@ var pixel_world: Node2D
 # 地图启动时，初始化世界数据，并生成宗门和资源点。
 func _ready() -> void:
 	var ready_started_at: int = Time.get_ticks_msec()
+	set_process(false)
 	_load_runtime_world_map()
 	world_camera.map_size = MAP_SIZE
 	world_camera.map_origin = MAP_ORIGIN
@@ -120,6 +124,7 @@ func _ready() -> void:
 	_validate_resource_positions()
 	TerritoryManager.recalculate_all()
 	_create_territory_areas()
+	visual_assets_started_at = Time.get_ticks_msec()
 	var resource_started_at: int = Time.get_ticks_msec()
 	_create_resource_nodes()
 	print("[WorldPerf] Resource nodes: %d ms" % (Time.get_ticks_msec() - resource_started_at))
@@ -136,6 +141,29 @@ func _ready() -> void:
 	print("[WorldPerf] World ready total: %d ms" % ready_elapsed)
 	if ready_elapsed > WORLD_READY_WARNING_MS:
 		push_warning("[WorldPerf][WARNING] 世界地图加载超过2秒")
+
+
+func _process(_delta: float) -> void:
+	for path_value in pending_texture_paths.keys():
+		var path: String = str(path_value)
+		var status: ResourceLoader.ThreadLoadStatus = ResourceLoader.load_threaded_get_status(path)
+		if status == ResourceLoader.THREAD_LOAD_IN_PROGRESS:
+			continue
+		pending_texture_paths.erase(path)
+		if status != ResourceLoader.THREAD_LOAD_LOADED:
+			push_warning("地图图标后台加载失败，继续使用 fallback：" + path)
+			_remove_texture_bindings(path)
+			continue
+		var texture := ResourceLoader.load_threaded_get(path) as Texture2D
+		if texture == null:
+			push_warning("地图图标资源不是 Texture2D：" + path)
+			_remove_texture_bindings(path)
+			continue
+		texture_cache[path] = texture
+		_apply_texture_bindings(path, texture)
+	if pending_texture_paths.is_empty():
+		set_process(false)
+		print("[WorldPerf] Visual assets ready: %d ms" % (Time.get_ticks_msec() - visual_assets_started_at))
 
 
 func _load_runtime_world_map() -> void:
@@ -200,13 +228,14 @@ func _create_sect_nodes() -> void:
 			_scale_source_position(sect_data["location"])
 		)
 		var sect_node: SectNode = SectNodeScript.new()
-		var icon_texture: Texture2D = _get_sect_icon_texture(
+		var icon_path: String = _get_sect_icon_path(
 			sect_index,
 			bool(display_data.get("is_player", false))
 		)
-		sect_node.setup(display_data, icon_texture, SECT_ICON_SIZE)
+		sect_node.setup(display_data, null, SECT_ICON_SIZE)
 		sect_node.selected.connect(_on_sect_selected.bind(sect_node))
 		sect_layer.add_child(sect_node)
+		_queue_texture_binding(icon_path, sect_node, "sect", float(SECT_ICON_SIZE))
 
 
 # 优先扫描处理后的小图；目录为空时回退到原图目录。
@@ -237,9 +266,9 @@ func _scan_sect_icon_directory(directory_path: String) -> Array[String]:
 
 
 # 玩家优先使用青玄图标，AI 使用其余图标并在数量不足时循环。
-func _get_sect_icon_texture(sect_index: int, is_player: bool) -> Texture2D:
+func _get_sect_icon_path(sect_index: int, is_player: bool) -> String:
 	if sect_icon_paths.is_empty():
-		return null
+		return ""
 
 	var player_icon_path: String = sect_icon_paths[0]
 	var preferred_player_path: String = active_sect_icon_directory.path_join(PLAYER_SECT_ICON_NAME)
@@ -255,7 +284,7 @@ func _get_sect_icon_texture(sect_index: int, is_player: bool) -> Texture2D:
 		if not ai_icon_paths.is_empty():
 			selected_path = ai_icon_paths[(sect_index - 1) % ai_icon_paths.size()]
 
-	return _load_texture_cached(selected_path)
+	return selected_path
 
 
 # 启动时扫描四类资源点图片；目录缺失或为空时只发出 warning。
@@ -292,27 +321,56 @@ func _scan_resource_icon_directory(directory_path: String) -> Array[String]:
 	return icon_paths
 
 
-# 从对应资源类型中随机选一张；加载失败时返回 null 触发 fallback。
-func _get_resource_icon_texture(resource_type: String) -> Texture2D:
+# 从对应资源类型中随机选一张路径；后台加载失败时节点继续使用代码绘制 fallback。
+func _get_resource_icon_path(resource_type: String) -> String:
 	var icon_paths: Array = resource_icon_paths_by_type.get(resource_type, [])
 	if icon_paths.is_empty():
-		return null
+		return ""
 
 	var selected_index: int = resource_icon_rng.randi_range(0, icon_paths.size() - 1)
-	var selected_path: String = str(icon_paths[selected_index])
-	var texture: Texture2D = _load_texture_cached(selected_path)
-	if texture == null:
-		push_warning("资源点图片加载失败，将使用代码绘制 fallback：" + selected_path)
-	return texture
+	return str(icon_paths[selected_index])
 
 
-func _load_texture_cached(path: String) -> Texture2D:
+func _queue_texture_binding(path: String, target: Node, binding_type: String, display_size: float) -> void:
+	if path == "" or not is_instance_valid(target):
+		return
 	if texture_cache.has(path):
-		return texture_cache[path] as Texture2D
-	var texture := load(path) as Texture2D
-	if texture != null:
-		texture_cache[path] = texture
-	return texture
+		_apply_texture_to_target(target, binding_type, texture_cache[path] as Texture2D, display_size)
+		return
+	texture_bindings.append({"path": path, "target": target, "type": binding_type, "display_size": display_size})
+	if pending_texture_paths.has(path):
+		return
+	var error: Error = ResourceLoader.load_threaded_request(path, "Texture2D", true)
+	if error != OK:
+		push_warning("无法请求后台加载地图图标：%s（%s）" % [path, error_string(error)])
+		_remove_texture_bindings(path)
+		return
+	pending_texture_paths[path] = true
+	set_process(true)
+
+
+func _apply_texture_bindings(path: String, texture: Texture2D) -> void:
+	for index in range(texture_bindings.size() - 1, -1, -1):
+		var binding: Dictionary = texture_bindings[index]
+		if str(binding.get("path", "")) != path:
+			continue
+		var target: Node = binding.get("target") as Node
+		if is_instance_valid(target):
+			_apply_texture_to_target(target, str(binding.get("type", "")), texture, float(binding.get("display_size", 36.0)))
+		texture_bindings.remove_at(index)
+
+
+func _remove_texture_bindings(path: String) -> void:
+	for index in range(texture_bindings.size() - 1, -1, -1):
+		if str(texture_bindings[index].get("path", "")) == path:
+			texture_bindings.remove_at(index)
+
+
+func _apply_texture_to_target(target: Node, binding_type: String, texture: Texture2D, display_size: float) -> void:
+	if binding_type == "sect" and target.has_method("set_icon_texture"):
+		target.call("set_icon_texture", texture, int(display_size))
+	elif binding_type == "resource" and target.has_method("set_resource_texture"):
+		target.call("set_resource_texture", texture, display_size)
 
 
 # 秘境入口尺寸更大，其余三类资源点使用统一尺寸。
@@ -340,14 +398,16 @@ func _create_resource_nodes() -> void:
 		)
 		var resource_node: ResourceNode = ResourceNodeScript.new()
 		var resource_type: String = str(display_data["resource_type"])
-		var icon_texture: Texture2D = _get_resource_icon_texture(resource_type)
+		var icon_path: String = _get_resource_icon_path(resource_type)
+		var icon_size: float = _get_resource_icon_size(resource_type)
 		resource_node.setup(
 			display_data,
-			icon_texture,
-			_get_resource_icon_size(resource_type)
+			null,
+			icon_size
 		)
 		resource_node.selected.connect(_on_resource_selected.bind(resource_node))
 		resource_layer.add_child(resource_node)
+		_queue_texture_binding(icon_path, resource_node, "resource", icon_size)
 
 
 # 创建玩家宗门建设点。

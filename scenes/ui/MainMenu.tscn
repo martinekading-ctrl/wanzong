@@ -138,7 +138,7 @@ value = 100.0
 
 [node name="AudioHintLabel" type="Label" parent="SettingsPanel/SettingsBox"]
 layout_mode = 2
-text = "当前版本包含操作提示音；背景音乐素材可后续放入 assets/audio/bgm。"
+text = "当前使用轻量环境乐；在 assets/audio/bgm 放入同名音频可自动替换。"
 autowrap_mode = 3
 
 [node name="CloseButton" type="Button" parent="SettingsPanel/SettingsBox"]

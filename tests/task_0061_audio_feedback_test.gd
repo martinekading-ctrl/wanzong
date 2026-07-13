@@ -38,7 +38,7 @@ func _test_audio_pipeline_and_settings() -> void:
 	_expect(AudioServer.get_bus_index("Music") >= 0 and AudioServer.get_bus_index("Effects") >= 0, "音频管理器应创建独立音乐与效果音总线。")
 	_expect(_audio.play_ui("confirm") and str(_audio.last_sfx_id) == "confirm", "确认提示音应可由内存音源播放。")
 	_expect(not _audio.play_ui("unknown"), "未知提示音应安全返回失败。")
-	_expect(not _audio.play_music("missing_track"), "缺失背景音乐时应静默降级且不报错。")
+	_expect(_audio.play_music("missing_track") and str(_audio.current_music_id) == "missing_track", "缺失背景音乐时应使用程序化环境乐安全降级。")
 	_expect(_audio.set_volume("effects", 0.35), "效果音音量应可修改。")
 	_expect(is_equal_approx(float(_world_data.game_settings.get("effects_volume", 0.0)), 0.35), "音量设置必须写入可存档游戏状态。")
 	var snapshot: Dictionary = _save.create_snapshot()

@@ -9,6 +9,7 @@ var current_music_id: String = ""
 var _music_player: AudioStreamPlayer
 var _effects_player: AudioStreamPlayer
 var _tone_cache: Dictionary = {}
+var _music_cache: Dictionary = {}
 var _created_buses: Array[String] = []
 
 
@@ -92,6 +93,8 @@ func play_ui(sfx_id: String) -> bool:
 func play_music(music_id: String) -> bool:
 	if _music_player == null or music_id == "":
 		return false
+	if current_music_id == music_id and _music_player.playing:
+		return true
 	for extension in ["ogg", "wav", "mp3"]:
 		var path: String = "res://assets/audio/bgm/%s.%s" % [music_id, extension]
 		if ResourceLoader.exists(path):
@@ -102,7 +105,20 @@ func play_music(music_id: String) -> bool:
 			_music_player.stream = stream
 			_music_player.play()
 			return true
-	return false
+	current_music_id = music_id
+	if not _music_cache.has(music_id):
+		var base_frequency: float = float({
+			"main_menu": 110.0,
+			"world": 98.0,
+			"sect": 123.75,
+			"battle_theme": 82.5,
+		}.get(music_id, 110.0))
+		_music_cache[music_id] = _create_ambient_loop(base_frequency)
+	if DisplayServer.get_name() == "headless":
+		return true
+	_music_player.stream = _music_cache[music_id]
+	_music_player.play()
+	return true
 
 
 func stop_music() -> void:
@@ -119,6 +135,7 @@ func shutdown_audio() -> void:
 		_effects_player.stop()
 		_effects_player.stream = null
 	_tone_cache.clear()
+	_music_cache.clear()
 
 
 func _connect_game_signals() -> void:
@@ -155,5 +172,30 @@ func _create_tone(frequency: float, duration: float) -> AudioStreamWAV:
 	stream.format = AudioStreamWAV.FORMAT_16_BITS
 	stream.mix_rate = SAMPLE_RATE
 	stream.stereo = false
+	stream.data = bytes
+	return stream
+
+
+func _create_ambient_loop(base_frequency: float) -> AudioStreamWAV:
+	const DURATION_SECONDS: float = 8.0
+	var sample_count: int = int(SAMPLE_RATE * DURATION_SECONDS)
+	var bytes := PackedByteArray()
+	bytes.resize(sample_count * 2)
+	for index in range(sample_count):
+		var time: float = float(index) / SAMPLE_RATE
+		var slow_wave: float = 0.65 + 0.35 * sin(TAU * time / DURATION_SECONDS)
+		var sample_value: float = (
+			sin(TAU * base_frequency * time) * 0.55
+			+ sin(TAU * base_frequency * 1.5 * time) * 0.3
+			+ sin(TAU * base_frequency * 2.0 * time) * 0.15
+		) * slow_wave
+		bytes.encode_s16(index * 2, int(sample_value * 700.0))
+	var stream := AudioStreamWAV.new()
+	stream.format = AudioStreamWAV.FORMAT_16_BITS
+	stream.mix_rate = SAMPLE_RATE
+	stream.stereo = false
+	stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
+	stream.loop_begin = 0
+	stream.loop_end = sample_count
 	stream.data = bytes
 	return stream

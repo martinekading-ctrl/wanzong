@@ -24,19 +24,23 @@ func setup_main(root_node: Node, current_page_node: Node) -> void:
 
 # 切换到主菜单。
 func go_to_main_menu() -> void:
+	AudioManager.play_music("main_menu")
 	_change_page(MAIN_MENU_SCENE)
 
 
 # 切换到俯视大地图。
 func go_to_world_map() -> void:
+	AudioManager.play_music("world")
 	_change_page(WORLD_SCENE)
 
 
 func go_to_player_sect_overview() -> void:
+	AudioManager.play_music("sect")
 	_change_page(PLAYER_SECT_OVERVIEW_SCENE)
 
 
 func go_to_battle_report() -> void:
+	AudioManager.play_music("battle_theme")
 	_change_page(BATTLE_REPORT_SCENE)
 
 

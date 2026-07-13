@@ -61,14 +61,30 @@ func find_nearest_land_world_position(world_position: Vector2) -> Vector2:
 	if _is_safe_land(start_cell):
 		return _cell_center(start_cell)
 	for radius in range(1, MAX_SEARCH_RADIUS + 1):
-		for offset_y in range(-radius, radius + 1):
-			for offset_x in range(-radius, radius + 1):
-				if abs(offset_x) != radius and abs(offset_y) != radius:
-					continue
-				var candidate := start_cell + Vector2i(offset_x, offset_y)
-				if _is_safe_land(candidate):
-					return _cell_center(candidate)
+		var candidate: Vector2i = _find_safe_cell_on_ring(start_cell, radius)
+		if candidate.x >= 0:
+			return _cell_center(candidate)
 	return world_position
+
+
+# 小半径逐格搜索以保证精确；大半径控制在约64个采样点，避免海上坐标产生数万次查询。
+func _find_safe_cell_on_ring(center: Vector2i, radius: int) -> Vector2i:
+	var stride: int = maxi(1, int(radius / 16.0))
+	for offset_x in range(-radius, radius + 1, stride):
+		var top := center + Vector2i(offset_x, -radius)
+		if _is_safe_land(top):
+			return top
+		var bottom := center + Vector2i(offset_x, radius)
+		if _is_safe_land(bottom):
+			return bottom
+	for offset_y in range(-radius + stride, radius, stride):
+		var left := center + Vector2i(-radius, offset_y)
+		if _is_safe_land(left):
+			return left
+		var right := center + Vector2i(radius, offset_y)
+		if _is_safe_land(right):
+			return right
+	return Vector2i(-1, -1)
 
 
 func _is_safe_land(cell: Vector2i) -> bool:

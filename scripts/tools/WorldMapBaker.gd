@@ -3,6 +3,7 @@ extends Node
 
 const PREVIEW_SCENE_PATH := "res://scenes/prototype/PixelWorldPreview.tscn"
 const GENERATED_SCENE_PATH := "res://scenes/world/GeneratedWorldMap.tscn"
+const GENERATED_RUNTIME_SCENE_PATH := "res://scenes/world/GeneratedWorldMap.scn"
 const GENERATED_SCRIPT_PATH := "res://scripts/world/GeneratedWorldMap.gd"
 const GENERATED_TILESET_PATH := "res://assets/generated/world_terrain_tileset.tres"
 const GENERATED_NATURE_DIRECTORY := "res://assets/generated/nature_batches"
@@ -71,6 +72,8 @@ func bake_world() -> Error:
 	var save_error: Error = pack_error
 	if pack_error == OK:
 		save_error = ResourceSaver.save(packed_scene, GENERATED_SCENE_PATH)
+	if save_error == OK:
+		save_error = ResourceSaver.save(packed_scene, GENERATED_RUNTIME_SCENE_PATH, ResourceSaver.FLAG_COMPRESS)
 	preview.queue_free()
 	generated_root.free()
 	_is_baking = false

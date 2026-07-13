@@ -79,7 +79,10 @@ func _create_collision_shape() -> void:
 # 创建空地文本。
 func _create_info_label() -> void:
 	info_label = Label.new()
+	info_label.text = "建设点"
+	info_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	info_label.visible = false
+	add_child(info_label)
 
 
 # 由 World 统一设置选中状态。
