@@ -148,7 +148,15 @@ func _test_save_roster_compatibility() -> void:
 		_assert_rejected_without_mutation(save_manager, world_data, game_state, retired_snapshot, "早期十宗门", container + " 退役键")
 	_expect(not WorldSectReferenceValidator.validate_world_state(_with_world_mutation(snapshot, func(world: Dictionary) -> void: world["diplomatic_pacts"].append({"member_ids":["sect_001","sect_002","sect_002"]}))["world_data"]).is_empty(), "重复契约成员必须拒绝")
 	_expect(not WorldSectReferenceValidator.validate_world_state(_with_world_mutation(snapshot, func(world: Dictionary) -> void: world["diplomatic_pacts"].append({"member_ids":["sect_001"]}))["world_data"]).is_empty(), "少于两个不同契约成员必须拒绝")
+	var empty_member_snapshot := _with_world_mutation(snapshot, func(world: Dictionary) -> void: world["diplomatic_pacts"].append({"member_ids":["sect_001",""]}))
+	var empty_member_errors := WorldSectReferenceValidator.validate_world_state(empty_member_snapshot["world_data"])
+	_expect("diplomatic_pacts[0].member_ids[1] must not be empty" in empty_member_errors, "空契约成员必须报告具体路径")
+	_expect("diplomatic_pacts[0].member_ids requires at least two distinct valid sect ids" in empty_member_errors, "空契约成员不得计入有效成员数")
+	_assert_rejected_without_mutation(save_manager, world_data, game_state, empty_member_snapshot, "diplomatic_pacts[0].member_ids[1] must not be empty", "空契约成员")
+	_expect(not WorldSectReferenceValidator.validate_world_state(_with_world_mutation(snapshot, func(world: Dictionary) -> void: world["diplomatic_pacts"].append({"member_ids":["",""]}))["world_data"]).is_empty(), "两个空契约成员必须拒绝")
+	_expect(not WorldSectReferenceValidator.validate_world_state(_with_world_mutation(snapshot, func(world: Dictionary) -> void: world["diplomatic_pacts"].append({"member_ids":["sect_001","sect_001"]}))["world_data"]).is_empty(), "一个有效成员加重复成员必须拒绝")
 	_expect(WorldSectReferenceValidator.validate_world_state(_with_world_mutation(snapshot, func(world: Dictionary) -> void: world["diplomatic_pacts"].append({"member_ids":["sect_001","sect_002"]}))["world_data"]).is_empty(), "两个不同有效契约成员必须通过")
+	_expect(WorldSectReferenceValidator.validate_world_state(_with_world_mutation(snapshot, func(world: Dictionary) -> void: world["diplomatic_pacts"].append({"member_ids":["sect_001","sect_002","sect_003"]}))["world_data"]).is_empty(), "三个不同有效契约成员必须通过")
 	_expect(not WorldSectReferenceValidator.validate_world_state(_with_world_mutation(snapshot, func(world: Dictionary) -> void: world["diplomatic_pacts"].append({"member_ids":["sect_001","sect_999"]}))["world_data"]).is_empty(), "未知契约成员必须拒绝")
 
 	var before_ids: Array[String] = []

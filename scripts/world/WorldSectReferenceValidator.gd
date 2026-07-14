@@ -166,16 +166,23 @@ static func _validate_pacts(value: Variant, ids: Dictionary, messages: PackedStr
 			continue
 		var path := "diplomatic_pacts[%d]" % index
 		var members: Variant = (pact as Dictionary).get("member_ids", [])
-		var distinct := {}
+		var seen := {}
+		var valid_distinct := {}
 		if members is Array:
 			for member_index in range((members as Array).size()):
 				var member_id := str((members as Array)[member_index])
+				if member_id == "":
+					if not removed_only:
+						messages.append(path + ".member_ids[%d] must not be empty" % member_index)
+					continue
 				_validate_id(member_id, path + ".member_ids[%d]" % member_index, ids, messages, removed_only)
-				if not removed_only and member_id != "" and distinct.has(member_id):
+				if not removed_only and seen.has(member_id):
 					messages.append(path + ".member_ids contains duplicate sect id: " + member_id)
-				distinct[member_id] = true
-		if not removed_only and (not members is Array or distinct.size() < 2):
-			messages.append(path + ".member_ids requires at least two distinct sect ids")
+				seen[member_id] = true
+				if ids.has(member_id):
+					valid_distinct[member_id] = true
+		if not removed_only and (not members is Array or valid_distinct.size() < 2):
+			messages.append(path + ".member_ids requires at least two distinct valid sect ids")
 		_validate_record(pact, path, ["overlord_sect_id", "vassal_sect_id"], ids, messages, removed_only)
 		var terms: Variant = (pact as Dictionary).get("terms", {})
 		if terms is Dictionary:
