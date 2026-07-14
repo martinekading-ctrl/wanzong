@@ -18,6 +18,9 @@ static func commit_files(staged_to_target: Dictionary, fail_after: int = -1) -> 
 	var backups: Array[Dictionary] = []
 	for entry in entries:
 		var target: String = str(entry["target"])
+		if FileAccess.file_exists(target + ".tmp") or FileAccess.file_exists(target + ".bak"):
+			push_warning("检测到陈旧地图事务文件，拒绝覆盖：" + target)
+			return ERR_ALREADY_EXISTS
 		backups.append({
 			"target": target,
 			"existed": FileAccess.file_exists(target),
@@ -48,8 +51,10 @@ static func commit_files(staged_to_target: Dictionary, fail_after: int = -1) -> 
 		var directory := DirAccess.open(str(backup["target"]).get_base_dir())
 		if directory == null: _restore_backups(backups); return ERR_CANT_OPEN
 		var target_name := str(backup["target"]).get_file()
+		backup["backup_created"] = false
 		if bool(backup["existed"]) and directory.rename(target_name, target_name + ".bak") != OK:
 			_restore_backups(backups); return ERR_CANT_CREATE
+		if bool(backup["existed"]): backup["backup_created"] = true
 		if directory.rename(target_name + ".tmp", target_name) != OK:
 			_restore_backups(backups); return ERR_CANT_CREATE
 	for backup in backups:
@@ -62,7 +67,7 @@ static func _restore_backups(backups: Array[Dictionary]) -> void:
 		var target: String = str(backup["target"])
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(str(backup["temporary"])))
 		var directory := DirAccess.open(target.get_base_dir())
-		if directory != null and FileAccess.file_exists(str(backup["backup"])):
+		if bool(backup.get("backup_created", false)) and directory != null and FileAccess.file_exists(str(backup["backup"])):
 			DirAccess.remove_absolute(ProjectSettings.globalize_path(target))
 			directory.rename(str(backup["backup"]).get_file(), target.get_file())
 		elif not bool(backup["existed"]): DirAccess.remove_absolute(ProjectSettings.globalize_path(target))

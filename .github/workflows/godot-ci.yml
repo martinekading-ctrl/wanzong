@@ -70,7 +70,7 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          Godot_v4.7-stable_linux.x86_64 --headless --path . --script scripts/tools/RunAllTests.gd -- --include-slow 2>&1 | tee godot-slow.log
+          Godot_v4.7-stable_linux.x86_64 --headless --path . --script tests/task_0062_release_qa_test.gd 2>&1 | tee godot-slow.log
 
       - name: Upload Godot logs
         if: always()

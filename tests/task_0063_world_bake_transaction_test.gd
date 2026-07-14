@@ -23,6 +23,10 @@ func _run() -> void:
 	_expect(not FileAccess.file_exists("user://task_0063_bake_runtime.bin"), "提交失败不得遗留新的正式运行时地图。")
 	_expect(TRANSACTION.commit_files({staged_a: target, staged_b: "user://task_0063_bake_runtime.bin"}) == OK, "完整临时资源应可一次提交。")
 	_expect(FileAccess.get_file_as_string(target) == "new-map", "成功提交应替换正式地图文件。")
+	_write(target + ".bak", "stale")
+	_expect(TRANSACTION.commit_files({staged_a: target}) != OK, "发现陈旧 bak 时必须拒绝事务。")
+	_expect(FileAccess.get_file_as_string(target) == "new-map", "陈旧 bak 不得覆盖正式文件。")
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(target + ".bak"))
 	for path in [target, staged_a, staged_b, "user://task_0063_bake_runtime.bin"]:
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
 	if _failures.is_empty():

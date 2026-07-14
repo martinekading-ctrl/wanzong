@@ -61,20 +61,14 @@ func bake_world() -> Error:
 	var staged_files: Dictionary = {}
 	var tile_set_save_error: Error = _save_external_tile_set(terrain_copy, stage_tile_set_path, GENERATED_TILESET_PATH, staged_files)
 	if tile_set_save_error != OK:
-		preview.queue_free()
-		generated_root.free()
-		_is_baking = false
-		return tile_set_save_error
+		return _finish_bake(tile_set_save_error, preview, generated_root, stage_root, started_at)
 	generated_root.add_child(terrain_copy)
 	terrain_copy.owner = generated_root
 	generated_root.set("safe_land_source_ids", _collect_safe_source_ids(preview))
 	_add_baked_nature(preview, generated_root, stage_nature_directory, staged_files)
 	if not _validate_baked_nature(generated_root):
-		preview.queue_free()
-		generated_root.free()
-		_is_baking = false
 		push_error("自然物MultiMesh变换无效；请在非headless编辑器中重新烘焙。")
-		return ERR_INVALID_DATA
+		return _finish_bake(ERR_INVALID_DATA, preview, generated_root, stage_root, started_at)
 
 	var packed_scene := PackedScene.new()
 	var pack_error: Error = packed_scene.pack(generated_root)
@@ -91,14 +85,18 @@ func bake_world() -> Error:
 		staged_files[stage_scene_path] = GENERATED_SCENE_PATH
 		staged_files[stage_runtime_path] = GENERATED_RUNTIME_SCENE_PATH
 		save_error = WorldMapBakeTransaction.commit_files(staged_files)
-	preview.queue_free()
-	generated_root.free()
-	var cleanup_error := WorldMapBakeTransaction.remove_staging_directory_recursive(stage_root)
-	if cleanup_error != OK:
-		push_warning("地图烘焙 staging 清理失败：" + error_string(cleanup_error))
+	return _finish_bake(save_error, preview, generated_root, stage_root, started_at)
+
+
+func _finish_bake(result: Error, preview: Node, generated_root: Node, stage_root: String, started_at: int) -> Error:
+	if is_instance_valid(preview): preview.queue_free()
+	if is_instance_valid(generated_root): generated_root.free()
+	if not stage_root.is_empty():
+		var cleanup_error := WorldMapBakeTransaction.remove_staging_directory_recursive(stage_root)
+		if cleanup_error != OK: push_warning("地图烘焙 staging 清理失败：" + error_string(cleanup_error))
 	_is_baking = false
-	print("[WorldPerf] bake_world: %d ms, result=%s" % [Time.get_ticks_msec() - started_at, error_string(save_error)])
-	return save_error
+	print("[WorldPerf] bake_world: %d ms, result=%s" % [Time.get_ticks_msec() - started_at, error_string(result)])
+	return result
 
 
 func _collect_safe_source_ids(preview: Node) -> Array[int]:
