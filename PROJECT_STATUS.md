@@ -5,7 +5,9 @@
 **1.0.0 Release Candidate**
 
 基准提交：`782f4ad622fc51a5e9b988283f1f415dc5e2f14c`  
-当前验证分支：`codex/task-0064-rc-verification`
+当前验证分支：`codex/task-0065-compact-world-map`
+
+Task-0065.1 keeps the compact 272×272 / 4352×4352 map while preserving 10 sects, all 26 baseline resource nodes, and 6 build slots. PR #1 and PR #2 remain unmerged Draft PRs; the project remains a 1.0.0 Release Candidate.
 
 Task-0063 已补齐全局音量持久化、损坏存档回退、地图烘焙事务化、GitHub Actions 回归入口与发布验收文档。自动化检查通过后，仍需要在真实 Windows EXE 与集成显卡设备上完成下列人工验收，才能考虑正式 `v1.0.0` 标签。
 
