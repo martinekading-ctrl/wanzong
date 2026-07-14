@@ -1,7 +1,7 @@
 extends Camera2D
 
 # 地图尺寸，由 World 设置。
-var map_size: Vector2 = Vector2(4096, 4096)
+var map_size: Vector2 = Vector2(WorldMapSpec.WORLD_SIZE)
 
 # 地图左上角坐标，扩大地图后允许世界范围向原地图四周延伸。
 var map_origin: Vector2 = Vector2.ZERO

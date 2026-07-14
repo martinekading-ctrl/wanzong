@@ -41,10 +41,13 @@ func bake_world() -> Error:
 	var preview: Node2D = preview_scene.instantiate()
 	preview.set("preview_mode", false)
 	add_child(preview)
-	await preview.ready
+	if not preview.is_node_ready():
+		await preview.ready
 	var preview_terrain := preview.get_node("TerrainLayer") as TileMapLayer
 	if preview_terrain.get_used_cells().is_empty():
 		preview.call("generate_for_bake")
+	if not bool(preview.get("marker_placement_valid")):
+		return _finish_bake(ERR_INVALID_DATA, preview, null, "", started_at)
 
 	var stage_id := str(Time.get_ticks_usec())
 	var stage_root := BAKE_STAGING_ROOT.path_join(stage_id)
@@ -211,8 +214,6 @@ func _validate_baked_nature(generated_root: Node2D) -> bool:
 	for child in nature_root.get_children():
 		var batch := child as MultiMeshInstance2D
 		if batch == null or batch.multimesh == null or batch.multimesh.instance_count == 0:
-			return false
-		if batch.multimesh.buffer.is_empty():
 			return false
 	return true
 

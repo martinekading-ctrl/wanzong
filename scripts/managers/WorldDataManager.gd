@@ -12,6 +12,26 @@ const ECONOMIC_RESOURCE_KEYS: Array[String] = [
 	"population",
 ]
 
+## 世界地图锚点使用归一化坐标，避免地图尺寸变化时继续保留旧绝对坐标。
+const SECT_ANCHORS_NORMALIZED: Array[Vector2] = [
+	Vector2(0.50, 0.52), Vector2(0.24, 0.23), Vector2(0.40, 0.19), Vector2(0.70, 0.23),
+	Vector2(0.83, 0.34), Vector2(0.78, 0.53), Vector2(0.82, 0.76), Vector2(0.59, 0.81),
+	Vector2(0.30, 0.80), Vector2(0.19, 0.54),
+]
+const RESOURCE_ANCHORS_NORMALIZED: Array[Vector2] = [
+	Vector2(0.16, 0.20), Vector2(0.31, 0.18), Vector2(0.47, 0.25), Vector2(0.66, 0.18),
+	Vector2(0.78, 0.31), Vector2(0.70, 0.48), Vector2(0.80, 0.67), Vector2(0.62, 0.75),
+	Vector2(0.46, 0.73), Vector2(0.28, 0.68), Vector2(0.18, 0.57), Vector2(0.24, 0.38),
+	Vector2(0.38, 0.34), Vector2(0.55, 0.39), Vector2(0.69, 0.57), Vector2(0.51, 0.62),
+	Vector2(0.36, 0.56), Vector2(0.22, 0.72), Vector2(0.57, 0.24), Vector2(0.73, 0.43),
+]
+const COMPACT_RESOURCE_TYPES: Array[String] = [
+	"spirit_mine", "spirit_mine", "spirit_mine", "spirit_mine",
+	"spirit_vein", "spirit_vein", "spirit_vein", "spirit_vein",
+	"herb_field", "herb_field", "herb_field", "herb_field", "herb_field", "herb_field", "herb_field", "herb_field",
+	"secret_realm", "secret_realm", "secret_realm", "secret_realm",
+]
+
 # 世界地图上的宗门数据。
 var sects: Array = []
 
@@ -156,6 +176,7 @@ func init_world_data() -> void:
 		{"slot_id": 6, "owner_sect_id": "sect_001", "position": Vector2(2268, 2148), "is_empty": true},
 	]
 	building_instances = []
+	_apply_compact_map_anchors()
 
 	disciples = [
 		_create_disciple_data("disciple_001", "sect_001", "林青", "男", 18, "炼气三层", "木灵根", "上品", 72, 88, 76, "修炼", 420, "正常", "性情沉稳，擅长吐纳行气，是青玄宗年轻弟子中的中坚。", {"role": "外门弟子", "appearance_id": "male_disciple_01", "portrait_id": "portrait_male_01", "model_id": "model_male_01", "battle_model_id": "battle_male_01", "color_scheme": "outer_gray", "tags": ["稳重"], "battle_position": "middle", "weapon_type": "剑", "hp": 320, "max_hp": 320, "attack": 72, "defense": 48, "speed": 56, "spiritual_power": 84}),
@@ -230,6 +251,50 @@ func reset_world_data() -> void:
 	_disciple_index_by_id.clear()
 	_disciple_indexes_by_sect.clear()
 	init_world_data()
+
+
+## 新地图布局只在新游戏初始化时生成绝对世界坐标；正式 World 会再落到安全陆地。
+func _apply_compact_map_anchors() -> void:
+	for index in range(mini(sects.size(), SECT_ANCHORS_NORMALIZED.size())):
+		var sect_data: Dictionary = sects[index]
+		var world_position: Vector2 = WorldMapSpec.normalized_to_world(SECT_ANCHORS_NORMALIZED[index])
+		sect_data["location"] = world_position
+		sect_data["position"] = world_position
+		sects[index] = sect_data
+	resources.clear()
+	for index in range(COMPACT_RESOURCE_TYPES.size()):
+		var resource_type: String = COMPACT_RESOURCE_TYPES[index]
+		resources.append({
+			"resource_id": index + 1,
+			"resource_name": _resource_display_name(resource_type),
+			"resource_type": resource_type,
+			"position": WorldMapSpec.normalized_to_world(RESOURCE_ANCHORS_NORMALIZED[index]),
+			"level": 1 + index % 3,
+			"amount": 1 if resource_type == "secret_realm" else 600 + index * 110,
+			"owner_sect_id": 0,
+		})
+	var player_position: Vector2 = WorldMapSpec.normalized_to_world(SECT_ANCHORS_NORMALIZED[0])
+	build_slots = []
+	var slot_offsets: Array[Vector2] = [
+		Vector2(-120, -80), Vector2(0, -120), Vector2(120, -70),
+		Vector2(-135, 75), Vector2(15, 105), Vector2(135, 60),
+	]
+	for index in range(slot_offsets.size()):
+		build_slots.append({
+			"slot_id": index + 1,
+			"owner_sect_id": "sect_001",
+			"position": WorldMapSpec.clamp_world_position(player_position + slot_offsets[index]),
+			"is_empty": true,
+		})
+
+
+func _resource_display_name(resource_type: String) -> String:
+	match resource_type:
+		"spirit_mine": return "灵矿"
+		"spirit_vein": return "灵脉"
+		"herb_field": return "灵草地"
+		"secret_realm": return "秘境入口"
+		_: return "资源点"
 
 
 func _create_sect_resource_data(
@@ -504,6 +569,7 @@ func add_ai_sect_data(sect_data: Dictionary, resources_data: Dictionary, ai_stat
 
 func export_world_state() -> Dictionary:
 	return {
+		"world_map_layout_version": WorldMapSpec.MAP_LAYOUT_VERSION,
 		"sects": sects.duplicate(true),
 		"resources": resources.duplicate(true),
 		"build_slots": build_slots.duplicate(true),
@@ -564,6 +630,31 @@ func restore_world_state(state: Dictionary) -> bool:
 	is_initialized = true
 	_rebuild_runtime_indexes()
 	return true
+
+
+func update_resource_position(resource_id: int, position: Vector2) -> bool:
+	for index in range(resources.size()):
+		if int(resources[index].get("resource_id", -1)) != resource_id:
+			continue
+		var resource_data: Dictionary = resources[index]
+		resource_data["position"] = position
+		resources[index] = resource_data
+		return true
+	push_warning("Cannot update missing resource position: %d" % resource_id)
+	return false
+
+
+func reposition_player_build_slots(player_position: Vector2) -> void:
+	var slot_offsets: Array[Vector2] = [
+		Vector2(-120, -80), Vector2(0, -120), Vector2(120, -70),
+		Vector2(-135, 75), Vector2(15, 105), Vector2(135, 60),
+	]
+	for index in range(build_slots.size()):
+		var slot_data: Dictionary = build_slots[index]
+		if str(slot_data.get("owner_sect_id", "")) != "sect_001":
+			continue
+		slot_data["position"] = WorldMapSpec.clamp_world_position(player_position + slot_offsets[index % slot_offsets.size()])
+		build_slots[index] = slot_data
 
 
 func remove_disciple_data(disciple_id: String) -> bool:

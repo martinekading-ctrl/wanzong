@@ -3,9 +3,9 @@ extends Node2D
 
 # 独立修仙像素世界视觉样张，不读取正式 World 数据，也不包含玩法交互。
 
-const WORLD_SIZE: Vector2i = Vector2i(6144, 6144)
-const TILE_SIZE: Vector2i = Vector2i(16, 16)
-const GRID_SIZE: Vector2i = Vector2i(384, 384)
+const WORLD_SIZE: Vector2i = WorldMapSpec.WORLD_SIZE
+const TILE_SIZE: Vector2i = WorldMapSpec.TILE_SIZE
+const GRID_SIZE: Vector2i = WorldMapSpec.GRID_SIZE
 
 const WORLD_OBJECT_DIRECTORY: String = "res://assets/pixel/world_objects/processed"
 const TREE_ICON_SIZE: int = 28
@@ -86,6 +86,7 @@ var rock_markers: Array[Vector2i] = []
 var hill_markers: Array[Vector2i] = []
 var sect_cells: Array[Vector2i] = []
 var resource_cells: Array[Vector2i] = []
+var marker_placement_valid: bool = true
 
 var tree_green_textures: Array[Texture2D] = []
 var tree_pine_textures: Array[Texture2D] = []
@@ -253,20 +254,20 @@ func _load_named_textures(relative_paths: Array[String]) -> Array[Texture2D]:
 
 func _setup_noises() -> void:
 	continent_noise.seed = 1902001
-	continent_noise.frequency = 0.012
+	continent_noise.frequency = 0.012 * WorldMapSpec.NOISE_FREQUENCY_SCALE
 	continent_noise.fractal_octaves = 4
 	continent_noise.fractal_gain = 0.52
 
 	biome_noise.seed = 1902002
-	biome_noise.frequency = 0.018
+	biome_noise.frequency = 0.018 * WorldMapSpec.NOISE_FREQUENCY_SCALE
 	biome_noise.fractal_octaves = 3
 
 	forest_noise.seed = 1902003
-	forest_noise.frequency = 0.027
+	forest_noise.frequency = 0.027 * WorldMapSpec.NOISE_FREQUENCY_SCALE
 	forest_noise.fractal_octaves = 3
 
 	river_noise.seed = 1902004
-	river_noise.frequency = 0.016
+	river_noise.frequency = 0.016 * WorldMapSpec.NOISE_FREQUENCY_SCALE
 	river_noise.fractal_octaves = 3
 
 
@@ -605,38 +606,54 @@ func _is_mountain_edge(cell: Vector2i) -> bool:
 
 
 func _place_world_markers() -> void:
-	var requested_sects: Array[Vector2i] = [
-		Vector2i(192, 198), # 青云宗，中央灵州。
-		Vector2i(93, 87), Vector2i(155, 72), Vector2i(270, 86),
-		Vector2i(318, 129), Vector2i(299, 204), Vector2i(314, 291),
-		Vector2i(227, 311), Vector2i(114, 305), Vector2i(72, 207),
+	var requested_sects: Array[Vector2] = [
+		Vector2(0.50, 0.52), # 青玄宗，中央灵州。
+		Vector2(0.24, 0.23), Vector2(0.40, 0.19), Vector2(0.70, 0.23),
+		Vector2(0.83, 0.34), Vector2(0.78, 0.53), Vector2(0.82, 0.76),
+		Vector2(0.59, 0.81), Vector2(0.30, 0.80), Vector2(0.19, 0.54),
 	]
+	var occupied: Dictionary = {}
+	marker_placement_valid = true
 	sect_cells.clear()
-	for requested_cell in requested_sects:
-		sect_cells.append(_find_marker_land(requested_cell))
+	for requested_anchor in requested_sects:
+		var sect_cell := _find_marker_land(WorldMapSpec.normalized_to_cell(requested_anchor), occupied)
+		if sect_cell.x < 0:
+			marker_placement_valid = false
+			push_error("World map baker could not place a sect marker on safe land.")
+			continue
+		sect_cells.append(sect_cell)
+		occupied[sect_cell] = true
 
 	resource_cells.clear()
+	var margin: int = WorldMapSpec.marker_margin_cells()
+	var usable: int = GRID_SIZE.x - margin * 2
 	for resource_index in range(20):
 		var requested_cell := Vector2i(
-			24 + (resource_index * 71 + 29) % 336,
-			24 + (resource_index * 107 + 53) % 336
+			margin + (resource_index * 71 + 29) % usable,
+			margin + (resource_index * 107 + 53) % usable
 		)
-		resource_cells.append(_find_marker_land(requested_cell))
+		var resource_cell := _find_marker_land(requested_cell, occupied)
+		if resource_cell.x < 0:
+			marker_placement_valid = false
+			push_error("World map baker could not place every resource marker on safe land.")
+			continue
+		resource_cells.append(resource_cell)
+		occupied[resource_cell] = true
 
 
-func _find_marker_land(start_cell: Vector2i) -> Vector2i:
-	if _can_place_marker(_terrain_at(start_cell)):
+func _find_marker_land(start_cell: Vector2i, occupied: Dictionary = {}) -> Vector2i:
+	if _can_place_marker(_terrain_at(start_cell)) and not occupied.has(start_cell):
 		return start_cell
 
-	for radius in range(1, 65):
+	for radius in range(1, WorldMapSpec.marker_search_radius_cells() + 1):
 		for offset_y in range(-radius, radius + 1):
 			for offset_x in range(-radius, radius + 1):
 				if abs(offset_x) != radius and abs(offset_y) != radius:
 					continue
 				var candidate := start_cell + Vector2i(offset_x, offset_y)
-				if _can_place_marker(_terrain_at(candidate)):
+				if _can_place_marker(_terrain_at(candidate)) and not occupied.has(candidate):
 					return candidate
-	return start_cell
+	return Vector2i(-1, -1)
 
 
 func _can_place_marker(terrain_type: String) -> bool:
@@ -734,7 +751,7 @@ func find_nearest_land_world_position(world_position: Vector2) -> Vector2:
 	if _is_safe_marker_terrain(_terrain_at(start_cell)):
 		return _cell_center(start_cell)
 
-	for radius in range(1, 129):
+	for radius in range(1, WorldMapSpec.marker_search_radius_cells() + 1):
 		for offset_y in range(-radius, radius + 1):
 			for offset_x in range(-radius, radius + 1):
 				if abs(offset_x) != radius and abs(offset_y) != radius:
@@ -758,7 +775,7 @@ func _is_water(terrain_type: String) -> bool:
 
 
 func _cell_center(cell: Vector2i) -> Vector2:
-	return Vector2(cell * TILE_SIZE) + Vector2(TILE_SIZE) * 0.5
+	return WorldMapSpec.cell_center(cell)
 
 
 func _cell_hash(cell_x: int, cell_y: int) -> int:
@@ -779,5 +796,11 @@ func _set_camera_zoom(new_zoom: float) -> void:
 func _clamp_camera() -> void:
 	var viewport_size: Vector2 = get_viewport_rect().size
 	var half_view: Vector2 = viewport_size / (preview_camera.zoom * 2.0)
-	preview_camera.position.x = clampf(preview_camera.position.x, half_view.x, WORLD_SIZE.x - half_view.x)
-	preview_camera.position.y = clampf(preview_camera.position.y, half_view.y, WORLD_SIZE.y - half_view.y)
+	if half_view.x * 2.0 >= WORLD_SIZE.x:
+		preview_camera.position.x = WorldMapSpec.world_center().x
+	else:
+		preview_camera.position.x = clampf(preview_camera.position.x, half_view.x, WORLD_SIZE.x - half_view.x)
+	if half_view.y * 2.0 >= WORLD_SIZE.y:
+		preview_camera.position.y = WorldMapSpec.world_center().y
+	else:
+		preview_camera.position.y = clampf(preview_camera.position.y, half_view.y, WORLD_SIZE.y - half_view.y)

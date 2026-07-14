@@ -11,5 +11,5 @@ z_index = -10
 texture_filter = 1
 
 [node name="PreviewCamera" type="Camera2D" parent="."]
-position = Vector2(2048, 2048)
+position = Vector2(2176, 2176)
 enabled = true
