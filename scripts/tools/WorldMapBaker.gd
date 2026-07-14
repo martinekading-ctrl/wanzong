@@ -93,7 +93,9 @@ func bake_world() -> Error:
 		save_error = WorldMapBakeTransaction.commit_files(staged_files)
 	preview.queue_free()
 	generated_root.free()
-	DirAccess.remove_absolute(ProjectSettings.globalize_path(stage_root))
+	var cleanup_error := WorldMapBakeTransaction.remove_staging_directory_recursive(stage_root)
+	if cleanup_error != OK:
+		push_warning("地图烘焙 staging 清理失败：" + error_string(cleanup_error))
 	_is_baking = false
 	print("[WorldPerf] bake_world: %d ms, result=%s" % [Time.get_ticks_msec() - started_at, error_string(save_error)])
 	return save_error
