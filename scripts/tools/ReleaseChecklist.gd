@@ -1,7 +1,6 @@
 extends SceneTree
 
 var failures := PackedStringArray()
-const WorldDataManagerScript := preload("res://scripts/managers/WorldDataManager.gd")
 
 func _initialize() -> void: call_deferred("_run")
 func _run() -> void:
@@ -19,10 +18,10 @@ func _run() -> void:
 		_expect(int(source_map.call("get_terrain_cell_count")) == int(runtime_map.call("get_terrain_cell_count")), "tscn/scn 地形统计必须一致")
 		_expect(int(source_map.call("get_nature_instance_count")) == int(runtime_map.call("get_nature_instance_count")), "tscn/scn 自然物统计必须一致")
 		_expect(not (source_map.get("safe_land_source_ids") as Array).is_empty(), "安全陆地 source 不能为空")
-		source_map.free()
-		runtime_map.free()
+		await _dispose_map(source_map)
+		await _dispose_map(runtime_map)
 	_expect(_generated_files_are_clean(), "生成目录不得残留 staging、tmp 或 bak")
-	var world_data := WorldDataManagerScript.new()
+	var world_data: Node = root.get_node("WorldDataManager")
 	world_data.init_world_data()
 	_expect(world_data.get_all_sects().size() == 10, "必须保留10个宗门")
 	_expect(world_data.get_all_resources().size() == 26, "必须保留基准的26个资源点")
@@ -45,22 +44,22 @@ func _load_map(path: String) -> Node:
 	return scene.instantiate() if scene != null else null
 
 
+func _dispose_map(map: Node) -> void:
+	root.add_child(map)
+	await process_frame
+	map.queue_free()
+	await process_frame
+
+
 func _generated_files_are_clean() -> bool:
-	var directory := DirAccess.open("res://assets/generated")
-	if directory == null:
-		return false
-	for file_name in directory.get_files():
-		if file_name.ends_with(".tmp") or file_name.ends_with(".bak"):
-			return false
-	var staging := DirAccess.open("res://assets/generated/.world_bake_staging")
-	return staging == null or staging.get_directories().is_empty()
+	var stale_files := ReleaseFileScanner.find_stale_generated_files("res://assets/generated")
+	for stale_file in stale_files:
+		push_error("[ReleaseChecklist] stale generated artifact: " + stale_file)
+	return stale_files.is_empty()
 
 
 func _resource_metadata_is_baseline(resources: Array) -> bool:
-	if resources.size() != 26:
-		return false
-	var signatures: PackedStringArray = []
-	for resource in resources:
-		var data: Dictionary = resource
-		signatures.append("%d|%s|%s|%d|%d|%s" % [int(data.get("resource_id", 0)), str(data.get("resource_name", "")), str(data.get("resource_type", "")), int(data.get("level", 0)), int(data.get("amount", 0)), str(data.get("owner_sect_id", ""))])
-	return signatures[0] == "1|灵矿|spirit_mine|1|1200|0" and signatures[25] == "26|秘境入口|secret_realm|1|1|0"
+	var errors := WorldResourceBaseline.validate_resource_metadata(resources)
+	for error_message in errors:
+		push_error("[ReleaseChecklist] " + error_message)
+	return errors.is_empty()

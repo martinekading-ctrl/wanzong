@@ -9,6 +9,8 @@ const GRID_SIZE := WorldMapSpec.GRID_SIZE
 
 var _load_started_at: int = 0
 var max_search_radius: int = WorldMapSpec.marker_search_radius_cells()
+# 对象落点需要同时避开已占用格；半图半径足以跨越海岸且不会遍历完整 272×272 地图。
+var max_available_search_radius: int = WorldMapSpec.object_placement_search_radius_cells()
 
 
 func _enter_tree() -> void:
@@ -82,7 +84,7 @@ func is_safe_land_world_position(world_position: Vector2) -> bool:
 
 func find_nearest_available_land_world_position(world_position: Vector2, occupied_cells: Dictionary, minimum_cell_distance: int = 0) -> Vector2:
 	var start_cell := world_position_to_cell(world_position)
-	for radius in range(0, max_search_radius + 1):
+	for radius in range(0, max_available_search_radius + 1):
 		for candidate in _ring_cells(start_cell, radius):
 			if _is_safe_land(candidate) and _is_available_cell(candidate, occupied_cells, minimum_cell_distance):
 				return _cell_center(candidate)
