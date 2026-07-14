@@ -1,7 +1,7 @@
 extends SceneTree
 
 const TEST_DIRECTORY := "res://tests"
-const SLOW_TESTS: Array[String] = ["task_0062_release_qa_test.gd"]
+const WORLD_ONLY_TEST := "task_0062_release_qa_test.gd"
 
 
 func _initialize() -> void:
@@ -10,13 +10,17 @@ func _initialize() -> void:
 
 func _run() -> void:
 	var include_slow: bool = "--include-slow" in OS.get_cmdline_user_args()
-	var test_files := _get_test_files(include_slow)
+	var test_files := _get_test_files()
+	if test_files.is_empty():
+		push_error("[RunAllTests] FAILED: no test files found")
+		quit(1)
+		return
 	var failures: int = 0
 	for test_file in test_files:
 		_cleanup_test_state()
 		var output: Array[String] = []
 		var arguments := PackedStringArray(["--headless", "--path", ProjectSettings.globalize_path("res://"), "--script", ProjectSettings.globalize_path(TEST_DIRECTORY.path_join(test_file))])
-		if test_file == "task_0062_release_qa_test.gd" and not include_slow:
+		if test_file == WORLD_ONLY_TEST and not include_slow:
 			arguments.append("--world-only")
 		var exit_code: int = OS.execute(OS.get_executable_path(), arguments, output, true)
 		print("[RunAllTests] %s exit=%d" % [test_file, exit_code])
@@ -33,7 +37,7 @@ func _run() -> void:
 	quit(1)
 
 
-func _get_test_files(include_slow: bool) -> PackedStringArray:
+func _get_test_files() -> PackedStringArray:
 	var directory := DirAccess.open(TEST_DIRECTORY)
 	var files := PackedStringArray()
 	if directory == null:
@@ -42,8 +46,7 @@ func _get_test_files(include_slow: bool) -> PackedStringArray:
 	var name := directory.get_next()
 	while name != "":
 		if not directory.current_is_dir() and name.begins_with("task_") and name.ends_with("_test.gd"):
-			if include_slow or name not in SLOW_TESTS:
-				files.append(name)
+			files.append(name)
 		name = directory.get_next()
 	directory.list_dir_end()
 	files.sort()

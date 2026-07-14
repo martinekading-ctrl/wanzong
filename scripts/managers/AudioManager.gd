@@ -49,13 +49,13 @@ func set_volume(channel: String, value: float) -> bool:
 	var clamped: float = clampf(value, 0.0, 1.0)
 	match channel:
 		"master":
-			SettingsManager.set_volume("master", clamped)
+			if not SettingsManager.set_volume("master", clamped): return false
 			_set_bus_linear("Master", clamped)
 		"music":
-			SettingsManager.set_volume("music", clamped)
+			if not SettingsManager.set_volume("music", clamped): return false
 			_set_bus_linear(MUSIC_BUS, clamped)
 		"effects":
-			SettingsManager.set_volume("effects", clamped)
+			if not SettingsManager.set_volume("effects", clamped): return false
 			_set_bus_linear(EFFECTS_BUS, clamped)
 		_:
 			return false
