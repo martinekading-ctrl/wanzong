@@ -116,7 +116,7 @@ func _save_external_tile_set(terrain_layer: TileMapLayer, stage_path: String, fi
 	var save_error: Error = ResourceSaver.save(terrain_layer.tile_set, stage_path)
 	if save_error != OK:
 		return save_error
-	terrain_layer.tile_set = load(stage_path) as TileSet
+	terrain_layer.tile_set = ResourceLoader.load(stage_path, "", ResourceLoader.CACHE_MODE_IGNORE) as TileSet
 	if terrain_layer.tile_set == null or terrain_layer.tile_set.get_source_count() == 0:
 		return ERR_INVALID_DATA
 	terrain_layer.tile_set.take_over_path(final_path)
@@ -196,7 +196,7 @@ func _create_multimesh_batches(parent: Node2D, batches: Dictionary, owner: Node,
 		var stage_batch_path: String = stage_nature_directory.path_join("world_nature_batch_%02d.res" % (batch_index + 1))
 		var save_error: Error = ResourceSaver.save(multi_mesh, stage_batch_path)
 		if save_error == OK:
-			batch.multimesh = load(stage_batch_path) as MultiMesh
+			batch.multimesh = ResourceLoader.load(stage_batch_path, "", ResourceLoader.CACHE_MODE_IGNORE) as MultiMesh
 			if batch.multimesh == null or batch.multimesh.instance_count == 0:
 				push_warning("自然物临时批次校验失败：" + stage_batch_path)
 				continue
