@@ -455,9 +455,9 @@ func _migrate_territory_state_positions(raw_states: Variant) -> Dictionary:
 
 
 func _migrate_world_position(position: Vector2) -> Vector2:
-	if position.x <= WorldMapSpec.LEGACY_SOURCE_WORLD_SIZE and position.y <= WorldMapSpec.LEGACY_SOURCE_WORLD_SIZE:
-		return WorldMapSpec.compact_from_legacy_source_position(position)
-	return WorldMapSpec.compact_from_old_world_position(position)
+	# Task-0064 及更早版本的 world_data 统一使用 4096 逻辑坐标。
+	# 一份旧存档只能使用这一种比例，禁止按单个坐标值猜测来源。
+	return WorldMapSpec.compact_from_legacy_source_position(position)
 
 
 func _atomic_replace(temporary_path: String, target_path: String) -> Error:

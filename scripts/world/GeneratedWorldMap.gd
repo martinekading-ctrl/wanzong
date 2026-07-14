@@ -59,10 +59,7 @@ func get_nature_instance_count() -> int:
 
 # 直接查询烘焙后的 TileMap，不重建 terrain_map 或陆地索引。
 func find_nearest_land_world_position(world_position: Vector2) -> Vector2:
-	var start_cell := Vector2i(
-		clampi(int(world_position.x / TILE_SIZE.x), 0, GRID_SIZE.x - 1),
-		clampi(int(world_position.y / TILE_SIZE.y), 0, GRID_SIZE.y - 1)
-	)
+	var start_cell := world_position_to_cell(world_position)
 	if _is_safe_land(start_cell):
 		return _cell_center(start_cell)
 	for radius in range(1, max_search_radius + 1):
@@ -70,6 +67,50 @@ func find_nearest_land_world_position(world_position: Vector2) -> Vector2:
 		if candidate.x >= 0:
 			return _cell_center(candidate)
 	return world_position
+
+
+func world_position_to_cell(world_position: Vector2) -> Vector2i:
+	return Vector2i(
+		clampi(int(world_position.x / TILE_SIZE.x), 0, GRID_SIZE.x - 1),
+		clampi(int(world_position.y / TILE_SIZE.y), 0, GRID_SIZE.y - 1)
+	)
+
+
+func is_safe_land_world_position(world_position: Vector2) -> bool:
+	return WorldMapSpec.is_world_position_in_bounds(world_position) and _is_safe_land(world_position_to_cell(world_position))
+
+
+func find_nearest_available_land_world_position(world_position: Vector2, occupied_cells: Dictionary, minimum_cell_distance: int = 0) -> Vector2:
+	var start_cell := world_position_to_cell(world_position)
+	for radius in range(0, max_search_radius + 1):
+		for candidate in _ring_cells(start_cell, radius):
+			if _is_safe_land(candidate) and _is_available_cell(candidate, occupied_cells, minimum_cell_distance):
+				return _cell_center(candidate)
+	return Vector2.INF
+
+
+func _ring_cells(center: Vector2i, radius: int) -> Array[Vector2i]:
+	if radius == 0:
+		return [center]
+	var result: Array[Vector2i] = []
+	for offset_x in range(-radius, radius + 1):
+		result.append(center + Vector2i(offset_x, -radius))
+		result.append(center + Vector2i(offset_x, radius))
+	for offset_y in range(-radius + 1, radius):
+		result.append(center + Vector2i(-radius, offset_y))
+		result.append(center + Vector2i(radius, offset_y))
+	return result
+
+
+func _is_available_cell(candidate: Vector2i, occupied_cells: Dictionary, minimum_cell_distance: int) -> bool:
+	if occupied_cells.has(candidate):
+		return false
+	if minimum_cell_distance <= 0:
+		return true
+	for occupied in occupied_cells.keys():
+		if candidate.distance_to(occupied as Vector2i) < float(minimum_cell_distance):
+			return false
+	return true
 
 
 # 小半径逐格搜索以保证精确；大半径控制在约64个采样点，避免海上坐标产生数万次查询。

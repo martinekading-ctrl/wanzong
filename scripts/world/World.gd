@@ -117,7 +117,8 @@ func _ready() -> void:
 	world_camera.position = MAP_ORIGIN + MAP_SIZE * 0.5
 	world_camera.make_current()
 	WorldDataManager.init_world_data()
-	_resolve_world_positions_on_generated_land()
+	if not _resolve_world_positions_on_generated_land():
+		return
 	_load_sect_icon_paths()
 	_load_resource_icon_paths()
 	_validate_resource_positions()
@@ -416,38 +417,41 @@ func _create_build_slot_nodes() -> void:
 
 ## 将归一化锚点落到正式烘焙地图的安全陆地。结果写回世界数据，
 ## 保证领地、点击节点、存档与地图显示使用同一套世界坐标。
-func _resolve_world_positions_on_generated_land() -> void:
-	if pixel_world == null or not pixel_world.has_method("find_nearest_land_world_position"):
+func _resolve_world_positions_on_generated_land() -> bool:
+	if pixel_world == null or not pixel_world.has_method("find_nearest_available_land_world_position"):
 		push_error("Generated world map cannot resolve safe land positions.")
-		return
-	var resolved_sect_positions: Array[Vector2] = []
-	for sect_data in WorldDataManager.get_all_sects():
+		return false
+	var occupied_cells: Dictionary = {}
+	var sects: Array = WorldDataManager.get_all_sects().duplicate()
+	sects.sort_custom(func(left: Dictionary, right: Dictionary) -> bool: return str(left.get("sect_id", "")) < str(right.get("sect_id", "")))
+	for sect_data in sects:
 		var sect_id: String = str(sect_data.get("sect_id", ""))
 		var resolved: Vector2 = pixel_world.call(
-			"find_nearest_land_world_position",
-			WorldMapSpec.clamp_world_position(sect_data.get("location", WorldMapSpec.world_center()))
+			"find_nearest_available_land_world_position",
+			WorldMapSpec.clamp_world_position(sect_data.get("location", WorldMapSpec.world_center())),
+			occupied_cells,
+			0
 		)
+		if not WorldMapSpec.is_world_position_in_bounds(resolved):
+			push_error("Could not place sect on safe compact world land: " + sect_id)
+			return false
 		WorldDataManager.update_sect_data(sect_id, "location", resolved)
-		resolved_sect_positions.append(resolved)
-	for resource_data in WorldDataManager.get_all_resources():
+		occupied_cells[pixel_world.call("world_position_to_cell", resolved)] = true
+	var resources: Array = WorldDataManager.get_all_resources().duplicate()
+	resources.sort_custom(func(left: Dictionary, right: Dictionary) -> bool: return int(left.get("resource_id", 0)) < int(right.get("resource_id", 0)))
+	for resource_data in resources:
 		var resource_id: int = int(resource_data.get("resource_id", -1))
 		var resolved: Vector2 = pixel_world.call(
-			"find_nearest_land_world_position",
-			WorldMapSpec.clamp_world_position(resource_data.get("position", WorldMapSpec.world_center()))
+			"find_nearest_available_land_world_position",
+			WorldMapSpec.clamp_world_position(resource_data.get("position", WorldMapSpec.world_center())), occupied_cells, 16
 		)
-		for offset in [Vector2(420, 0), Vector2(-420, 0), Vector2(0, 420), Vector2(0, -420), Vector2(300, 300)]:
-			if _is_far_enough_from_sects(resolved, resolved_sect_positions):
-				break
-			resolved = pixel_world.call("find_nearest_land_world_position", WorldMapSpec.clamp_world_position(resolved + offset))
+		if not WorldMapSpec.is_world_position_in_bounds(resolved):
+			push_error("Could not place resource on safe compact world land: %d" % resource_id)
+			return false
 		WorldDataManager.update_resource_position(resource_id, resolved)
+		occupied_cells[pixel_world.call("world_position_to_cell", resolved)] = true
 	var player_position: Vector2 = WorldDataManager.get_player_sect().get("location", WorldMapSpec.world_center())
 	WorldDataManager.reposition_player_build_slots(player_position)
-
-
-func _is_far_enough_from_sects(position: Vector2, sect_positions: Array[Vector2]) -> bool:
-	for sect_position in sect_positions:
-		if position.distance_to(sect_position) < RESOURCE_MIN_DISTANCE_TO_SECT:
-			return false
 	return true
 
 
