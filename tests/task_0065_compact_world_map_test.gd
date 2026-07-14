@@ -25,12 +25,12 @@ func _run() -> void:
 		for sect in world_data.get_all_sects():
 			var position: Vector2 = source.call("find_nearest_land_world_position", sect.get("location", Vector2.ZERO))
 			_expect(WorldMapSpec.is_world_position_in_bounds(position), "宗门必须在边界内")
-			_expect(bool(source.call("_is_safe_land", Vector2i(position / Vector2(WorldMapSpec.TILE_SIZE)))), "宗门必须在安全陆地")
+			_expect(bool(source.call("is_safe_land_world_position", position)), "宗门必须在安全陆地")
 		for resource in world_data.get_all_resources():
 			var position: Vector2 = source.call("find_nearest_land_world_position", resource.get("position", Vector2.ZERO))
 			_expect(WorldMapSpec.is_world_position_in_bounds(position), "资源必须在边界内")
 		_expect(world_data.get_all_sects().size() == 10, "必须保留10个宗门")
-		_expect(world_data.get_all_resources().size() == 20, "必须保留20个资源点")
+		_expect(world_data.get_all_resources().size() == 26, "必须保留基准的26个资源点")
 		source.free()
 		runtime.free()
 	if failures.is_empty():

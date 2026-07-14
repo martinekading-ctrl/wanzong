@@ -46,7 +46,7 @@ func bake_world() -> Error:
 	var preview_terrain := preview.get_node("TerrainLayer") as TileMapLayer
 	if preview_terrain.get_used_cells().is_empty():
 		preview.call("generate_for_bake")
-	if not bool(preview.get("marker_placement_valid")):
+	if not bool(preview.get("marker_placement_valid")) or (preview.get("sect_cells") as Array).size() != 10 or (preview.get("resource_cells") as Array).size() != 26:
 		return _finish_bake(ERR_INVALID_DATA, preview, null, "", started_at)
 
 	var stage_id := str(Time.get_ticks_usec())

@@ -123,14 +123,13 @@ func generate_for_bake() -> void:
 	_create_tile_set()
 	_generate_world()
 	_collect_nature_markers()
+	var marker_result: Dictionary = _calculate_marker_placements()
+	marker_placement_valid = bool(marker_result.get("success", false))
 	if preview_mode:
-		_place_world_markers()
 		preview_camera.position = Vector2(WORLD_SIZE) * 0.5
 		preview_camera.zoom = Vector2(0.32, 0.32)
 		preview_camera.make_current()
 	else:
-		sect_cells.clear()
-		resource_cells.clear()
 		preview_camera.enabled = false
 	queue_redraw()
 	print("[WorldPerf] PixelWorldPreview ready total: %d ms" % (Time.get_ticks_msec() - ready_started_at))
@@ -605,7 +604,7 @@ func _is_mountain_edge(cell: Vector2i) -> bool:
 	return false
 
 
-func _place_world_markers() -> void:
+func _calculate_marker_placements() -> Dictionary:
 	var requested_sects: Array[Vector2] = [
 		Vector2(0.50, 0.52), # 青玄宗，中央灵州。
 		Vector2(0.24, 0.23), Vector2(0.40, 0.19), Vector2(0.70, 0.23),
@@ -627,7 +626,7 @@ func _place_world_markers() -> void:
 	resource_cells.clear()
 	var margin: int = WorldMapSpec.marker_margin_cells()
 	var usable: int = GRID_SIZE.x - margin * 2
-	for resource_index in range(20):
+	for resource_index in range(26):
 		var requested_cell := Vector2i(
 			margin + (resource_index * 71 + 29) % usable,
 			margin + (resource_index * 107 + 53) % usable
@@ -639,6 +638,12 @@ func _place_world_markers() -> void:
 			continue
 		resource_cells.append(resource_cell)
 		occupied[resource_cell] = true
+	if sect_cells.size() != 10 or resource_cells.size() != 26:
+		return {"success": false, "message": "marker count mismatch"}
+	for cell in sect_cells + resource_cells:
+		if not _can_place_marker(_terrain_at(cell)):
+			return {"success": false, "message": "marker is not on safe land"}
+	return {"success": marker_placement_valid, "sect_cells": sect_cells.duplicate(), "resource_cells": resource_cells.duplicate(), "message": ""}
 
 
 func _find_marker_land(start_cell: Vector2i, occupied: Dictionary = {}) -> Vector2i:
