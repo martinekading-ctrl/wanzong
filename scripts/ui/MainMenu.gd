@@ -45,14 +45,16 @@ func _on_continue_button_pressed() -> void:
 
 
 func _refresh_continue_state() -> void:
-	var latest_path: String = SaveManager.get_latest_save_path()
+	var latest_info: Dictionary = SaveManager.get_latest_valid_save_info()
+	var latest_path: String = str(latest_info.get("path", ""))
 	continue_button.disabled = latest_path == ""
 	if latest_path == "":
-		continue_hint_label.text = "暂无可读取存档"
+		continue_hint_label.text = "暂无可读取的有效存档"
 		return
 	var metadata: Dictionary = SaveManager.get_save_metadata(latest_path)
 	var game_state_data: Dictionary = metadata.get("game_state", {})
-	continue_hint_label.text = "最近进度：第%d年%d月%d日" % [
+	var skipped_count: int = (latest_info.get("skipped_invalid_paths", []) as Array).size()
+	continue_hint_label.text = ("已跳过%d份损坏存档，" % skipped_count if skipped_count > 0 else "") + "最近进度：第%d年%d月%d日" % [
 		int(game_state_data.get("year", 1)),
 		int(game_state_data.get("month", 1)),
 		int(game_state_data.get("day", 1)),
