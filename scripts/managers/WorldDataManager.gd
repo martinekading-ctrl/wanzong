@@ -19,17 +19,19 @@ const SECT_ANCHORS_NORMALIZED: Array[Vector2] = [
 	Vector2(0.30, 0.80), Vector2(0.19, 0.54),
 ]
 const RESOURCE_ANCHORS_NORMALIZED: Array[Vector2] = [
-	Vector2(0.16, 0.20), Vector2(0.31, 0.18), Vector2(0.47, 0.25), Vector2(0.66, 0.18),
-	Vector2(0.78, 0.31), Vector2(0.70, 0.48), Vector2(0.80, 0.67), Vector2(0.62, 0.75),
-	Vector2(0.46, 0.73), Vector2(0.28, 0.68), Vector2(0.18, 0.57), Vector2(0.24, 0.38),
-	Vector2(0.38, 0.34), Vector2(0.55, 0.39), Vector2(0.69, 0.57), Vector2(0.51, 0.62),
-	Vector2(0.36, 0.56), Vector2(0.22, 0.72), Vector2(0.57, 0.24), Vector2(0.73, 0.43),
-]
-const COMPACT_RESOURCE_TYPES: Array[String] = [
-	"spirit_mine", "spirit_mine", "spirit_mine", "spirit_mine",
-	"spirit_vein", "spirit_vein", "spirit_vein", "spirit_vein",
-	"herb_field", "herb_field", "herb_field", "herb_field", "herb_field", "herb_field", "herb_field", "herb_field",
-	"secret_realm", "secret_realm", "secret_realm", "secret_realm",
+	Vector2(350.0 / 4096.0, 450.0 / 4096.0), Vector2(1050.0 / 4096.0, 420.0 / 4096.0),
+	Vector2(2350.0 / 4096.0, 620.0 / 4096.0), Vector2(3720.0 / 4096.0, 720.0 / 4096.0),
+	Vector2(3600.0 / 4096.0, 2400.0 / 4096.0), Vector2(2520.0 / 4096.0, 3500.0 / 4096.0),
+	Vector2(1200.0 / 4096.0, 3600.0 / 4096.0), Vector2(420.0 / 4096.0, 2550.0 / 4096.0),
+	Vector2(410.0 / 4096.0, 1250.0 / 4096.0), Vector2(1900.0 / 4096.0, 520.0 / 4096.0),
+	Vector2(2600.0 / 4096.0, 1280.0 / 4096.0), Vector2(3260.0 / 4096.0, 2200.0 / 4096.0),
+	Vector2(1450.0 / 4096.0, 2650.0 / 4096.0), Vector2(350.0 / 4096.0, 650.0 / 4096.0),
+	Vector2(980.0 / 4096.0, 1350.0 / 4096.0), Vector2(1600.0 / 4096.0, 1250.0 / 4096.0),
+	Vector2(2300.0 / 4096.0, 950.0 / 4096.0), Vector2(3600.0 / 4096.0, 1200.0 / 4096.0),
+	Vector2(3260.0 / 4096.0, 2850.0 / 4096.0), Vector2(2800.0 / 4096.0, 3600.0 / 4096.0),
+	Vector2(1500.0 / 4096.0, 3400.0 / 4096.0), Vector2(600.0 / 4096.0, 3500.0 / 4096.0),
+	Vector2(350.0 / 4096.0, 2300.0 / 4096.0), Vector2(2500.0 / 4096.0, 1650.0 / 4096.0),
+	Vector2(3800.0 / 4096.0, 3000.0 / 4096.0), Vector2(1100.0 / 4096.0, 2200.0 / 4096.0),
 ]
 
 # 世界地图上的宗门数据。
@@ -261,40 +263,25 @@ func _apply_compact_map_anchors() -> void:
 		sect_data["location"] = world_position
 		sect_data["position"] = world_position
 		sects[index] = sect_data
-	resources.clear()
-	for index in range(COMPACT_RESOURCE_TYPES.size()):
-		var resource_type: String = COMPACT_RESOURCE_TYPES[index]
-		resources.append({
-			"resource_id": index + 1,
-			"resource_name": _resource_display_name(resource_type),
-			"resource_type": resource_type,
-			"position": WorldMapSpec.normalized_to_world(RESOURCE_ANCHORS_NORMALIZED[index]),
-			"level": 1 + index % 3,
-			"amount": 1 if resource_type == "secret_realm" else 600 + index * 110,
-			"owner_sect_id": 0,
-		})
-	var player_position: Vector2 = WorldMapSpec.normalized_to_world(SECT_ANCHORS_NORMALIZED[0])
-	build_slots = []
-	var slot_offsets: Array[Vector2] = [
-		Vector2(-120, -80), Vector2(0, -120), Vector2(120, -70),
-		Vector2(-135, 75), Vector2(15, 105), Vector2(135, 60),
+	if RESOURCE_ANCHORS_NORMALIZED.size() != resources.size():
+		push_error("Compact map resource anchor count does not match baseline resources.")
+		return
+	for index in range(resources.size()):
+		var resource_data: Dictionary = resources[index]
+		resource_data["position"] = WorldMapSpec.normalized_to_world(RESOURCE_ANCHORS_NORMALIZED[index])
+		resources[index] = resource_data
+	var slot_anchors: Array[Vector2] = [
+		Vector2(1868.0 / 4096.0, 1928.0 / 4096.0), Vector2(2048.0 / 4096.0, 1868.0 / 4096.0),
+		Vector2(2228.0 / 4096.0, 1938.0 / 4096.0), Vector2(1848.0 / 4096.0, 2168.0 / 4096.0),
+		Vector2(2068.0 / 4096.0, 2198.0 / 4096.0), Vector2(2268.0 / 4096.0, 2148.0 / 4096.0),
 	]
-	for index in range(slot_offsets.size()):
-		build_slots.append({
-			"slot_id": index + 1,
-			"owner_sect_id": "sect_001",
-			"position": WorldMapSpec.clamp_world_position(player_position + slot_offsets[index]),
-			"is_empty": true,
-		})
-
-
-func _resource_display_name(resource_type: String) -> String:
-	match resource_type:
-		"spirit_mine": return "灵矿"
-		"spirit_vein": return "灵脉"
-		"herb_field": return "灵草地"
-		"secret_realm": return "秘境入口"
-		_: return "资源点"
+	if slot_anchors.size() != build_slots.size():
+		push_error("Compact map build slot anchor count does not match baseline build slots.")
+		return
+	for index in range(build_slots.size()):
+		var slot_data: Dictionary = build_slots[index]
+		slot_data["position"] = WorldMapSpec.normalized_to_world(slot_anchors[index])
+		build_slots[index] = slot_data
 
 
 func _create_sect_resource_data(
