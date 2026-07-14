@@ -12,6 +12,8 @@ static func _scan_directory(path: String, findings: PackedStringArray) -> void:
 	var directory := DirAccess.open(path)
 	if directory == null:
 		return
+	# Godot 在部分平台默认不枚举以“.”开头的目录；烘焙 staging 正是隐藏目录。
+	directory.include_hidden = true
 	for file_name in directory.get_files():
 		if file_name.ends_with(".tmp") or file_name.ends_with(".bak"):
 			findings.append(path.path_join(file_name))
@@ -26,4 +28,7 @@ static func _scan_directory(path: String, findings: PackedStringArray) -> void:
 
 static func _directory_is_empty(path: String) -> bool:
 	var directory := DirAccess.open(path)
-	return directory != null and directory.get_files().is_empty() and directory.get_directories().is_empty()
+	if directory == null:
+		return false
+	directory.include_hidden = true
+	return directory.get_files().is_empty() and directory.get_directories().is_empty()
