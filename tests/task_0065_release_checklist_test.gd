@@ -29,6 +29,26 @@ func _run() -> void:
 	_expect((clean_scan.get("scan_errors", PackedStringArray()) as PackedStringArray).is_empty(), "existing clean root must scan successfully")
 	var missing_scan: Dictionary = ReleaseFileScanner.scan_generated_directory(TEST_ROOT.path_join("missing"))
 	_expect(not (missing_scan.get("scan_errors", PackedStringArray()) as PackedStringArray).is_empty(), "missing scan root must fail closed")
+	var blocked_child := TEST_ROOT.path_join("blocked_child")
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(blocked_child))
+	ReleaseFileScanner.set_directory_open_override_for_testing(func(path: String) -> DirAccess:
+		if path == blocked_child:
+			return null
+		return DirAccess.open(path)
+	)
+	var blocked_child_scan: Dictionary = ReleaseFileScanner.scan_generated_directory(TEST_ROOT)
+	_expect(not (blocked_child_scan.get("scan_errors", PackedStringArray()) as PackedStringArray).is_empty(), "unreadable child directory must fail closed")
+	ReleaseFileScanner.clear_directory_open_override_for_testing()
+	var blocked_staging := TEST_ROOT.path_join("blocked_staging/.world_bake_staging")
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(blocked_staging))
+	ReleaseFileScanner.set_directory_open_override_for_testing(func(path: String) -> DirAccess:
+		if path == blocked_staging:
+			return null
+		return DirAccess.open(path)
+	)
+	var blocked_staging_scan: Dictionary = ReleaseFileScanner.scan_generated_directory(TEST_ROOT)
+	_expect(not (blocked_staging_scan.get("scan_errors", PackedStringArray()) as PackedStringArray).is_empty(), "unreadable staging directory must fail closed")
+	ReleaseFileScanner.clear_directory_open_override_for_testing()
 	_cleanup()
 	if failures.is_empty():
 		print("[Task0065ReleaseChecklist] PASS")
@@ -47,6 +67,7 @@ func _write(path: String) -> void:
 
 
 func _cleanup() -> void:
+	ReleaseFileScanner.clear_directory_open_override_for_testing()
 	if DirAccess.dir_exists_absolute(ProjectSettings.globalize_path(TEST_ROOT)):
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(TEST_ROOT.path_join("root.tmp")))
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(TEST_ROOT.path_join("nested/old.bak")))
@@ -56,6 +77,9 @@ func _cleanup() -> void:
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(TEST_ROOT.path_join("nested")))
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(TEST_ROOT.path_join(".world_bake_staging")))
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(TEST_ROOT.path_join("ordinary.res")))
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(TEST_ROOT.path_join("blocked_child")))
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(TEST_ROOT.path_join("blocked_staging/.world_bake_staging")))
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(TEST_ROOT.path_join("blocked_staging")))
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(TEST_ROOT))
 
 
