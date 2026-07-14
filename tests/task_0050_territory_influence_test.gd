@@ -1,5 +1,7 @@
 extends SceneTree
 
+const WorldSectRoster = preload("res://scripts/world/WorldSectRoster.gd")
+
 var _failures := PackedStringArray()
 var _game_state: Node
 var _world_data_manager: Node
@@ -32,7 +34,7 @@ func _run() -> void:
 func _test_initial_influence_and_boundaries() -> void:
 	_game_state.new_game()
 	var territories: Array[Dictionary] = _territory_manager.get_all_territories()
-	_expect(territories.size() == 10, "十个初始宗门都应拥有领地状态。")
+	_expect(territories.size() == WorldSectRoster.expected_sect_count(), "全部初始宗门都应拥有领地状态。")
 	for territory in territories:
 		_expect(int(territory.get("influence", 0)) > 0, "宗门影响力必须为正数。")
 		_expect(territory.get("boundary_points", []).size() >= 12, "领地边界应由控制点生成多边形。")
@@ -77,9 +79,9 @@ func _test_ai_influence_neighbors_and_save() -> void:
 	var snapshot: Dictionary = root.get_node("SaveManager").create_snapshot()
 	_world_data_manager.territory_states.clear()
 	_expect(root.get_node("SaveManager").apply_snapshot(snapshot), "领地与影响力状态应可存档恢复。")
-	_expect(_territory_manager.get_all_territories().size() == 10, "读档后应重算十个宗门领地。")
+	_expect(_territory_manager.get_all_territories().size() == WorldSectRoster.expected_sect_count(), "读档后应重算全部初始宗门领地。")
 	var report: Dictionary = _game_state.next_day()
-	_expect(int(report.get("territories", {}).get("sect_count", 0)) == 10, "每日统一推进应包含领地刷新摘要。")
+	_expect(int(report.get("territories", {}).get("sect_count", 0)) == WorldSectRoster.expected_sect_count(), "每日统一推进应包含领地刷新摘要。")
 
 
 func _test_world_territory_rendering() -> void:
@@ -91,7 +93,7 @@ func _test_world_territory_rendering() -> void:
 		area.setup(sect, _territory_manager.get_territory(str(sect.get("sect_id", ""))))
 		layer.add_child(area)
 	await process_frame
-	_expect(layer.get_child_count() == 10, "世界地图应以十个轻量节点显示派生领地边界。")
+	_expect(layer.get_child_count() == WorldSectRoster.expected_sect_count(), "世界地图应以轻量节点显示全部初始宗门领地边界。")
 	for child in layer.get_children():
 		_expect((child as TerritoryArea).local_boundary_points.size() >= 12, "领地显示必须读取计算后的多边形边界。")
 	layer.queue_free()

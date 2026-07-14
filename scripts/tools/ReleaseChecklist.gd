@@ -1,5 +1,9 @@
 extends SceneTree
 
+const WorldSectRoster = preload("res://scripts/world/WorldSectRoster.gd")
+const WorldSectReferenceValidator = preload("res://scripts/world/WorldSectReferenceValidator.gd")
+const WorldSectBaseline = preload("res://scripts/world/WorldSectBaseline.gd")
+
 var failures := PackedStringArray()
 
 func _initialize() -> void: call_deferred("_run")
@@ -22,8 +26,19 @@ func _run() -> void:
 		await _dispose_map(runtime_map)
 	_expect(_generated_files_are_clean(), "生成目录不得残留 staging、tmp 或 bak")
 	var world_data: Node = root.get_node("WorldDataManager")
-	world_data.init_world_data()
-	_expect(world_data.get_all_sects().size() == 10, "必须保留10个宗门")
+	# 需要完整初始化领地、库存和市场等持久化容器，不能只初始化基础名册。
+	root.get_node("GameState").new_game()
+	var roster_errors := WorldSectRoster.validate()
+	_expect(roster_errors.is_empty(), "五宗门名册必须有效")
+	_expect(world_data.get_all_sects().size() == WorldSectRoster.expected_sect_count(), "必须保留五个初始宗门")
+	_expect(world_data.get_ai_sects().size() == WorldSectRoster.expected_ai_sect_count(), "必须保留四个初始AI宗门")
+	_expect(_has_expected_initial_roster(world_data.get_all_sects()), "初始宗门ID与顺序必须匹配五宗门名册")
+	_expect(WorldSectBaseline.validate_sects(world_data.get_all_sects()).is_empty(), "五宗门元数据基线必须完全一致")
+	_expect(WorldSectBaseline.validate_sect_resources(world_data.sect_resources).is_empty(), "五宗门初始资源基线必须完全一致")
+	_expect(_has_exact_active_sect_keys(world_data.sect_resources), "宗门资源键必须与五宗门名册完全一致")
+	_expect(_has_exact_ai_sect_keys(world_data.ai_states), "AI状态键必须与四个 AI 名册完全一致")
+	_expect(WorldSectReferenceValidator.validate_world_state(world_data.export_world_state()).is_empty(), "世界状态不得包含悬空宗门引用")
+	_expect(WorldSectReferenceValidator.find_removed_development_sect_references(world_data.export_world_state()).is_empty(), "世界状态不得残留退役宗门引用")
 	_expect(world_data.get_all_resources().size() == 26, "必须保留基准的26个资源点")
 	_expect(world_data.get_all_build_slots().size() == 6, "必须保留6个建设点")
 	_expect(_resource_metadata_is_baseline(world_data.get_all_resources()), "资源元数据不得被紧凑地图改写")
@@ -52,10 +67,14 @@ func _dispose_map(map: Node) -> void:
 
 
 func _generated_files_are_clean() -> bool:
-	var stale_files := ReleaseFileScanner.find_stale_generated_files("res://assets/generated")
+	var scan: Dictionary = ReleaseFileScanner.scan_generated_directory("res://assets/generated")
+	var stale_files: PackedStringArray = scan.get("findings", PackedStringArray())
+	var scan_errors: PackedStringArray = scan.get("scan_errors", PackedStringArray())
 	for stale_file in stale_files:
 		push_error("[ReleaseChecklist] stale generated artifact: " + stale_file)
-	return stale_files.is_empty()
+	for scan_error in scan_errors:
+		push_error("[ReleaseChecklist] generated scan error: " + scan_error)
+	return stale_files.is_empty() and scan_errors.is_empty()
 
 
 func _resource_metadata_is_baseline(resources: Array) -> bool:
@@ -63,3 +82,29 @@ func _resource_metadata_is_baseline(resources: Array) -> bool:
 	for error_message in errors:
 		push_error("[ReleaseChecklist] " + error_message)
 	return errors.is_empty()
+
+
+func _has_expected_initial_roster(sects: Array) -> bool:
+	if sects.size() != WorldSectRoster.expected_sect_count():
+		return false
+	for index in range(sects.size()):
+		if str((sects[index] as Dictionary).get("sect_id", "")) != WorldSectRoster.ACTIVE_SECT_IDS[index]:
+			return false
+	return true
+
+
+func _has_exact_active_sect_keys(values: Dictionary) -> bool:
+	return _has_exact_keys(values, WorldSectRoster.ACTIVE_SECT_IDS)
+
+
+func _has_exact_ai_sect_keys(values: Dictionary) -> bool:
+	return _has_exact_keys(values, WorldSectRoster.AI_SECT_IDS)
+
+
+func _has_exact_keys(values: Dictionary, expected_ids: Array[String]) -> bool:
+	if values.size() != expected_ids.size():
+		return false
+	for sect_id in expected_ids:
+		if not values.has(sect_id):
+			return false
+	return true

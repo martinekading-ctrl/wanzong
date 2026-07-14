@@ -66,6 +66,9 @@ var current_selected_node: Node = null
 
 # 正式地图只引用预生成结果或简化回退，不引用程序化生成器。
 var pixel_world: Node2D
+var _loaded_world_map_path: String = ""
+var _using_simple_world_fallback: bool = false
+var _world_initialization_successful: bool = false
 
 # 领地层，只放宗门领地范围。
 @onready var territory_layer: Node2D = $TerritoryLayer
@@ -145,6 +148,7 @@ func _ready() -> void:
 	print("[WorldPerf] Sect nodes: %d ms" % (Time.get_ticks_msec() - sect_started_at))
 	enter_sect_button.pressed.connect(_on_enter_sect_button_pressed)
 	_show_empty_panel()
+	_world_initialization_successful = true
 	var ready_elapsed: int = Time.get_ticks_msec() - ready_started_at
 	print("[WorldPerf] World ready total: %d ms" % ready_elapsed)
 	if ready_elapsed > WORLD_READY_WARNING_MS:
@@ -152,6 +156,7 @@ func _ready() -> void:
 
 
 func _abort_world_initialization(message: String) -> void:
+	_world_initialization_successful = false
 	push_error("[World] 初始化已中止：" + message)
 	set_process(false)
 	set_process_unhandled_input(false)
@@ -198,12 +203,15 @@ func _load_runtime_world_map() -> void:
 	if not ResourceLoader.exists(map_path):
 		push_error("预生成地图缺失，当前使用简化地图。")
 		map_path = SIMPLE_WORLD_FALLBACK_PATH
+	_using_simple_world_fallback = map_path == SIMPLE_WORLD_FALLBACK_PATH
 	var load_started_at: int = Time.get_ticks_msec()
 	var map_scene := load(map_path) as PackedScene
 	print("[WorldPerf] Map resource load: %d ms" % (Time.get_ticks_msec() - load_started_at))
 	if map_scene == null and map_path != SIMPLE_WORLD_FALLBACK_PATH:
 		push_error("预生成地图加载失败，当前使用简化地图。")
 		map_scene = load(SIMPLE_WORLD_FALLBACK_PATH) as PackedScene
+		map_path = SIMPLE_WORLD_FALLBACK_PATH
+		_using_simple_world_fallback = true
 	if map_scene == null:
 		push_error("简化地图也无法加载。")
 		return
@@ -219,6 +227,8 @@ func _load_runtime_world_map() -> void:
 		pixel_world.free()
 		map_scene = load(SIMPLE_WORLD_FALLBACK_PATH) as PackedScene
 		pixel_world = map_scene.instantiate() as Node2D if map_scene != null else null
+		map_path = SIMPLE_WORLD_FALLBACK_PATH
+		_using_simple_world_fallback = true
 	var instantiate_elapsed: int = Time.get_ticks_msec() - instantiate_started_at
 	print("[WorldPerf] Map instantiate: %d ms" % instantiate_elapsed)
 	if instantiate_elapsed > MAP_INSTANTIATE_WARNING_MS:
@@ -228,8 +238,22 @@ func _load_runtime_world_map() -> void:
 		return
 	var add_child_started_at: int = Time.get_ticks_msec()
 	map_layer.add_child(pixel_world)
+	_loaded_world_map_path = map_path
 	print("[WorldPerf] Map add child: %d ms" % (Time.get_ticks_msec() - add_child_started_at))
 	print("[WorldPerf] Generated map load: %d ms" % (Time.get_ticks_msec() - load_started_at))
+
+
+## 只读诊断接口，供回归测试确认正式烘焙地图未回退或未半初始化。
+func get_loaded_world_map_path() -> String:
+	return _loaded_world_map_path
+
+
+func is_using_simple_world_fallback() -> bool:
+	return _using_simple_world_fallback
+
+
+func is_world_initialization_successful() -> bool:
+	return _world_initialization_successful
 
 
 # ESC 取消当前选择、隐藏建设点并恢复地图概况。

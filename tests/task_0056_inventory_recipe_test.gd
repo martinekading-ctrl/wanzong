@@ -1,5 +1,7 @@
 extends SceneTree
 
+const WorldSectRoster = preload("res://scripts/world/WorldSectRoster.gd")
+
 var _failures := PackedStringArray()
 var _game_state: Node
 var _world_data_manager: Node
@@ -33,7 +35,7 @@ func _test_registries_and_unique_resource_source() -> void:
 	_expect(ItemRegistry.validate().is_empty(), "物品配置校验应通过。")
 	_expect(RecipeRegistry.get_all().size() == 5, "第一批应加载5张配方。")
 	_expect(RecipeRegistry.validate().is_empty(), "配方引用的物品必须全部有效。")
-	_expect(_world_data_manager.sect_inventories.size() == 10, "十个宗门都应拥有独立背包容器。")
+	_expect(_world_data_manager.sect_inventories.size() == WorldSectRoster.expected_sect_count(), "全部初始宗门都应拥有独立背包容器。")
 	var grass_before: int = int(_world_data_manager.get_sect_resources("sect_001")["spirit_grass"])
 	_expect(_inventory_manager.get_item_count("sect_001", "spirit_grass") == grass_before, "基础灵草物品必须读取sect_resources。")
 	_expect(_inventory_manager.add_item("sect_001", "spirit_grass", 7), "基础资源应可通过统一背包接口增加。")
@@ -70,7 +72,7 @@ func _test_save_restore() -> void:
 	_world_data_manager.sect_inventories.clear()
 	_expect(root.get_node("SaveManager").apply_snapshot(snapshot), "宗门背包应可存档恢复。")
 	_expect(_inventory_manager.get_item_count("sect_001", "iron_sword") == 2 and _inventory_manager.get_item_count("sect_001", "healing_pill") == 4, "读档后装备和丹药数量不得丢失。")
-	_expect(_world_data_manager.sect_inventories.size() == 10, "旧档或缺失宗门背包应在恢复时补全。")
+	_expect(_world_data_manager.sect_inventories.size() == WorldSectRoster.expected_sect_count(), "缺失宗门背包应在恢复时补全。")
 
 
 func _test_inventory_ui() -> void:

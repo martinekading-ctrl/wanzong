@@ -1,5 +1,8 @@
 extends Node
 
+const WorldSectRoster = preload("res://scripts/world/WorldSectRoster.gd")
+const WorldSectReferenceValidator = preload("res://scripts/world/WorldSectReferenceValidator.gd")
+
 signal disciple_data_updated(disciple_id: String, key: String, value: Variant)
 
 const ECONOMIC_RESOURCE_KEYS: Array[String] = [
@@ -90,32 +93,19 @@ func init_world_data() -> void:
 			118, 760, 3150, Vector2(3500, 1700), "friendly",
 			[], [], "以金莲佛法护佑一方，门人善守亦善度化。"
 		),
-		_create_sect_data(
-			"sect_006", "寒月宫", false, "snow", "宫主苏寒月", "七品",
-			97, 580, 3380, Vector2(2840, 2700), "neutral",
-			[], [], "坐落北境雪原，传承寒月一脉的冰系术法。"
-		),
-		_create_sect_data(
-			"sect_007", "黄沙门", false, "desert", "拓跋烈", "八品",
-			73, 280, 2260, Vector2(3400, 3300), "neutral",
-			[], [], "扎根大漠商道，擅长御沙与追踪之术。"
-		),
-		_create_sect_data(
-			"sect_008", "沧海阁", false, "ocean", "洛沧澜", "七品",
-			105, 690, 3520, Vector2(1900, 3250), "friendly",
-			[], [], "立于东海群岛，门下修士精通水法与舟阵。"
-		),
-		_create_sect_data(
-			"sect_009", "玄雷宗", false, "orthodox", "雷震岳", "六品",
-			168, 820, 5860, Vector2(760, 3050), "neutral",
-			[], [], "以玄雷淬体立宗，功法刚猛，声势显赫。"
-		),
-		_create_sect_data(
-			"sect_010", "万兽山", false, "orthodox", "岳千峰", "五品",
-			236, 960, 7450, Vector2(520, 1900), "hostile",
-			[], [], "雄踞群山并与灵兽共修，是实力深厚的古老宗门。"
-		),
 	]
+	var roster_errors := WorldSectRoster.validate()
+	if not roster_errors.is_empty():
+		for roster_error in roster_errors:
+			push_error("World sect roster validation failed: " + roster_error)
+		return
+	if sects.size() != WorldSectRoster.expected_sect_count():
+		push_error("Initial world sect count does not match WorldSectRoster.")
+		return
+	for sect_index in range(sects.size()):
+		if str(sects[sect_index].get("sect_id", "")) != WorldSectRoster.ACTIVE_SECT_IDS[sect_index]:
+			push_error("Initial world sect order does not match WorldSectRoster.")
+			return
 	_rebuild_runtime_indexes()
 
 	resources = [
@@ -181,11 +171,6 @@ func init_world_data() -> void:
 		"sect_003": _create_sect_resource_data(7200, 8600, 520, 430, 680, 80, 960),
 		"sect_004": _create_sect_resource_data(9800, 13200, 1100, 900, 160, 420, 1750),
 		"sect_005": _create_sect_resource_data(8400, 15000, 700, 760, 360, 140, 1680),
-		"sect_006": _create_sect_resource_data(7600, 9200, 460, 820, 240, 190, 1050),
-		"sect_007": _create_sect_resource_data(4900, 11800, 380, 540, 90, 75, 1380),
-		"sect_008": _create_sect_resource_data(9100, 12600, 950, 500, 310, 130, 1420),
-		"sect_009": _create_sect_resource_data(12800, 17500, 1200, 980, 420, 360, 2100),
-		"sect_010": _create_sect_resource_data(18600, 24000, 1800, 1500, 520, 460, 3200),
 	}
 	event_instances = []
 	triggered_event_ids = []
@@ -240,7 +225,7 @@ func _apply_compact_map_anchors() -> void:
 		for anchor_error in anchor_errors:
 			push_error("World map anchor validation failed: " + anchor_error)
 		return
-	if sects.size() != WorldMapAnchors.SECT_ANCHORS_NORMALIZED.size():
+	if sects.size() != WorldSectRoster.expected_sect_count() or sects.size() != WorldMapAnchors.SECT_ANCHORS_NORMALIZED.size():
 		push_error("Compact map sect anchor count does not match baseline sects.")
 		return
 	for index in range(sects.size()):
@@ -537,6 +522,7 @@ func add_ai_sect_data(sect_data: Dictionary, resources_data: Dictionary, ai_stat
 
 func export_world_state() -> Dictionary:
 	return {
+		"world_sect_roster_version": WorldSectRoster.ROSTER_VERSION,
 		"world_map_layout_version": WorldMapSpec.MAP_LAYOUT_VERSION,
 		"sects": sects.duplicate(true),
 		"resources": resources.duplicate(true),
@@ -569,6 +555,10 @@ func export_world_state() -> Dictionary:
 func restore_world_state(state: Dictionary) -> bool:
 	if not state.has("sects") or not state.has("disciples") or not state.has("sect_resources"):
 		push_warning("世界存档缺少必要数据域。")
+		return false
+	var reference_errors := WorldSectReferenceValidator.validate_world_state(state)
+	if not reference_errors.is_empty():
+		push_warning("世界存档存在无效宗门引用：" + "; ".join(reference_errors))
 		return false
 	sects.assign(state.get("sects", []))
 	resources.assign(state.get("resources", []))

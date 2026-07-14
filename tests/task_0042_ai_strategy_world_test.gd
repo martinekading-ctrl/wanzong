@@ -1,5 +1,7 @@
 extends SceneTree
 
+const WorldSectRoster = preload("res://scripts/world/WorldSectRoster.gd")
+
 var _failures := PackedStringArray()
 var _game_state: Node
 var _world_data_manager: Node
@@ -40,7 +42,7 @@ func _test_strategy_scoring_and_resource_constrained_expansion() -> void:
 		for goal in ["survival", "development", "military", "diplomacy", "resource_need"]:
 			_expect(scores.has(goal), "%s缺少效用评分：%s" % [sect_id, goal])
 	var summary: Dictionary = _ai_manager.monthly_update({"year": 1, "month": 1, "day": 30})
-	_expect(int(summary.get("sects_updated", 0)) == 9, "战略月度更新应覆盖9个AI宗门。")
+	_expect(int(summary.get("sects_updated", 0)) == WorldSectRoster.expected_ai_sect_count(), "战略月度更新应覆盖全部初始AI宗门。")
 	var goals: Dictionary = {}
 	var expanded_count: int = 0
 	for decision in summary.get("decisions", []):
@@ -68,20 +70,22 @@ func _test_decline_vassal_and_destruction_states() -> void:
 	_expect(str(_world_data_manager.ai_states["sect_002"]["current_goal"]) == "survival", "严重短缺时AI应优先选择生存。")
 	_expect(str(_world_data_manager.ai_states["sect_002"]["status"]) == "declining", "长期短缺应使宗门进入衰退状态。")
 
-	_expect(_ai_manager.set_vassal("sect_003", "sect_009"), "有效宗门应能建立附属关系。")
+	var liege_id := WorldSectRoster.AI_SECT_IDS[3]
+	_expect(_ai_manager.set_vassal("sect_003", liege_id), "有效宗门应能建立附属关系。")
 	_expect(str(_world_data_manager.ai_states["sect_003"]["status"]) == "vassal", "附属宗门状态应为vassal。")
-	_expect(str(_world_data_manager.ai_states["sect_003"]["vassal_of"]) == "sect_009", "附属宗门应保存宗主宗门ID。")
+	_expect(str(_world_data_manager.ai_states["sect_003"]["vassal_of"]) == liege_id, "附属宗门应保存宗主宗门ID。")
 
-	_expect(_ai_manager.eliminate_sect("sect_007", "测试覆灭"), "AI宗门应支持覆灭。")
-	_expect(not bool(_world_data_manager.get_sect_by_id("sect_007").get("is_active", true)), "覆灭宗门应标记为非活跃。")
+	var eliminated_id := WorldSectRoster.AI_SECT_IDS[2]
+	_expect(_ai_manager.eliminate_sect(eliminated_id, "测试覆灭"), "AI宗门应支持覆灭。")
+	_expect(not bool(_world_data_manager.get_sect_by_id(eliminated_id).get("is_active", true)), "覆灭宗门应标记为非活跃。")
 	var daily: Dictionary = _ai_manager.daily_update({"year": 1, "month": 2, "day": 1})
-	_expect(int(daily.get("sects_updated", 0)) == 8, "覆灭宗门不应继续参与每日模拟。")
+	_expect(int(daily.get("sects_updated", 0)) == WorldSectRoster.expected_ai_sect_count() - 1, "覆灭宗门不应继续参与每日模拟。")
 	_expect(_history_manager.get_entries_by_category("ai_world_change").size() >= 3, "附属、衰退和覆灭应留下世界历史。")
 
 
 func _test_sect_split_preserves_people_and_resources() -> void:
 	_game_state.new_game()
-	var parent_id := "sect_010"
+	var parent_id := WorldSectRoster.AI_SECT_IDS[3]
 	var sect_count_before: int = _world_data_manager.get_all_sects().size()
 	var disciple_count_before: int = _world_data_manager.get_disciples_by_sect_id(parent_id).size()
 	var resources_before: Dictionary = _world_data_manager.get_sect_resources(parent_id).duplicate(true)

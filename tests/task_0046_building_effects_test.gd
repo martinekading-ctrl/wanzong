@@ -1,5 +1,7 @@
 extends SceneTree
 
+const WorldSectRoster = preload("res://scripts/world/WorldSectRoster.gd")
+
 var _failures := PackedStringArray()
 var _game_state: Node
 var _world_data_manager: Node
@@ -109,7 +111,7 @@ func _test_ai_uses_same_construction_rules() -> void:
 		for building in _construction_manager.get_buildings_by_sect_id(sect_id):
 			if str(building.get("status", "")) == "constructing":
 				constructing_count += 1
-	_expect(constructing_count == 9, "首次月度决策应让9个AI宗门按同一规则开始建设。")
+	_expect(constructing_count == WorldSectRoster.expected_ai_sect_count(), "首次月度决策应让全部AI宗门按同一规则开始建设。")
 	for _day in range(4):
 		_game_state.next_day()
 	var active_count: int = 0
@@ -117,7 +119,7 @@ func _test_ai_uses_same_construction_rules() -> void:
 		for building in _construction_manager.get_buildings_by_sect_id(sect_id):
 			if str(building.get("status", "")) == "active":
 				active_count += 1
-	_expect(active_count == 9, "AI宗门建筑应按相同建设时间完成。")
+	_expect(active_count == WorldSectRoster.expected_ai_sect_count(), "AI宗门建筑应按相同建设时间完成。")
 
 
 func _test_upgrade_ui() -> void:

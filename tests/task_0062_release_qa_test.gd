@@ -123,7 +123,7 @@ func _test_ten_year_simulation() -> void:
 	_expect(int(result.get("days_completed", 0)) == 3600, "发布QA必须完整模拟十个游戏年。")
 	_expect(int(result.get("negative_resource_count", -1)) == 0, "十年模拟中不得出现负资源。")
 	_expect(int(result.get("maximum_day_ms", 10000)) < 2000, "十年模拟单日峰值不得超过两秒。")
-	_expect(int(result.get("sect_count", 0)) >= 10 and int(result.get("active_ai_count", 0)) >= 9, "十年后AI世界仍须保持有效宗门。")
+	_expect(int(result.get("sect_count", 0)) >= WorldSectRoster.expected_sect_count() and int(result.get("active_ai_count", 0)) >= WorldSectRoster.expected_ai_sect_count(), "十年后AI世界仍须保持完整五宗门名册。")
 	_expect(int(result.get("save_size_bytes", 1000000000)) < 64 * 1024 * 1024, "十年存档快照应小于64MB。")
 	_expect(bool(result.get("restored", false)), "十年模拟后必须成功回滚测试快照。")
 	_expect([_game_state.year, _game_state.month, _game_state.day] == original_date, "十年回滚后不得污染玩家日期。")

@@ -1,14 +1,15 @@
 class_name WorldMapAnchors
 extends RefCounted
 
+const WorldSectRoster = preload("res://scripts/world/WorldSectRoster.gd")
+
 ## 世界地图标记的唯一逻辑锚点来源。
 ## 坐标以旧版 4096 逻辑世界归一化，随后由 WorldMapSpec 映射到当前地图。
 const LEGACY_LOGICAL_WORLD_SIZE := Vector2(4096.0, 4096.0)
 
 const SECT_ANCHORS_NORMALIZED: Array[Vector2] = [
-	Vector2(0.50, 0.52), Vector2(0.24, 0.23), Vector2(0.40, 0.19), Vector2(0.70, 0.23),
-	Vector2(0.83, 0.34), Vector2(0.78, 0.53), Vector2(0.82, 0.76), Vector2(0.59, 0.81),
-	Vector2(0.30, 0.80), Vector2(0.19, 0.54),
+	Vector2(0.50, 0.52), Vector2(0.23, 0.23), Vector2(0.76, 0.24), Vector2(0.76, 0.76),
+	Vector2(0.24, 0.76),
 ]
 
 const RESOURCE_ANCHORS_NORMALIZED: Array[Vector2] = [
@@ -36,7 +37,7 @@ const BUILD_SLOT_ANCHORS_NORMALIZED: Array[Vector2] = [
 
 static func validate() -> PackedStringArray:
 	var errors := PackedStringArray()
-	_validate_anchor_group(SECT_ANCHORS_NORMALIZED, 10, "sect", errors)
+	_validate_anchor_group(SECT_ANCHORS_NORMALIZED, WorldSectRoster.expected_sect_count(), "sect", errors)
 	_validate_anchor_group(RESOURCE_ANCHORS_NORMALIZED, 26, "resource", errors)
 	_validate_anchor_group(BUILD_SLOT_ANCHORS_NORMALIZED, 6, "build_slot", errors)
 	return errors

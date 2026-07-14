@@ -1,5 +1,8 @@
 extends Node
 
+const WorldSectRoster = preload("res://scripts/world/WorldSectRoster.gd")
+const WorldSectReferenceValidator = preload("res://scripts/world/WorldSectReferenceValidator.gd")
+
 signal save_completed(path: String)
 signal load_completed(path: String)
 signal save_failed(path: String, message: String)
@@ -14,6 +17,9 @@ const QUICK_SAVE_PATH := SAVE_DIRECTORY + "/quick.save"
 const AUTOSAVE_PATH := SAVE_DIRECTORY + "/autosave.save"
 
 var last_skipped_invalid_paths: Array[String] = []
+var last_snapshot_error: String = ""
+
+const EARLY_TEN_SECT_SAVE_MESSAGE := "该存档来自早期十宗门开发版本，无法用于当前五宗门世界。请开始新游戏。"
 
 
 func get_manual_slot_path(slot_index: int) -> String:
@@ -112,12 +118,15 @@ func create_snapshot() -> Dictionary:
 
 
 func apply_snapshot(raw_snapshot: Dictionary) -> bool:
+	last_snapshot_error = ""
 	var migration: Dictionary = migrate_snapshot(raw_snapshot)
 	if not bool(migration.get("success", false)):
+		last_snapshot_error = str(migration.get("message", "存档迁移失败。"))
 		return false
 	var snapshot: Dictionary = migration["snapshot"]
 	var validation_error: String = validate_snapshot(snapshot)
 	if validation_error != "":
+		last_snapshot_error = validation_error
 		push_warning("存档校验失败：" + validation_error)
 		return false
 	var game_state_data: Dictionary = snapshot["game_state"]
@@ -129,11 +138,13 @@ func apply_snapshot(raw_snapshot: Dictionary) -> bool:
 			player_exists = true
 			break
 	if not player_exists:
+		last_snapshot_error = "存档中的玩家宗门无效：" + player_sect_id
 		push_warning("存档中的玩家宗门无效：" + player_sect_id)
 		return false
 
 	# 固定恢复顺序：世界仓库 → Data对象与索引 → GameState → 场景由调用方切换。
 	if not WorldDataManager.restore_world_state(world_data):
+		last_snapshot_error = "世界存档恢复失败。"
 		return false
 	SectManager.reset()
 	DiscipleManager.load_from_world_data()
@@ -211,8 +222,10 @@ func load_from_path(path: String) -> Dictionary:
 		return _load_error(path, "无法读取存档：%s" % error_string(FileAccess.get_open_error()))
 	var decoded: Variant = _read_snapshot_from_file(file)
 	file.close()
-	if not (decoded is Dictionary) or not apply_snapshot(decoded):
+	if not (decoded is Dictionary):
 		return _load_error(path, "存档内容校验或恢复失败。")
+	if not apply_snapshot(decoded):
+		return _load_error(path, last_snapshot_error if last_snapshot_error != "" else "存档内容校验或恢复失败。")
 	var duration_ms: int = Time.get_ticks_msec() - started_at
 	if duration_ms > 5000:
 		push_warning("[SavePerf][WARNING] 读档超过5秒：%d ms" % duration_ms)
@@ -231,6 +244,11 @@ func validate_snapshot(snapshot: Dictionary) -> String:
 	if not (snapshot.get("world_data") is Dictionary):
 		return "缺少world_data。"
 	var world_data: Dictionary = snapshot["world_data"]
+	if int(world_data.get("world_sect_roster_version", 0)) != WorldSectRoster.ROSTER_VERSION:
+		return "world_data 宗门名册版本无效。"
+	var reference_errors := WorldSectReferenceValidator.validate_world_state(world_data)
+	if not reference_errors.is_empty():
+		return "world_data 存在无效宗门引用：" + "; ".join(reference_errors)
 	for required_key in ["sects", "disciples", "sect_resources", "event_instances", "history_entries", "ai_states"]:
 		if not world_data.has(required_key):
 			return "world_data缺少%s。" % required_key
@@ -241,6 +259,11 @@ func migrate_snapshot(raw_snapshot: Dictionary) -> Dictionary:
 	if raw_snapshot.is_empty():
 		return {"success": false, "message": "空存档。"}
 	var snapshot: Dictionary = raw_snapshot.duplicate(true)
+	var original_world_data: Dictionary = snapshot.get("world_data", {})
+	var retired_references := WorldSectReferenceValidator.find_removed_development_sect_references(original_world_data)
+	if not retired_references.is_empty():
+		push_warning("早期十宗门存档包含已移除引用：" + "; ".join(retired_references))
+		return {"success": false, "message": EARLY_TEN_SECT_SAVE_MESSAGE}
 	var version: int = int(snapshot.get("save_version", 0))
 	if version > CURRENT_SAVE_VERSION:
 		return {"success": false, "message": "不支持未来版本存档。"}
@@ -252,8 +275,14 @@ func migrate_snapshot(raw_snapshot: Dictionary) -> Dictionary:
 			_:
 				return {"success": false, "message": "缺少版本迁移函数。"}
 	snapshot = _migrate_world_map_layout(snapshot)
+	var world_data: Dictionary = snapshot.get("world_data", {})
+	if not world_data.is_empty():
+		world_data["world_sect_roster_version"] = WorldSectRoster.ROSTER_VERSION
+		snapshot["world_data"] = world_data
 	snapshot["save_version"] = CURRENT_SAVE_VERSION
 	return {"success": true, "snapshot": snapshot}
+
+
 
 
 func get_save_metadata(path: String) -> Dictionary:

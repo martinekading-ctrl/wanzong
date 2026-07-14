@@ -1,5 +1,7 @@
 extends SceneTree
 
+const WorldSectRoster = preload("res://scripts/world/WorldSectRoster.gd")
+
 var failures := PackedStringArray()
 const WORLD_SCENE_PATH := "res://scenes/world/World.tscn"
 
@@ -29,7 +31,7 @@ func _run() -> void:
 		for resource in world_data.get_all_resources():
 			var position: Vector2 = source.call("find_nearest_land_world_position", resource.get("position", Vector2.ZERO))
 			_expect(WorldMapSpec.is_world_position_in_bounds(position), "资源必须在边界内")
-		_expect(world_data.get_all_sects().size() == 10, "必须保留10个宗门")
+		_expect(world_data.get_all_sects().size() == WorldSectRoster.expected_sect_count(), "宗门数量必须匹配当前初始名册")
 		_expect(world_data.get_all_resources().size() == 26, "必须保留基准的26个资源点")
 		source.free()
 		runtime.free()

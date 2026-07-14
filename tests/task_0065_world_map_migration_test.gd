@@ -1,5 +1,7 @@
 extends SceneTree
 
+const WorldSectRoster = preload("res://scripts/world/WorldSectRoster.gd")
+
 var failures := PackedStringArray()
 
 
@@ -13,6 +15,7 @@ func _run() -> void:
 	_expect(bool(migrated.get("success", false)), "v1 snapshot must migrate")
 	var world_data: Dictionary = migrated.get("snapshot", {}).get("world_data", {})
 	_expect(int(world_data.get("world_map_layout_version", 0)) == 2, "layout version must become v2")
+	_expect(int(world_data.get("world_sect_roster_version", 0)) == WorldSectRoster.ROSTER_VERSION, "world roster version must become v2")
 	_expect(_near(_sect(world_data)["location"], Vector2(2176, 2176)), "center sect must use 4096 to 4352 scale")
 	_expect(_sect(world_data)["location"] == _sect(world_data)["position"], "sect location and position must match")
 	_expect(_near((world_data["resources"][0] as Dictionary)["position"], Vector2(4352, 0)), "resource must migrate and clamp")
@@ -27,6 +30,7 @@ func _run() -> void:
 	_expect(twice.get("snapshot", {}) == migrated.get("snapshot", {}), "v2 migration must be idempotent")
 	var already_v2 := _legacy_snapshot()
 	already_v2["world_data"]["world_map_layout_version"] = WorldMapSpec.MAP_LAYOUT_VERSION
+	already_v2["world_data"]["world_sect_roster_version"] = WorldSectRoster.ROSTER_VERSION
 	var unchanged: Dictionary = manager.migrate_snapshot(already_v2)
 	_expect(unchanged.get("snapshot", {}) == already_v2, "explicit v2 snapshots must remain unchanged")
 	if failures.is_empty(): print("[Task0065WorldMapMigration] PASS"); quit(0)
