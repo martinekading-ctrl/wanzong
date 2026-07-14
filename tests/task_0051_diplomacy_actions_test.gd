@@ -1,5 +1,7 @@
 extends SceneTree
 
+const WorldSectRoster = preload("res://scripts/world/WorldSectRoster.gd")
+
 var _failures := PackedStringArray()
 var _game_state: Node
 var _world_data_manager: Node
@@ -29,8 +31,9 @@ func _run() -> void:
 
 func _test_relation_catalog_and_statuses() -> void:
 	_game_state.new_game()
-	_expect(_world_data_manager.relations.size() == 45, "十个宗门应形成45组无向关系。")
-	_expect(_diplomacy_manager.get_relations_for_sect("sect_001").size() == 9, "玩家应拥有九个外交对象。")
+	var expected_relation_count: int = WorldSectRoster.expected_sect_count() * (WorldSectRoster.expected_sect_count() - 1) / 2
+	_expect(_world_data_manager.relations.size() == expected_relation_count, "初始宗门应形成完整无向关系。")
+	_expect(_diplomacy_manager.get_relations_for_sect("sect_001").size() == WorldSectRoster.expected_ai_sect_count(), "玩家应拥有全部AI外交对象。")
 	_expect(DiplomaticActionRegistry.get_all().size() == 4, "Task-0051应提供四类基础外交行动。")
 	var relation: Dictionary = _diplomacy_manager.get_relation("sect_001", "sect_002")
 	_expect(not relation.is_empty() and relation.has("value") and relation.has("status"), "关系值与外交状态必须分别存储。")
@@ -105,9 +108,9 @@ func _test_diplomacy_ui() -> void:
 	var action_option: OptionButton = section.get_node("ControlBox/ActionOption")
 	var list: VBoxContainer = section.get_node("RelationScroll/RelationList")
 	_expect(section.visible, "点击外交按钮应显示外交界面。")
-	_expect(target_option.item_count == 9, "外交目标应包含九个AI宗门。")
+	_expect(target_option.item_count == WorldSectRoster.expected_ai_sect_count(), "外交目标应包含全部AI宗门。")
 	_expect(action_option.item_count == 4, "外交界面应读取四个数据化行动。")
-	_expect(list.get_child_count() == 9, "外交界面应展示玩家的九组关系。")
+	_expect(list.get_child_count() == WorldSectRoster.expected_ai_sect_count(), "外交界面应展示玩家的全部关系。")
 	overview.queue_free()
 	await process_frame
 

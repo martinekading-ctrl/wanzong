@@ -12,14 +12,17 @@ static func _scan_directory(path: String, findings: PackedStringArray) -> void:
 	var directory := DirAccess.open(path)
 	if directory == null:
 		return
+	# get_directories() may omit dot-prefixed directories on some platforms.
+	# Probe staging explicitly so release validation is identical on Windows and Linux CI.
+	var staging_path := path.path_join(".world_bake_staging")
+	if DirAccess.dir_exists_absolute(ProjectSettings.globalize_path(staging_path)) and not _directory_is_empty(staging_path):
+		findings.append(staging_path)
 	for file_name in directory.get_files():
 		if file_name.ends_with(".tmp") or file_name.ends_with(".bak"):
 			findings.append(path.path_join(file_name))
 	for directory_name in directory.get_directories():
 		var child_path := path.path_join(directory_name)
 		if directory_name == ".world_bake_staging":
-			if not _directory_is_empty(child_path):
-				findings.append(child_path)
 			continue
 		_scan_directory(child_path, findings)
 

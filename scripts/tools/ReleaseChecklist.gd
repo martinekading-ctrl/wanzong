@@ -1,5 +1,8 @@
 extends SceneTree
 
+const WorldSectRoster = preload("res://scripts/world/WorldSectRoster.gd")
+const WorldSectReferenceValidator = preload("res://scripts/world/WorldSectReferenceValidator.gd")
+
 var failures := PackedStringArray()
 
 func _initialize() -> void: call_deferred("_run")
@@ -23,7 +26,14 @@ func _run() -> void:
 	_expect(_generated_files_are_clean(), "生成目录不得残留 staging、tmp 或 bak")
 	var world_data: Node = root.get_node("WorldDataManager")
 	world_data.init_world_data()
-	_expect(world_data.get_all_sects().size() == 10, "必须保留10个宗门")
+	var roster_errors := WorldSectRoster.validate()
+	_expect(roster_errors.is_empty(), "五宗门名册必须有效")
+	_expect(world_data.get_all_sects().size() == WorldSectRoster.expected_sect_count(), "必须保留五个初始宗门")
+	_expect(world_data.get_ai_sects().size() == WorldSectRoster.expected_ai_sect_count(), "必须保留四个初始AI宗门")
+	_expect(_has_expected_initial_roster(world_data.get_all_sects()), "初始宗门ID与顺序必须匹配五宗门名册")
+	_expect(_has_expected_resource_keys(world_data.sect_resources), "宗门资源键必须与五宗门名册一致")
+	_expect(_has_expected_resource_keys(world_data.ai_states), "AI状态键必须与五宗门名册一致")
+	_expect(WorldSectReferenceValidator.validate_world_state(world_data.export_world_state()).is_empty(), "世界状态不得包含悬空宗门引用")
 	_expect(world_data.get_all_resources().size() == 26, "必须保留基准的26个资源点")
 	_expect(world_data.get_all_build_slots().size() == 6, "必须保留6个建设点")
 	_expect(_resource_metadata_is_baseline(world_data.get_all_resources()), "资源元数据不得被紧凑地图改写")
@@ -63,3 +73,21 @@ func _resource_metadata_is_baseline(resources: Array) -> bool:
 	for error_message in errors:
 		push_error("[ReleaseChecklist] " + error_message)
 	return errors.is_empty()
+
+
+func _has_expected_initial_roster(sects: Array) -> bool:
+	if sects.size() != WorldSectRoster.expected_sect_count():
+		return false
+	for index in range(sects.size()):
+		if str((sects[index] as Dictionary).get("sect_id", "")) != WorldSectRoster.ACTIVE_SECT_IDS[index]:
+			return false
+	return true
+
+
+func _has_expected_resource_keys(values: Dictionary) -> bool:
+	if values.size() != WorldSectRoster.expected_sect_count() and values.size() != WorldSectRoster.expected_ai_sect_count():
+		return false
+	for sect_id in values.keys():
+		if not WorldSectRoster.is_active_sect_id(str(sect_id)):
+			return false
+	return true

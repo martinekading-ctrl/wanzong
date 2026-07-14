@@ -1,5 +1,7 @@
 extends SceneTree
 
+const WorldSectRoster = preload("res://scripts/world/WorldSectRoster.gd")
+
 var _failures := PackedStringArray()
 var _game_state: Node
 var _world_data_manager: Node
@@ -33,7 +35,7 @@ func _run() -> void:
 
 func _test_market_catalog_and_dynamic_prices() -> void:
 	_game_state.new_game()
-	_expect(_market_manager.get_markets().size() == 9, "九个AI宗门应各自拥有区域市场。")
+	_expect(_market_manager.get_markets().size() == WorldSectRoster.expected_ai_sect_count(), "全部AI宗门应各自拥有区域市场。")
 	var market_id: String = "market_sect_002"
 	var base_price: int = _market_manager.get_price(market_id, "sect_001", "healing_pill", true)
 	_expect(base_price > 0, "市场物品应产生正数价格。")
@@ -83,12 +85,12 @@ func _test_monthly_update_and_save_restore() -> void:
 	_world_data_manager.market_states[market_id] = state
 	var report: Dictionary = _market_manager.daily_update({"year": 1, "month": 1, "day": 30})
 	var updated: Dictionary = _market_manager.get_market(market_id)
-	_expect(int(report.get("markets_updated", 0)) == 9, "月末应刷新九个市场。")
+	_expect(int(report.get("markets_updated", 0)) == WorldSectRoster.expected_ai_sect_count(), "月末应刷新全部市场。")
 	_expect(float(updated["demand"]["spirit_ore"]) < 1.8 and float(updated["event_modifiers"]["spirit_ore"]) < 2.0, "需求与事件修正应逐月回归常态。")
 	var snapshot: Dictionary = root.get_node("SaveManager").create_snapshot()
 	_world_data_manager.market_states.clear()
 	_expect(root.get_node("SaveManager").apply_snapshot(snapshot), "市场状态和交易历史应可存档恢复。")
-	_expect(_market_manager.get_markets().size() == 9 and _market_manager.get_market(market_id).has("stock"), "读档后市场库存不得丢失。")
+	_expect(_market_manager.get_markets().size() == WorldSectRoster.expected_ai_sect_count() and _market_manager.get_market(market_id).has("stock"), "读档后市场库存不得丢失。")
 
 
 func _test_market_ui() -> void:
@@ -101,7 +103,7 @@ func _test_market_ui() -> void:
 	var section: VBoxContainer = overview.get_node("MarginContainer/RootBox/FunctionPanel/FunctionBox/MarketSection")
 	var option: OptionButton = section.get_node("ControlBox/MarketOption")
 	var list: VBoxContainer = section.get_node("ItemScroll/ItemList")
-	_expect(section.visible and option.item_count == 9, "市场界面应展示九个区域市场。")
+	_expect(section.visible and option.item_count == WorldSectRoster.expected_ai_sect_count(), "市场界面应展示全部区域市场。")
 	_expect(list.get_child_count() == 11, "市场应显示标题和10种非灵石商品。")
 	var first_row: HBoxContainer = list.get_child(1)
 	_expect(first_row.get_child_count() == 3, "每种商品应包含价格信息、购买和出售按钮。")

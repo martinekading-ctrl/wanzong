@@ -1,5 +1,7 @@
 extends SceneTree
 
+const WorldSectRoster = preload("res://scripts/world/WorldSectRoster.gd")
+
 var _failures := PackedStringArray()
 var _game_state: Node
 var _world_data_manager: Node
@@ -41,9 +43,9 @@ func _test_ai_data_matches_world_counts() -> void:
 	_game_state.new_game()
 	_initialization_ms = Time.get_ticks_msec() - started_at
 	var ai_sects: Array = _world_data_manager.get_ai_sects()
-	_expect(ai_sects.size() == 9, "世界必须包含9个AI宗门。")
-	_expect(_ai_manager.get_ai_sect_ids().size() == 9, "AI管理器必须索引9个宗门。")
-	_expect(_world_data_manager.ai_states.size() == 9, "每个AI宗门必须拥有独立AI状态。")
+	_expect(ai_sects.size() == WorldSectRoster.expected_ai_sect_count(), "世界AI宗门数量必须匹配当前名册。")
+	_expect(_ai_manager.get_ai_sect_ids().size() == WorldSectRoster.expected_ai_sect_count(), "AI管理器必须索引当前名册中的AI宗门。")
+	_expect(_world_data_manager.ai_states.size() == WorldSectRoster.expected_ai_sect_count(), "每个AI宗门必须拥有独立AI状态。")
 	for sect in ai_sects:
 		var sect_id: String = str(sect["sect_id"])
 		var actual_count: int = _world_data_manager.get_disciples_by_sect_id(sect_id).size()
@@ -70,8 +72,11 @@ func _test_daily_simulation_uses_shared_rules() -> void:
 	var report: Dictionary = _game_state.next_day()
 	var ai_summary: Dictionary = report.get("ai_summary", {})
 	_first_daily_ms = int(ai_summary.get("duration_ms", 0))
-	_expect(int(ai_summary.get("sects_updated", 0)) == 9, "每日推进必须更新全部9个活跃AI宗门。")
-	_expect(int(ai_summary.get("disciples_updated", 0)) > 1000, "每日推进必须覆盖全部AI弟子。")
+	_expect(int(ai_summary.get("sects_updated", 0)) == WorldSectRoster.expected_ai_sect_count(), "每日推进必须更新全部活跃AI宗门。")
+	var expected_ai_disciples: int = 0
+	for ai_sect_id in _ai_manager.get_ai_sect_ids():
+		expected_ai_disciples += _world_data_manager.get_disciples_by_sect_id(ai_sect_id).size()
+	_expect(int(ai_summary.get("disciples_updated", 0)) >= expected_ai_disciples, "每日推进必须覆盖全部AI弟子。")
 	_expect(int(ai_summary.get("duration_ms", 999999)) < 500, "完整AI世界单日推进目标应低于500毫秒。")
 	var resources_after: Dictionary = _world_data_manager.get_sect_resources(sect_id)
 	_expect(resources_after != resources_before, "AI宗门资源应通过共享经济规则发生变化。")
@@ -96,7 +101,7 @@ func _test_monthly_operations_and_persistence() -> void:
 		)
 	var monthly: Dictionary = final_report.get("ai_summary", {}).get("monthly", {})
 	_expect(_monthly_max_daily_ms < 500, "包含月度决策的完整AI推进也应低于500毫秒。")
-	_expect(int(monthly.get("sects_updated", 0)) == 9, "每月末必须更新9个AI宗门的运营决策。")
+	_expect(int(monthly.get("sects_updated", 0)) == WorldSectRoster.expected_ai_sect_count(), "每月末必须更新全部AI宗门的运营决策。")
 	for sect_id in _ai_manager.get_ai_sect_ids():
 		var state: Dictionary = _world_data_manager.ai_states[sect_id]
 		_expect(int(state.get("monthly_cycle_count", 0)) == 1, "%s月度周期计数应增加。" % sect_id)

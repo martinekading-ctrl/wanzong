@@ -1,5 +1,7 @@
 extends SceneTree
 
+const WorldSectRoster = preload("res://scripts/world/WorldSectRoster.gd")
+
 var _failures := PackedStringArray()
 var _game_state: Node
 var _battle_manager: Node
@@ -35,7 +37,7 @@ func _test_empty_and_sparring_report() -> void:
 	var target_option: OptionButton = report.get_node("Margin/RootBox/ControlBar/TargetOption")
 	var summary: Label = report.get_node("Margin/RootBox/SummaryLabel")
 	var log_label: Label = report.get_node("Margin/RootBox/LogPanel/LogScroll/LogLabel")
-	_expect(target_option.item_count == 9, "切磋目标应包含九个AI宗门。")
+	_expect(target_option.item_count == WorldSectRoster.expected_ai_sect_count(), "切磋目标应包含全部AI宗门。")
 	_expect(summary.text.contains("暂无战报"), "没有战斗时应显示明确空状态。")
 	report.call("_on_spar_pressed")
 	await process_frame

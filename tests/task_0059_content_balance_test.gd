@@ -1,5 +1,7 @@
 extends SceneTree
 
+const WorldSectRoster = preload("res://scripts/world/WorldSectRoster.gd")
+
 var _failures := PackedStringArray()
 var _game_state: Node
 var _world_data: Node
@@ -90,7 +92,7 @@ func _test_balance_simulation() -> void:
 	var result: Dictionary = BalanceSimulation.run(360, true)
 	_expect(int(result.get("days_completed", 0)) == 360, "数值模拟应完整推进三百六十天。")
 	_expect(int(result.get("negative_resource_count", -1)) == 0, "长期模拟中经济资源不得出现负数。")
-	_expect(int(result.get("sect_count", 0)) >= 10 and int(result.get("active_ai_count", 0)) >= 9, "长期模拟应维持完整世界宗门数量。")
+	_expect(int(result.get("sect_count", 0)) >= WorldSectRoster.expected_sect_count() and int(result.get("active_ai_count", 0)) >= WorldSectRoster.expected_ai_sect_count(), "长期模拟应维持完整初始世界宗门数量。")
 	_expect(int(result.get("maximum_day_ms", 10000)) < 1000, "包含自动存档的单日模拟峰值不应超过一秒。")
 	_expect(bool(result.get("restored", false)), "数值模拟必须成功恢复执行前快照。")
 	_expect([_game_state.year, _game_state.month, _game_state.day] == original_date, "回滚后游戏日期必须保持不变。")
