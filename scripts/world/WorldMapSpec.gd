@@ -47,6 +47,11 @@ static func marker_search_radius_cells() -> int:
 	return maxi(1, ceili(64.0 * float(GRID_SIZE.x) / float(OLD_GRID_SIZE.x)))
 
 
+static func object_placement_search_radius_cells() -> int:
+	# 受限于半张地图的环形搜索：可跨越海岸，但不会扫描完整 272×272 格地形。
+	return GRID_SIZE.x / 2
+
+
 static func is_world_position_in_bounds(world_position: Vector2) -> bool:
 	return WORLD_RECT.has_point(world_position)
 

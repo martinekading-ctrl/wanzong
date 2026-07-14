@@ -12,28 +12,6 @@ const ECONOMIC_RESOURCE_KEYS: Array[String] = [
 	"population",
 ]
 
-## 世界地图锚点使用归一化坐标，避免地图尺寸变化时继续保留旧绝对坐标。
-const SECT_ANCHORS_NORMALIZED: Array[Vector2] = [
-	Vector2(0.50, 0.52), Vector2(0.24, 0.23), Vector2(0.40, 0.19), Vector2(0.70, 0.23),
-	Vector2(0.83, 0.34), Vector2(0.78, 0.53), Vector2(0.82, 0.76), Vector2(0.59, 0.81),
-	Vector2(0.30, 0.80), Vector2(0.19, 0.54),
-]
-const RESOURCE_ANCHORS_NORMALIZED: Array[Vector2] = [
-	Vector2(350.0 / 4096.0, 450.0 / 4096.0), Vector2(1050.0 / 4096.0, 420.0 / 4096.0),
-	Vector2(2350.0 / 4096.0, 620.0 / 4096.0), Vector2(3720.0 / 4096.0, 720.0 / 4096.0),
-	Vector2(3600.0 / 4096.0, 2400.0 / 4096.0), Vector2(2520.0 / 4096.0, 3500.0 / 4096.0),
-	Vector2(1200.0 / 4096.0, 3600.0 / 4096.0), Vector2(420.0 / 4096.0, 2550.0 / 4096.0),
-	Vector2(410.0 / 4096.0, 1250.0 / 4096.0), Vector2(1900.0 / 4096.0, 520.0 / 4096.0),
-	Vector2(2600.0 / 4096.0, 1280.0 / 4096.0), Vector2(3260.0 / 4096.0, 2200.0 / 4096.0),
-	Vector2(1450.0 / 4096.0, 2650.0 / 4096.0), Vector2(350.0 / 4096.0, 650.0 / 4096.0),
-	Vector2(980.0 / 4096.0, 1350.0 / 4096.0), Vector2(1600.0 / 4096.0, 1250.0 / 4096.0),
-	Vector2(2300.0 / 4096.0, 950.0 / 4096.0), Vector2(3600.0 / 4096.0, 1200.0 / 4096.0),
-	Vector2(3260.0 / 4096.0, 2850.0 / 4096.0), Vector2(2800.0 / 4096.0, 3600.0 / 4096.0),
-	Vector2(1500.0 / 4096.0, 3400.0 / 4096.0), Vector2(600.0 / 4096.0, 3500.0 / 4096.0),
-	Vector2(350.0 / 4096.0, 2300.0 / 4096.0), Vector2(2500.0 / 4096.0, 1650.0 / 4096.0),
-	Vector2(3800.0 / 4096.0, 3000.0 / 4096.0), Vector2(1100.0 / 4096.0, 2200.0 / 4096.0),
-]
-
 # 世界地图上的宗门数据。
 var sects: Array = []
 
@@ -257,30 +235,33 @@ func reset_world_data() -> void:
 
 ## 新地图布局只在新游戏初始化时生成绝对世界坐标；正式 World 会再落到安全陆地。
 func _apply_compact_map_anchors() -> void:
-	for index in range(mini(sects.size(), SECT_ANCHORS_NORMALIZED.size())):
+	var anchor_errors := WorldMapAnchors.validate()
+	if not anchor_errors.is_empty():
+		for anchor_error in anchor_errors:
+			push_error("World map anchor validation failed: " + anchor_error)
+		return
+	if sects.size() != WorldMapAnchors.SECT_ANCHORS_NORMALIZED.size():
+		push_error("Compact map sect anchor count does not match baseline sects.")
+		return
+	for index in range(sects.size()):
 		var sect_data: Dictionary = sects[index]
-		var world_position: Vector2 = WorldMapSpec.normalized_to_world(SECT_ANCHORS_NORMALIZED[index])
+		var world_position: Vector2 = WorldMapSpec.normalized_to_world(WorldMapAnchors.SECT_ANCHORS_NORMALIZED[index])
 		sect_data["location"] = world_position
 		sect_data["position"] = world_position
 		sects[index] = sect_data
-	if RESOURCE_ANCHORS_NORMALIZED.size() != resources.size():
+	if WorldMapAnchors.RESOURCE_ANCHORS_NORMALIZED.size() != resources.size():
 		push_error("Compact map resource anchor count does not match baseline resources.")
 		return
 	for index in range(resources.size()):
 		var resource_data: Dictionary = resources[index]
-		resource_data["position"] = WorldMapSpec.normalized_to_world(RESOURCE_ANCHORS_NORMALIZED[index])
+		resource_data["position"] = WorldMapSpec.normalized_to_world(WorldMapAnchors.RESOURCE_ANCHORS_NORMALIZED[index])
 		resources[index] = resource_data
-	var slot_anchors: Array[Vector2] = [
-		Vector2(1868.0 / 4096.0, 1928.0 / 4096.0), Vector2(2048.0 / 4096.0, 1868.0 / 4096.0),
-		Vector2(2228.0 / 4096.0, 1938.0 / 4096.0), Vector2(1848.0 / 4096.0, 2168.0 / 4096.0),
-		Vector2(2068.0 / 4096.0, 2198.0 / 4096.0), Vector2(2268.0 / 4096.0, 2148.0 / 4096.0),
-	]
-	if slot_anchors.size() != build_slots.size():
+	if WorldMapAnchors.BUILD_SLOT_ANCHORS_NORMALIZED.size() != build_slots.size():
 		push_error("Compact map build slot anchor count does not match baseline build slots.")
 		return
 	for index in range(build_slots.size()):
 		var slot_data: Dictionary = build_slots[index]
-		slot_data["position"] = WorldMapSpec.normalized_to_world(slot_anchors[index])
+		slot_data["position"] = WorldMapSpec.normalized_to_world(WorldMapAnchors.BUILD_SLOT_ANCHORS_NORMALIZED[index])
 		build_slots[index] = slot_data
 
 
@@ -632,15 +613,16 @@ func update_resource_position(resource_id: int, position: Vector2) -> bool:
 
 
 func reposition_player_build_slots(player_position: Vector2) -> void:
-	var slot_offsets: Array[Vector2] = [
-		Vector2(-120, -80), Vector2(0, -120), Vector2(120, -70),
-		Vector2(-135, 75), Vector2(15, 105), Vector2(135, 60),
-	]
+	if WorldMapAnchors.BUILD_SLOT_ANCHORS_NORMALIZED.size() != build_slots.size():
+		push_error("Compact map build slot anchor count does not match baseline build slots.")
+		return
+	var player_anchor_position := WorldMapSpec.normalized_to_world(WorldMapAnchors.SECT_ANCHORS_NORMALIZED[0])
 	for index in range(build_slots.size()):
 		var slot_data: Dictionary = build_slots[index]
 		if str(slot_data.get("owner_sect_id", "")) != "sect_001":
 			continue
-		slot_data["position"] = WorldMapSpec.clamp_world_position(player_position + slot_offsets[index % slot_offsets.size()])
+		var slot_anchor_position := WorldMapSpec.normalized_to_world(WorldMapAnchors.BUILD_SLOT_ANCHORS_NORMALIZED[index])
+		slot_data["position"] = WorldMapSpec.clamp_world_position(player_position + slot_anchor_position - player_anchor_position)
 		build_slots[index] = slot_data
 
 

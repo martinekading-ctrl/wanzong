@@ -87,6 +87,7 @@ var hill_markers: Array[Vector2i] = []
 var sect_cells: Array[Vector2i] = []
 var resource_cells: Array[Vector2i] = []
 var marker_placement_valid: bool = true
+var marker_placement_result: Dictionary = {}
 
 var tree_green_textures: Array[Texture2D] = []
 var tree_pine_textures: Array[Texture2D] = []
@@ -124,6 +125,7 @@ func generate_for_bake() -> void:
 	_generate_world()
 	_collect_nature_markers()
 	var marker_result: Dictionary = _calculate_marker_placements()
+	marker_placement_result = marker_result.duplicate(true)
 	marker_placement_valid = bool(marker_result.get("success", false))
 	if preview_mode:
 		preview_camera.position = Vector2(WORLD_SIZE) * 0.5
@@ -605,16 +607,13 @@ func _is_mountain_edge(cell: Vector2i) -> bool:
 
 
 func _calculate_marker_placements() -> Dictionary:
-	var requested_sects: Array[Vector2] = [
-		Vector2(0.50, 0.52), # 青玄宗，中央灵州。
-		Vector2(0.24, 0.23), Vector2(0.40, 0.19), Vector2(0.70, 0.23),
-		Vector2(0.83, 0.34), Vector2(0.78, 0.53), Vector2(0.82, 0.76),
-		Vector2(0.59, 0.81), Vector2(0.30, 0.80), Vector2(0.19, 0.54),
-	]
+	var anchor_errors := WorldMapAnchors.validate()
+	if not anchor_errors.is_empty():
+		return {"success": false, "message": "; ".join(anchor_errors), "sect_cells": [], "resource_cells": []}
 	var occupied: Dictionary = {}
 	marker_placement_valid = true
 	sect_cells.clear()
-	for requested_anchor in requested_sects:
+	for requested_anchor in WorldMapAnchors.SECT_ANCHORS_NORMALIZED:
 		var sect_cell := _find_marker_land(WorldMapSpec.normalized_to_cell(requested_anchor), occupied)
 		if sect_cell.x < 0:
 			marker_placement_valid = false
@@ -624,13 +623,8 @@ func _calculate_marker_placements() -> Dictionary:
 		occupied[sect_cell] = true
 
 	resource_cells.clear()
-	var margin: int = WorldMapSpec.marker_margin_cells()
-	var usable: int = GRID_SIZE.x - margin * 2
-	for resource_index in range(26):
-		var requested_cell := Vector2i(
-			margin + (resource_index * 71 + 29) % usable,
-			margin + (resource_index * 107 + 53) % usable
-		)
+	for requested_anchor in WorldMapAnchors.RESOURCE_ANCHORS_NORMALIZED:
+		var requested_cell := WorldMapSpec.normalized_to_cell(requested_anchor)
 		var resource_cell := _find_marker_land(requested_cell, occupied)
 		if resource_cell.x < 0:
 			marker_placement_valid = false
@@ -638,19 +632,25 @@ func _calculate_marker_placements() -> Dictionary:
 			continue
 		resource_cells.append(resource_cell)
 		occupied[resource_cell] = true
-	if sect_cells.size() != 10 or resource_cells.size() != 26:
-		return {"success": false, "message": "marker count mismatch"}
+	if sect_cells.size() != WorldMapAnchors.SECT_ANCHORS_NORMALIZED.size() or resource_cells.size() != WorldMapAnchors.RESOURCE_ANCHORS_NORMALIZED.size():
+		return {"success": false, "message": "marker count mismatch", "sect_cells": sect_cells.duplicate(), "resource_cells": resource_cells.duplicate()}
+	var used_cells: Dictionary = {}
 	for cell in sect_cells + resource_cells:
+		if used_cells.has(cell):
+			return {"success": false, "message": "duplicate marker cell", "sect_cells": sect_cells.duplicate(), "resource_cells": resource_cells.duplicate()}
+		used_cells[cell] = true
+		if cell.x < 0 or cell.y < 0 or cell.x >= GRID_SIZE.x or cell.y >= GRID_SIZE.y:
+			return {"success": false, "message": "marker is out of bounds", "sect_cells": sect_cells.duplicate(), "resource_cells": resource_cells.duplicate()}
 		if not _can_place_marker(_terrain_at(cell)):
-			return {"success": false, "message": "marker is not on safe land"}
-	return {"success": marker_placement_valid, "sect_cells": sect_cells.duplicate(), "resource_cells": resource_cells.duplicate(), "message": ""}
+			return {"success": false, "message": "marker is not on safe land", "sect_cells": sect_cells.duplicate(), "resource_cells": resource_cells.duplicate()}
+	return {"success": marker_placement_valid, "sect_cells": sect_cells.duplicate(), "resource_cells": resource_cells.duplicate(), "build_slot_anchors": WorldMapAnchors.BUILD_SLOT_ANCHORS_NORMALIZED.duplicate(), "message": ""}
 
 
 func _find_marker_land(start_cell: Vector2i, occupied: Dictionary = {}) -> Vector2i:
 	if _can_place_marker(_terrain_at(start_cell)) and not occupied.has(start_cell):
 		return start_cell
 
-	for radius in range(1, WorldMapSpec.marker_search_radius_cells() + 1):
+	for radius in range(1, WorldMapSpec.object_placement_search_radius_cells() + 1):
 		for offset_y in range(-radius, radius + 1):
 			for offset_x in range(-radius, radius + 1):
 				if abs(offset_x) != radius and abs(offset_y) != radius:
