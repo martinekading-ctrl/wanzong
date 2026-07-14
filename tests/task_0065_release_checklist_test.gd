@@ -23,6 +23,12 @@ func _run() -> void:
 	_cleanup()
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(TEST_ROOT.path_join(".world_bake_staging")))
 	_expect(ReleaseFileScanner.find_stale_generated_files(TEST_ROOT).is_empty(), "empty staging directory must be accepted")
+	_write(TEST_ROOT.path_join("ordinary.res"))
+	var clean_scan: Dictionary = ReleaseFileScanner.scan_generated_directory(TEST_ROOT)
+	_expect((clean_scan.get("findings", PackedStringArray()) as PackedStringArray).is_empty(), "ordinary res files must not be false positives")
+	_expect((clean_scan.get("scan_errors", PackedStringArray()) as PackedStringArray).is_empty(), "existing clean root must scan successfully")
+	var missing_scan: Dictionary = ReleaseFileScanner.scan_generated_directory(TEST_ROOT.path_join("missing"))
+	_expect(not (missing_scan.get("scan_errors", PackedStringArray()) as PackedStringArray).is_empty(), "missing scan root must fail closed")
 	_cleanup()
 	if failures.is_empty():
 		print("[Task0065ReleaseChecklist] PASS")
@@ -49,6 +55,7 @@ func _cleanup() -> void:
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(TEST_ROOT.path_join("nested/.world_bake_staging")))
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(TEST_ROOT.path_join("nested")))
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(TEST_ROOT.path_join(".world_bake_staging")))
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(TEST_ROOT.path_join("ordinary.res")))
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(TEST_ROOT))
 
 

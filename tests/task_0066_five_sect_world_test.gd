@@ -67,6 +67,13 @@ func _test_actual_world_placement() -> void:
 		var world := scene.instantiate() as Node2D
 		root.add_child(world)
 		await process_frame
+		_expect(str(world.call("get_loaded_world_map_path")) == "res://scenes/world/GeneratedWorldMap.scn", "正式世界必须加载 GeneratedWorldMap.scn")
+		_expect(not bool(world.call("is_using_simple_world_fallback")), "正式世界不得回退到简化地图")
+		_expect(bool(world.call("is_world_initialization_successful")), "世界初始化必须完整成功")
+		_expect(world.get_node("SectLayer").get_child_count() == 5, "场景中的宗门节点必须恰好为五个")
+		_expect(world.get_node("ResourceLayer").get_child_count() == 26, "场景中的资源节点必须恰好为二十六个")
+		_expect(world.get_node("BuildSlotLayer").get_child_count() == 6, "场景中的建设点必须恰好为六个")
+		var map: Node = world.get_node("MapLayer").get_child(0)
 		var world_data: Node = root.get_node("WorldDataManager")
 		var occupied: Dictionary = {}
 		for sect_data in world_data.call("get_all_sects"):
@@ -74,6 +81,7 @@ func _test_actual_world_placement() -> void:
 			var sect_id := str(sect.get("sect_id", ""))
 			var position: Vector2 = sect.get("location", Vector2.INF)
 			_expect(WorldMapSpec.is_world_position_in_bounds(position), sect_id + " 必须位于世界范围内")
+			_expect(bool(map.call("is_safe_land_world_position", position)), sect_id + " 必须落在安全陆地")
 			var cell := Vector2i(floori(position.x / WorldMapSpec.TILE_SIZE.x), floori(position.y / WorldMapSpec.TILE_SIZE.y))
 			_expect(not occupied.has(cell), sect_id + " 不得与其他宗门共享地图格")
 			occupied[cell] = true
@@ -110,6 +118,13 @@ func _test_save_roster_compatibility() -> void:
 	_expect(int(world_state.get("world_sect_roster_version", 0)) == WorldSectRoster.ROSTER_VERSION, "新存档必须记录五宗门名册版本")
 	_expect((world_state.get("sects", []) as Array).size() == 5, "新存档必须保存五个初始宗门")
 	_expect(bool(save_manager.call("apply_snapshot", snapshot)), "名册版本2存档必须可以恢复")
+	_assert_rejected_without_mutation(save_manager, world_data, game_state, _with_world_mutation(snapshot, func(world: Dictionary) -> void: world["relations"].append({"sect_a_id": "sect_001", "sect_b_id": "sect_999"})), "relations[", "关系孤儿引用")
+	_assert_rejected_without_mutation(save_manager, world_data, game_state, _with_world_mutation(snapshot, func(world: Dictionary) -> void: world["diplomatic_pacts"].append({"member_ids": ["sect_001", "sect_999"], "terms": {"attacker": "sect_999"}})), "diplomatic_pacts[", "契约孤儿引用")
+	_assert_rejected_without_mutation(save_manager, world_data, game_state, _with_world_mutation(snapshot, func(world: Dictionary) -> void: world["war_campaigns"].append({"attacker_sect_id": "sect_999", "defender_sect_id": "sect_001"})), "war_campaigns[", "战争孤儿引用")
+	_assert_rejected_without_mutation(save_manager, world_data, game_state, _with_world_mutation(snapshot, func(world: Dictionary) -> void: world["market_transactions"].append({"trader_sect_id": "sect_999", "market_owner_sect_id": "sect_002"})), "market_transactions[", "交易孤儿引用")
+	_assert_rejected_without_mutation(save_manager, world_data, game_state, _with_world_mutation(snapshot, func(world: Dictionary) -> void: world["ai_states"]["sect_999"] = {}), "ai_states.sect_999", "AI 键错误")
+	_assert_rejected_without_mutation(save_manager, world_data, game_state, _with_world_mutation(snapshot, func(world: Dictionary) -> void: world["sect_resources"].erase("sect_005")), "sect_resources missing key", "资源键错误")
+	_assert_rejected_without_mutation(save_manager, world_data, game_state, _with_world_mutation(snapshot, func(world: Dictionary) -> void: world["mission_instances"].append({"sect_id": "sect_006"})), "早期十宗门", "已退役宗门引用")
 
 	var before_ids: Array[String] = []
 	for sect_data in world_data.call("get_all_sects"):
@@ -147,3 +162,20 @@ func _test_save_roster_compatibility() -> void:
 func _expect(condition: bool, message: String) -> void:
 	if not condition:
 		_failures.append(message)
+
+
+func _with_world_mutation(snapshot: Dictionary, mutation: Callable) -> Dictionary:
+	var variant: Dictionary = snapshot.duplicate(true)
+	var world: Dictionary = variant["world_data"]
+	mutation.call(world)
+	variant["world_data"] = world
+	return variant
+
+
+func _assert_rejected_without_mutation(save_manager: Node, world_data: Node, game_state: Node, snapshot: Dictionary, expected_text: String, label: String) -> void:
+	var before_world: Dictionary = world_data.call("export_world_state")
+	var before_game := {"year": game_state.year, "month": game_state.month, "day": game_state.day, "seed": game_state.world_seed}
+	_expect(not bool(save_manager.call("apply_snapshot", snapshot)), label + " 必须拒绝")
+	_expect(expected_text in str(save_manager.get("last_snapshot_error")), label + " 必须报告具体路径或旧存档原因")
+	_expect(world_data.call("export_world_state") == before_world, label + " 被拒绝后不得污染 WorldDataManager")
+	_expect({"year": game_state.year, "month": game_state.month, "day": game_state.day, "seed": game_state.world_seed} == before_game, label + " 被拒绝后不得污染 GameState")

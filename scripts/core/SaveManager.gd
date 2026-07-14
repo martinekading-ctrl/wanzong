@@ -259,7 +259,10 @@ func migrate_snapshot(raw_snapshot: Dictionary) -> Dictionary:
 	if raw_snapshot.is_empty():
 		return {"success": false, "message": "空存档。"}
 	var snapshot: Dictionary = raw_snapshot.duplicate(true)
-	if _is_early_ten_sect_development_save(snapshot):
+	var original_world_data: Dictionary = snapshot.get("world_data", {})
+	var retired_references := WorldSectReferenceValidator.find_removed_development_sect_references(original_world_data)
+	if not retired_references.is_empty():
+		push_warning("早期十宗门存档包含已移除引用：" + "; ".join(retired_references))
 		return {"success": false, "message": EARLY_TEN_SECT_SAVE_MESSAGE}
 	var version: int = int(snapshot.get("save_version", 0))
 	if version > CURRENT_SAVE_VERSION:
@@ -280,17 +283,6 @@ func migrate_snapshot(raw_snapshot: Dictionary) -> Dictionary:
 	return {"success": true, "snapshot": snapshot}
 
 
-func _is_early_ten_sect_development_save(snapshot: Dictionary) -> bool:
-	var world_data: Dictionary = snapshot.get("world_data", {})
-	if world_data.is_empty():
-		return false
-	var roster_version: int = int(world_data.get("world_sect_roster_version", 0))
-	if roster_version >= WorldSectRoster.ROSTER_VERSION:
-		return false
-	for sect_data in world_data.get("sects", []):
-		if str((sect_data as Dictionary).get("sect_id", "")) in WorldSectRoster.REMOVED_DEVELOPMENT_SECT_IDS:
-			return true
-	return false
 
 
 func get_save_metadata(path: String) -> Dictionary:
