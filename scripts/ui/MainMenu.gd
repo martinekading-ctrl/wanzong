@@ -2,6 +2,7 @@ extends Control
 
 # 开始游戏按钮。
 @onready var start_button: Button = $CenterContainer/MenuBox/StartButton
+@onready var version_label: Label = $VersionLabel
 @onready var continue_button: Button = $CenterContainer/MenuBox/ContinueButton
 @onready var continue_hint_label: Label = $CenterContainer/MenuBox/ContinueHintLabel
 @onready var settings_button: Button = $CenterContainer/MenuBox/SettingsButton
@@ -17,6 +18,7 @@ extends Control
 
 # 场景准备好后，绑定按钮点击事件。
 func _ready() -> void:
+	_refresh_build_info()
 	start_button.pressed.connect(_on_start_button_pressed)
 	continue_button.pressed.connect(_on_continue_button_pressed)
 	settings_button.pressed.connect(_on_settings_button_pressed)
@@ -27,6 +29,12 @@ func _ready() -> void:
 	quit_button.pressed.connect(_on_quit_button_pressed)
 	_refresh_audio_settings()
 	_refresh_continue_state()
+
+
+func _refresh_build_info() -> void:
+	var version := str(ProjectSettings.get_setting("application/config/version", "0.0.0"))
+	var stage := str(ProjectSettings.get_setting("wanzong/build/stage", "Development"))
+	version_label.text = "v%s · %s\n开发中版本：UI、场景与美术尚未完成" % [version, stage]
 
 
 # 点击“开始游戏”后，进入俯视大地图。
