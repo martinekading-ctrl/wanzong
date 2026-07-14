@@ -10,18 +10,17 @@ func _initialize() -> void:
 
 func _run() -> void:
 	var include_slow: bool = "--include-slow" in OS.get_cmdline_user_args()
-	var test_files := _get_test_files()
-	if test_files.is_empty():
+	var plan := _build_test_plan(include_slow)
+	if plan.is_empty():
 		push_error("[RunAllTests] FAILED: no test files found")
 		quit(1)
 		return
 	var failures: int = 0
-	for test_file in test_files:
+	for item in plan:
+		var test_file: String = str(item["test_file"])
 		_cleanup_test_state()
 		var output: Array[String] = []
-		var arguments := PackedStringArray(["--headless", "--path", ProjectSettings.globalize_path("res://"), "--script", ProjectSettings.globalize_path(TEST_DIRECTORY.path_join(test_file))])
-		if test_file == WORLD_ONLY_TEST and not include_slow:
-			arguments.append("--world-only")
+		var arguments: PackedStringArray = item["arguments"]
 		var exit_code: int = OS.execute(OS.get_executable_path(), arguments, output, true)
 		print("[RunAllTests] %s exit=%d" % [test_file, exit_code])
 		for line in output:
@@ -30,7 +29,7 @@ func _run() -> void:
 			failures += 1
 	_cleanup_test_state()
 	if failures == 0:
-		print("[RunAllTests] PASS (%d tests)" % test_files.size())
+		print("[RunAllTests] PASS (%d tests)" % plan.size())
 		quit(0)
 		return
 	push_error("[RunAllTests] FAILED: %d test(s)" % failures)
@@ -51,6 +50,24 @@ func _get_test_files() -> PackedStringArray:
 	directory.list_dir_end()
 	files.sort()
 	return files
+
+
+func _build_test_plan(include_slow: bool) -> Array[Dictionary]:
+	var plan: Array[Dictionary] = []
+	for test_file in _get_test_files():
+		plan.append({
+			"test_file": test_file,
+			"arguments": _build_test_arguments(test_file, include_slow),
+		})
+	return plan
+
+
+func _build_test_arguments(test_file: String, include_slow: bool) -> PackedStringArray:
+	var arguments := PackedStringArray(["--headless", "--path", ProjectSettings.globalize_path("res://"), "--script", ProjectSettings.globalize_path(TEST_DIRECTORY.path_join(test_file))])
+	if test_file == WORLD_ONLY_TEST and not include_slow:
+		arguments.append("--")
+		arguments.append("--world-only")
+	return arguments
 
 
 func _cleanup_test_state() -> void:
