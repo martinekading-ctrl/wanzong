@@ -1,6 +1,5 @@
 extends SceneTree
 
-const SaveManagerScript := preload("res://scripts/core/SaveManager.gd")
 var failures := PackedStringArray()
 
 
@@ -9,7 +8,7 @@ func _initialize() -> void:
 
 
 func _run() -> void:
-	var manager := SaveManagerScript.new()
+	var manager: Node = root.get_node("SaveManager")
 	var migrated: Dictionary = manager.migrate_snapshot(_legacy_snapshot())
 	_expect(bool(migrated.get("success", false)), "v1 snapshot must migrate")
 	var world_data: Dictionary = migrated.get("snapshot", {}).get("world_data", {})
@@ -20,8 +19,16 @@ func _run() -> void:
 	_expect(_near((world_data["build_slots"][0] as Dictionary)["position"], Vector2(1088, 1088)), "build slot must migrate")
 	_expect(_near((world_data["war_campaigns"][0] as Dictionary)["target_position"], Vector2(3264, 3264)), "war target must migrate")
 	_expect(_near((world_data["territory_states"]["sect_001"] as Dictionary)["center"], Vector2(2176, 2176)), "territory center must migrate")
+	_expect(_near((world_data["territory_states"]["sect_001"] as Dictionary)["control_positions"][0], Vector2.ZERO), "territory control positions must migrate")
+	_expect(_near((world_data["territory_states"]["sect_001"] as Dictionary)["boundary_points"][0], Vector2(4352, 4352)), "territory boundary positions must migrate")
+	_expect((world_data["battle_instances"][0] as Dictionary)["ui_preview_position"] == Vector2(5000, 5000), "non-world battle UI vectors must remain unchanged")
+	_expect((world_data["ui_state"] as Dictionary)["map_panel_position"] == Vector2(320, 180), "UI vectors must remain unchanged")
 	var twice: Dictionary = manager.migrate_snapshot(migrated["snapshot"])
 	_expect(twice.get("snapshot", {}) == migrated.get("snapshot", {}), "v2 migration must be idempotent")
+	var already_v2 := _legacy_snapshot()
+	already_v2["world_data"]["world_map_layout_version"] = WorldMapSpec.MAP_LAYOUT_VERSION
+	var unchanged: Dictionary = manager.migrate_snapshot(already_v2)
+	_expect(unchanged.get("snapshot", {}) == already_v2, "explicit v2 snapshots must remain unchanged")
 	if failures.is_empty(): print("[Task0065WorldMapMigration] PASS"); quit(0)
 	else:
 		for failure in failures: push_error("[Task0065WorldMapMigration] " + failure)
@@ -29,7 +36,7 @@ func _run() -> void:
 
 
 func _legacy_snapshot() -> Dictionary:
-	return {"save_version": 1, "game_state": {}, "world_data": {"sects": [{"sect_id":"sect_001", "location":Vector2(2048,2048), "position":Vector2(2048,2048)}], "resources":[{"resource_id":1,"position":Vector2(5000,0)}], "build_slots":[{"slot_id":1,"position":Vector2(1024,1024)}], "war_campaigns":[{"target_position":Vector2(3072,3072)}], "territory_states":{"sect_001":{"center":Vector2(2048,2048),"control_positions":[Vector2(0,0)],"boundary_points":[Vector2(4096,4096)]}}, "disciples":[], "sect_resources":{}, "event_instances":[], "history_entries":[], "ai_states":[]}}
+	return {"save_version": 1, "game_state": {}, "world_data": {"sects": [{"sect_id":"sect_001", "location":Vector2(2048,2048), "position":Vector2(2048,2048)}], "resources":[{"resource_id":1,"position":Vector2(5000,0)}], "build_slots":[{"slot_id":1,"position":Vector2(1024,1024)}], "war_campaigns":[{"target_position":Vector2(3072,3072)}], "territory_states":{"sect_001":{"center":Vector2(2048,2048),"control_positions":[Vector2(0,0)],"boundary_points":[Vector2(4096,4096)]}}, "battle_instances":[{"ui_preview_position":Vector2(5000,5000)}], "ui_state":{"map_panel_position":Vector2(320,180)}, "disciples":[], "sect_resources":{}, "event_instances":[], "history_entries":[], "ai_states":[]}}
 
 
 func _sect(world_data: Dictionary) -> Dictionary: return world_data["sects"][0]
