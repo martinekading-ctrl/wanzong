@@ -79,6 +79,10 @@ static func _validate_exact_keys(value: Variant, path: String, expected_ids: Arr
 static func _validate_references(world_state: Dictionary, ids: Dictionary, messages: PackedStringArray, removed_only: bool) -> void:
 	# Dictionary keys owned by sects.
 	_validate_array_records(world_state.get("sects", []), "sects", ["sect_id"], ids, messages, removed_only)
+	_validate_sect_dictionary_keys(world_state.get("sect_resources", {}), "sect_resources", ids, messages, removed_only)
+	_validate_sect_dictionary_keys(world_state.get("ai_states", {}), "ai_states", ids, messages, removed_only)
+	_validate_sect_dictionary_keys(world_state.get("territory_states", {}), "territory_states", ids, messages, removed_only)
+	_validate_sect_dictionary_keys(world_state.get("sect_inventories", {}), "sect_inventories", ids, messages, removed_only)
 	_validate_keyed_records(world_state.get("territory_states", {}), "territory_states", ["sect_id", "owner_sect_id", "controller_sect_id", "occupier_sect_id"], ids, messages, removed_only)
 	_validate_keyed_records(world_state.get("ai_states", {}), "ai_states", ["sect_id", "target_sect_id", "vassal_of", "ally_sect_id", "enemy_sect_id"], ids, messages, removed_only)
 	_validate_keyed_records(world_state.get("market_states", {}), "market_states", ["owner_sect_id"], ids, messages, removed_only)
@@ -92,6 +96,14 @@ static func _validate_references(world_state: Dictionary, ids: Dictionary, messa
 	_validate_array_records(world_state.get("event_instances", []), "event_instances", ["sect_id", "owner_sect_id", "actor_sect_id", "target_sect_id"], ids, messages, removed_only)
 	_validate_array_records(world_state.get("crafting_jobs", []), "crafting_jobs", ["sect_id", "owner_sect_id"], ids, messages, removed_only)
 	_validate_history(world_state.get("history_entries", []), ids, messages, removed_only)
+
+
+## 仅用于明确以 sect_id 为键的容器；市场、任务与资源的普通 ID 不会进入这里。
+static func _validate_sect_dictionary_keys(value: Variant, path: String, ids: Dictionary, messages: PackedStringArray, removed_only: bool) -> void:
+	if not value is Dictionary:
+		return
+	for key in (value as Dictionary).keys():
+		_validate_id(str(key), path + "." + str(key), ids, messages, removed_only)
 
 
 static func _validate_keyed_records(value: Variant, path: String, fields: Array[String], ids: Dictionary, messages: PackedStringArray, removed_only: bool) -> void:
@@ -159,6 +171,8 @@ static func _validate_pacts(value: Variant, ids: Dictionary, messages: PackedStr
 			for member_index in range((members as Array).size()):
 				var member_id := str((members as Array)[member_index])
 				_validate_id(member_id, path + ".member_ids[%d]" % member_index, ids, messages, removed_only)
+				if not removed_only and member_id != "" and distinct.has(member_id):
+					messages.append(path + ".member_ids contains duplicate sect id: " + member_id)
 				distinct[member_id] = true
 		if not removed_only and (not members is Array or distinct.size() < 2):
 			messages.append(path + ".member_ids requires at least two distinct sect ids")

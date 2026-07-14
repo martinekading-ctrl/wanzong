@@ -2,6 +2,7 @@ extends SceneTree
 
 const WorldSectRoster = preload("res://scripts/world/WorldSectRoster.gd")
 const WorldSectReferenceValidator = preload("res://scripts/world/WorldSectReferenceValidator.gd")
+const WorldSectBaseline = preload("res://scripts/world/WorldSectBaseline.gd")
 const WORLD_SCENE_PATH := "res://scenes/world/World.tscn"
 const LEGACY_SAVE_PATH := "user://task_0066_legacy_ten_sect.save"
 
@@ -53,6 +54,19 @@ func _test_roster_and_initial_world_state() -> void:
 		var disciple: Dictionary = disciple_data
 		_expect(not str(disciple.get("sect_id", "")) in WorldSectRoster.REMOVED_DEVELOPMENT_SECT_IDS, "AI弟子不能引用已移除宗门")
 	var state: Dictionary = world_data.call("export_world_state")
+	var baseline_errors := WorldSectBaseline.validate_sects(sects)
+	_expect(baseline_errors.is_empty(), "五宗门完整元数据基线必须通过")
+	_expect(WorldSectBaseline.validate_sect_resources(world_data.sect_resources).is_empty(), "五套宗门资源基线必须通过")
+	var renamed: Array = sects.duplicate(true); renamed[0]["sect_name"] = "错误名称"
+	_expect(not WorldSectBaseline.validate_sects(renamed).is_empty(), "宗门名称变化必须破坏基线")
+	var power_changed: Array = sects.duplicate(true); power_changed[1]["combat_power"] = 1
+	_expect(not WorldSectBaseline.validate_sects(power_changed).is_empty(), "宗门战力变化必须破坏基线")
+	var resource_changed: Dictionary = world_data.sect_resources.duplicate(true); resource_changed["sect_001"]["food"] = 1
+	_expect(not WorldSectBaseline.validate_sect_resources(resource_changed).is_empty(), "宗门资源变化必须破坏基线")
+	var extra: Array = sects.duplicate(true); extra.append({"sect_id":"sect_999"})
+	_expect(not WorldSectBaseline.validate_sects(extra).is_empty(), "额外宗门必须破坏基线")
+	var missing: Array = sects.duplicate(true); missing.pop_back()
+	_expect(not WorldSectBaseline.validate_sects(missing).is_empty(), "缺少 sect_005 必须破坏基线")
 	_expect(int(state.get("world_sect_roster_version", 0)) == 2, "导出的世界状态必须记录名册版本")
 	_expect(WorldSectReferenceValidator.validate_world_state(state).is_empty(), "初始世界状态不得含悬空宗门引用")
 
@@ -125,6 +139,17 @@ func _test_save_roster_compatibility() -> void:
 	_assert_rejected_without_mutation(save_manager, world_data, game_state, _with_world_mutation(snapshot, func(world: Dictionary) -> void: world["ai_states"]["sect_999"] = {}), "ai_states.sect_999", "AI 键错误")
 	_assert_rejected_without_mutation(save_manager, world_data, game_state, _with_world_mutation(snapshot, func(world: Dictionary) -> void: world["sect_resources"].erase("sect_005")), "sect_resources missing key", "资源键错误")
 	_assert_rejected_without_mutation(save_manager, world_data, game_state, _with_world_mutation(snapshot, func(world: Dictionary) -> void: world["mission_instances"].append({"sect_id": "sect_006"})), "早期十宗门", "已退役宗门引用")
+	for retired_case in [{"sect_resources":"sect_009"}, {"ai_states":"sect_010"}, {"territory_states":"sect_008"}, {"sect_inventories":"sect_006"}]:
+		var container := str(retired_case.keys()[0])
+		var retired_id := str(retired_case[container])
+		var retired_snapshot := _with_world_mutation(snapshot, func(world: Dictionary) -> void: world[container][retired_id] = {})
+		var findings := WorldSectReferenceValidator.find_removed_development_sect_references(retired_snapshot["world_data"])
+		_expect((container + "." + retired_id + " references removed development sect id: " + retired_id) in findings, container + " 退役键必须返回具体路径")
+		_assert_rejected_without_mutation(save_manager, world_data, game_state, retired_snapshot, "早期十宗门", container + " 退役键")
+	_expect(not WorldSectReferenceValidator.validate_world_state(_with_world_mutation(snapshot, func(world: Dictionary) -> void: world["diplomatic_pacts"].append({"member_ids":["sect_001","sect_002","sect_002"]}))["world_data"]).is_empty(), "重复契约成员必须拒绝")
+	_expect(not WorldSectReferenceValidator.validate_world_state(_with_world_mutation(snapshot, func(world: Dictionary) -> void: world["diplomatic_pacts"].append({"member_ids":["sect_001"]}))["world_data"]).is_empty(), "少于两个不同契约成员必须拒绝")
+	_expect(WorldSectReferenceValidator.validate_world_state(_with_world_mutation(snapshot, func(world: Dictionary) -> void: world["diplomatic_pacts"].append({"member_ids":["sect_001","sect_002"]}))["world_data"]).is_empty(), "两个不同有效契约成员必须通过")
+	_expect(not WorldSectReferenceValidator.validate_world_state(_with_world_mutation(snapshot, func(world: Dictionary) -> void: world["diplomatic_pacts"].append({"member_ids":["sect_001","sect_999"]}))["world_data"]).is_empty(), "未知契约成员必须拒绝")
 
 	var before_ids: Array[String] = []
 	for sect_data in world_data.call("get_all_sects"):

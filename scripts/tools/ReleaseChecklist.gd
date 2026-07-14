@@ -2,6 +2,7 @@ extends SceneTree
 
 const WorldSectRoster = preload("res://scripts/world/WorldSectRoster.gd")
 const WorldSectReferenceValidator = preload("res://scripts/world/WorldSectReferenceValidator.gd")
+const WorldSectBaseline = preload("res://scripts/world/WorldSectBaseline.gd")
 
 var failures := PackedStringArray()
 
@@ -32,9 +33,12 @@ func _run() -> void:
 	_expect(world_data.get_all_sects().size() == WorldSectRoster.expected_sect_count(), "必须保留五个初始宗门")
 	_expect(world_data.get_ai_sects().size() == WorldSectRoster.expected_ai_sect_count(), "必须保留四个初始AI宗门")
 	_expect(_has_expected_initial_roster(world_data.get_all_sects()), "初始宗门ID与顺序必须匹配五宗门名册")
+	_expect(WorldSectBaseline.validate_sects(world_data.get_all_sects()).is_empty(), "五宗门元数据基线必须完全一致")
+	_expect(WorldSectBaseline.validate_sect_resources(world_data.sect_resources).is_empty(), "五宗门初始资源基线必须完全一致")
 	_expect(_has_exact_active_sect_keys(world_data.sect_resources), "宗门资源键必须与五宗门名册完全一致")
 	_expect(_has_exact_ai_sect_keys(world_data.ai_states), "AI状态键必须与四个 AI 名册完全一致")
 	_expect(WorldSectReferenceValidator.validate_world_state(world_data.export_world_state()).is_empty(), "世界状态不得包含悬空宗门引用")
+	_expect(WorldSectReferenceValidator.find_removed_development_sect_references(world_data.export_world_state()).is_empty(), "世界状态不得残留退役宗门引用")
 	_expect(world_data.get_all_resources().size() == 26, "必须保留基准的26个资源点")
 	_expect(world_data.get_all_build_slots().size() == 6, "必须保留6个建设点")
 	_expect(_resource_metadata_is_baseline(world_data.get_all_resources()), "资源元数据不得被紧凑地图改写")
