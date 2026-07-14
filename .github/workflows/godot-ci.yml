@@ -1,5 +1,12 @@
 name: Godot Regression
 
+permissions:
+  contents: read
+
+concurrency:
+  group: godot-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 on:
   push:
     branches: [master]
@@ -35,7 +42,10 @@ jobs:
           echo "$HOME/godot" >> "$GITHUB_PATH"
 
       - name: Import project resources
-        run: Godot_v4.7-stable_linux.x86_64 --headless --editor --path . --quit
+        shell: bash
+        run: |
+          set -o pipefail
+          Godot_v4.7-stable_linux.x86_64 --headless --editor --path . --quit 2>&1 | tee godot-import.log
 
       - name: Run fast regression suite
         shell: bash
@@ -48,6 +58,12 @@ jobs:
         run: |
           set -o pipefail
           Godot_v4.7-stable_linux.x86_64 --headless --path . --quit-after 120 2>&1 | tee godot-smoke.log
+
+      - name: Run release checklist
+        shell: bash
+        run: |
+          set -o pipefail
+          Godot_v4.7-stable_linux.x86_64 --headless --path . --script scripts/tools/ReleaseChecklist.gd 2>&1 | tee godot-release-checklist.log
 
       - name: Run ten-year release simulation
         if: github.event_name == 'workflow_dispatch' && inputs.include_slow
@@ -64,5 +80,8 @@ jobs:
           path: |
             godot-regression.log
             godot-smoke.log
+
+            godot-import.log
+            godot-release-checklist.log
             godot-slow.log
           if-no-files-found: ignore

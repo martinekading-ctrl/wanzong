@@ -5,9 +5,11 @@
 **1.0.0 Release Candidate**
 
 基准提交：`782f4ad622fc51a5e9b988283f1f415dc5e2f14c`  
-发布加固分支：`codex/task-0063-release-hardening`
+当前验证分支：`codex/task-0064-rc-verification`
 
 Task-0063 已补齐全局音量持久化、损坏存档回退、地图烘焙事务化、GitHub Actions 回归入口与发布验收文档。自动化检查通过后，仍需要在真实 Windows EXE 与集成显卡设备上完成下列人工验收，才能考虑正式 `v1.0.0` 标签。
+
+Task-0064 正在补齐世界地图快速验收、staging 安全清理、发布检查与 CI 覆盖；状态仍为 RC。
 
 ## 自动化质量门禁
 
