@@ -34,26 +34,39 @@ func bake_world() -> Error:
 		return ERR_BUSY
 	_is_baking = true
 	var started_at: int = Time.get_ticks_msec()
+	var stage_root := ""
+	var preview: Node2D = null
+	var generated_root: Node2D = null
 	var preview_scene := load(PREVIEW_SCENE_PATH) as PackedScene
 	if preview_scene == null:
-		_is_baking = false
-		return ERR_FILE_NOT_FOUND
-	var preview: Node2D = preview_scene.instantiate()
+		return _finish_bake(ERR_FILE_NOT_FOUND, preview, generated_root, stage_root, started_at)
+	preview = preview_scene.instantiate()
+	if preview == null:
+		return _finish_bake(ERR_CANT_CREATE, preview, generated_root, stage_root, started_at)
 	preview.set("preview_mode", false)
 	add_child(preview)
-	await preview.ready
+	if not preview.is_node_ready():
+		await preview.ready
 	var preview_terrain := preview.get_node("TerrainLayer") as TileMapLayer
+	if preview_terrain == null:
+		return _finish_bake(ERR_INVALID_DATA, preview, generated_root, stage_root, started_at)
 	if preview_terrain.get_used_cells().is_empty():
 		preview.call("generate_for_bake")
+	var marker_result: Dictionary = preview.get("marker_placement_result") as Dictionary
+	if not _validate_marker_placement_result(marker_result):
+		push_error("World map baker rejected invalid marker placement: " + str(marker_result.get("message", "unknown reason")))
+		return _finish_bake(ERR_INVALID_DATA, preview, null, "", started_at)
 
 	var stage_id := str(Time.get_ticks_usec())
-	var stage_root := BAKE_STAGING_ROOT.path_join(stage_id)
+	stage_root = BAKE_STAGING_ROOT.path_join(stage_id)
 	var stage_tile_set_path := stage_root.path_join("world_terrain_tileset.tres")
 	var stage_nature_directory := stage_root.path_join("nature_batches")
 	var stage_scene_path := stage_root.path_join("GeneratedWorldMap.tscn")
 	var stage_runtime_path := stage_root.path_join("GeneratedWorldMap.scn")
-	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(stage_nature_directory))
-	var generated_root := Node2D.new()
+	var create_directory_error := DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(stage_nature_directory))
+	if create_directory_error != OK:
+		return _finish_bake(create_directory_error, preview, generated_root, stage_root, started_at)
+	generated_root = Node2D.new()
 	generated_root.name = "GeneratedWorldMap"
 	generated_root.set_script(load(GENERATED_SCRIPT_PATH))
 	var terrain_copy := preview.get_node("TerrainLayer").duplicate() as TileMapLayer
@@ -65,7 +78,9 @@ func bake_world() -> Error:
 	generated_root.add_child(terrain_copy)
 	terrain_copy.owner = generated_root
 	generated_root.set("safe_land_source_ids", _collect_safe_source_ids(preview))
-	_add_baked_nature(preview, generated_root, stage_nature_directory, staged_files)
+	var nature_bake_error := _add_baked_nature(preview, generated_root, stage_nature_directory, staged_files)
+	if nature_bake_error != OK:
+		return _finish_bake(nature_bake_error, preview, generated_root, stage_root, started_at)
 	if not _validate_baked_nature(generated_root):
 		push_error("自然物MultiMesh变换无效；请在非headless编辑器中重新烘焙。")
 		return _finish_bake(ERR_INVALID_DATA, preview, generated_root, stage_root, started_at)
@@ -108,6 +123,24 @@ func _collect_safe_source_ids(preview: Node) -> Array[int]:
 	return result
 
 
+func _validate_marker_placement_result(marker_result: Dictionary) -> bool:
+	if not bool(marker_result.get("success", false)):
+		return false
+	var sect_cells: Array = marker_result.get("sect_cells", [])
+	var resource_cells: Array = marker_result.get("resource_cells", [])
+	if sect_cells.size() != WorldMapAnchors.SECT_ANCHORS_NORMALIZED.size() or resource_cells.size() != WorldMapAnchors.RESOURCE_ANCHORS_NORMALIZED.size():
+		return false
+	var used_cells: Dictionary = {}
+	for cell_value in sect_cells + resource_cells:
+		if not (cell_value is Vector2i):
+			return false
+		var cell: Vector2i = cell_value
+		if cell.x < 0 or cell.y < 0 or cell.x >= WorldMapSpec.GRID_SIZE.x or cell.y >= WorldMapSpec.GRID_SIZE.y or used_cells.has(cell):
+			return false
+		used_cells[cell] = true
+	return used_cells.size() == WorldMapAnchors.SECT_ANCHORS_NORMALIZED.size() + WorldMapAnchors.RESOURCE_ANCHORS_NORMALIZED.size()
+
+
 func _save_external_tile_set(terrain_layer: TileMapLayer, stage_path: String, final_path: String, staged_files: Dictionary) -> Error:
 	if terrain_layer.tile_set == null:
 		return ERR_INVALID_DATA
@@ -122,7 +155,7 @@ func _save_external_tile_set(terrain_layer: TileMapLayer, stage_path: String, fi
 	return OK if terrain_layer.tile_set != null else ERR_CANT_OPEN
 
 
-func _add_baked_nature(preview: Node, generated_root: Node2D, stage_nature_directory: String, staged_files: Dictionary) -> void:
+func _add_baked_nature(preview: Node, generated_root: Node2D, stage_nature_directory: String, staged_files: Dictionary) -> Error:
 	var nature_root := Node2D.new()
 	nature_root.name = "NatureObjects"
 	generated_root.add_child(nature_root)
@@ -137,7 +170,7 @@ func _add_baked_nature(preview: Node, generated_root: Node2D, stage_nature_direc
 	_collect_marker_instances(preview, batches, "wasteland_markers", "dead_tree_textures", SPECIAL_TREE_ICON_SIZE)
 	_collect_marker_instances(preview, batches, "rock_markers", "rock_textures", ROCK_ICON_SIZE)
 	_collect_marker_instances(preview, batches, "hill_markers", "hill_textures", HILL_ICON_SIZE)
-	_create_multimesh_batches(nature_root, batches, generated_root, stage_nature_directory, staged_files)
+	return _create_multimesh_batches(nature_root, batches, generated_root, stage_nature_directory, staged_files)
 
 
 func _collect_marker_instances(preview: Node, batches: Dictionary, marker_property: String, texture_property: String, icon_size: int) -> void:
@@ -164,7 +197,7 @@ func _collect_instance(batches: Dictionary, textures: Array, anchor_position: Ve
 	transforms.append(Transform2D(0.0, Vector2.ONE * scale_factor, 0.0, draw_position))
 
 
-func _create_multimesh_batches(parent: Node2D, batches: Dictionary, owner: Node, stage_nature_directory: String, staged_files: Dictionary) -> void:
+func _create_multimesh_batches(parent: Node2D, batches: Dictionary, owner: Node, stage_nature_directory: String, staged_files: Dictionary) -> Error:
 	var sorted_keys: Array = batches.keys()
 	sorted_keys.sort()
 	for batch_index in range(sorted_keys.size()):
@@ -196,12 +229,14 @@ func _create_multimesh_batches(parent: Node2D, batches: Dictionary, owner: Node,
 		if save_error == OK:
 			batch.multimesh = ResourceLoader.load(stage_batch_path, "", ResourceLoader.CACHE_MODE_IGNORE) as MultiMesh
 			if batch.multimesh == null or batch.multimesh.instance_count == 0:
-				push_warning("自然物临时批次校验失败：" + stage_batch_path)
-				continue
+				push_error("自然物临时批次校验失败：" + stage_batch_path)
+				return ERR_INVALID_DATA
 			batch.multimesh.take_over_path(final_batch_path)
 			staged_files[stage_batch_path] = final_batch_path
 		else:
-			push_warning("自然物临时批次保存失败：" + stage_batch_path)
+			push_error("自然物临时批次保存失败：" + stage_batch_path)
+			return save_error
+	return OK
 
 
 func _validate_baked_nature(generated_root: Node2D) -> bool:
@@ -211,8 +246,6 @@ func _validate_baked_nature(generated_root: Node2D) -> bool:
 	for child in nature_root.get_children():
 		var batch := child as MultiMeshInstance2D
 		if batch == null or batch.multimesh == null or batch.multimesh.instance_count == 0:
-			return false
-		if batch.multimesh.buffer.is_empty():
 			return false
 	return true
 

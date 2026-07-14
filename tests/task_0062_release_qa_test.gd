@@ -93,8 +93,9 @@ func _validate_world_instance(world: Node) -> void:
 		return
 	var nature: Node = map.get_node("NatureObjects")
 	_expect(nature.get_child_count() < 50, "自然物渲染节点必须少于50。")
-	_expect(int(map.call("get_nature_instance_count")) == 1668, "自然物批处理不得丢失烘焙实例。")
-	_expect(_count_nodes(map) == 35, "运行时烘焙地图应保持35个批处理节点。")
+	_expect(int(map.call("get_terrain_cell_count")) == WorldMapSpec.GRID_SIZE.x * WorldMapSpec.GRID_SIZE.y, "运行时烘焙地图格数必须符合统一规格。")
+	_expect(int(map.call("get_nature_instance_count")) > 0 and int(map.call("get_nature_instance_count")) < 1668, "缩小后的自然物必须存在且少于旧地图。")
+	_expect(_count_nodes(map) < 50, "运行时烘焙地图应保持少量批处理节点。")
 	var resource_layer: Node = world.get_node("ResourceLayer")
 	var sect_layer: Node = world.get_node("SectLayer")
 	_expect(resource_layer.get_child_count() == _world_data.get_all_resources().size(), "资源点节点数量应与世界数据一致。")

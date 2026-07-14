@@ -18,11 +18,9 @@ const SIMPLE_WORLD_FALLBACK_PATH := "res://scenes/world/SimpleWorldFallback.tscn
 const WORLD_READY_WARNING_MS: int = 2000
 const MAP_INSTANTIATE_WARNING_MS: int = 1000
 
-# 像素世界扩大为 6144 x 6144，旧世界坐标按比例映射显示。
-const MAP_SIZE: Vector2 = Vector2(6144, 6144)
+## 正式世界尺寸只从 WorldMapSpec 获取；旧地图坐标不再在显示层缩放。
+const MAP_SIZE: Vector2 = Vector2(WorldMapSpec.WORLD_SIZE)
 const MAP_ORIGIN: Vector2 = Vector2.ZERO
-const SOURCE_MAP_SIZE: float = 4096.0
-const MAP_POSITION_SCALE: float = MAP_SIZE.x / SOURCE_MAP_SIZE
 
 # 宗门图标统一配置，后续只需要修改这里即可调整显示大小。
 const SECT_ICON_DIRECTORY: String = "res://assets/pixel/sects/processed"
@@ -42,8 +40,9 @@ const RESOURCE_TYPE_DIRECTORIES: Dictionary = {
 	"secret_realm": "secret_realm",
 }
 
-# 资源点与宗门之间的最小距离，避免图标重叠。
-const RESOURCE_MIN_DISTANCE_TO_SECT: float = 250.0
+# 资源点与宗门/资源点之间的最小格距，坐标阈值从同一常量推导。
+const RESOURCE_MIN_CELL_DISTANCE: int = 16
+const RESOURCE_MIN_DISTANCE_TO_SECT: float = float(RESOURCE_MIN_CELL_DISTANCE * WorldMapSpec.TILE_SIZE.x)
 
 # 启动时自动扫描到的宗门图标路径，按文件名排序。
 var sect_icon_paths: Array[String] = []
@@ -119,11 +118,20 @@ func _ready() -> void:
 	world_camera.position = MAP_ORIGIN + MAP_SIZE * 0.5
 	world_camera.make_current()
 	WorldDataManager.init_world_data()
+	if pixel_world == null or not _resolve_world_positions_on_generated_land():
+		_abort_world_initialization("无法将世界对象放置到烘焙地图的安全陆地。")
+		return
+	var icon_scan_started_at: int = Time.get_ticks_msec()
 	_load_sect_icon_paths()
 	_load_resource_icon_paths()
+	print("[WorldPerf] Icon path scan: %d ms" % (Time.get_ticks_msec() - icon_scan_started_at))
 	_validate_resource_positions()
+	var territory_recalculate_started_at: int = Time.get_ticks_msec()
 	TerritoryManager.recalculate_all()
+	print("[WorldPerf] Territory recalculate: %d ms" % (Time.get_ticks_msec() - territory_recalculate_started_at))
+	var territory_nodes_started_at: int = Time.get_ticks_msec()
 	_create_territory_areas()
+	print("[WorldPerf] Territory nodes: %d ms" % (Time.get_ticks_msec() - territory_nodes_started_at))
 	visual_assets_started_at = Time.get_ticks_msec()
 	var resource_started_at: int = Time.get_ticks_msec()
 	_create_resource_nodes()
@@ -141,6 +149,23 @@ func _ready() -> void:
 	print("[WorldPerf] World ready total: %d ms" % ready_elapsed)
 	if ready_elapsed > WORLD_READY_WARNING_MS:
 		push_warning("[WorldPerf][WARNING] 世界地图加载超过2秒")
+
+
+func _abort_world_initialization(message: String) -> void:
+	push_error("[World] 初始化已中止：" + message)
+	set_process(false)
+	set_process_unhandled_input(false)
+	pending_texture_paths.clear()
+	texture_bindings.clear()
+	for layer in [territory_layer, resource_layer, build_slot_layer, sect_layer, map_layer]:
+		if layer == null:
+			continue
+		for child in layer.get_children():
+			child.queue_free()
+	pixel_world = null
+	build_slot_layer.visible = false
+	_set_enter_sect_button_visible(false)
+	tip_label.text = "世界地图初始化失败，请检查烘焙地图与日志。"
 
 
 func _process(_delta: float) -> void:
@@ -223,10 +248,7 @@ func _create_sect_nodes() -> void:
 	for sect_index in range(all_sects.size()):
 		var sect_data: Dictionary = all_sects[sect_index]
 		var display_data: Dictionary = sect_data.duplicate(true)
-		display_data["position"] = pixel_world.call(
-			"find_nearest_land_world_position",
-			_scale_source_position(sect_data["location"])
-		)
+		display_data["position"] = sect_data["location"]
 		var sect_node: SectNode = SectNodeScript.new()
 		var icon_path: String = _get_sect_icon_path(
 			sect_index,
@@ -392,10 +414,7 @@ func _create_territory_areas() -> void:
 func _create_resource_nodes() -> void:
 	for resource_data in WorldDataManager.get_all_resources():
 		var display_data: Dictionary = resource_data.duplicate(true)
-		display_data["position"] = pixel_world.call(
-			"find_nearest_land_world_position",
-			_scale_source_position(resource_data["position"])
-		)
+		display_data["position"] = resource_data["position"]
 		var resource_node: ResourceNode = ResourceNodeScript.new()
 		var resource_type: String = str(display_data["resource_type"])
 		var icon_path: String = _get_resource_icon_path(resource_type)
@@ -414,16 +433,57 @@ func _create_resource_nodes() -> void:
 func _create_build_slot_nodes() -> void:
 	for slot_data in WorldDataManager.get_build_slots_by_sect_id("sect_001"):
 		var display_data: Dictionary = slot_data.duplicate(true)
-		display_data["position"] = _scale_source_position(slot_data["position"])
+		display_data["position"] = slot_data["position"]
 		var build_slot_node: BuildSlotNode = BuildSlotNodeScript.new()
 		build_slot_node.setup(display_data)
 		build_slot_node.selected.connect(_on_build_slot_selected.bind(build_slot_node))
 		build_slot_layer.add_child(build_slot_node)
 
 
-# 旧数据仍使用 4096 坐标，只在正式地图显示时映射到新尺寸。
-func _scale_source_position(source_position: Vector2) -> Vector2:
-	return source_position * MAP_POSITION_SCALE
+## 将归一化锚点落到正式烘焙地图的安全陆地。结果写回世界数据，
+## 保证领地、点击节点、存档与地图显示使用同一套世界坐标。
+func _resolve_world_positions_on_generated_land() -> bool:
+	if pixel_world == null or not pixel_world.has_method("find_nearest_available_land_world_position"):
+		push_error("Generated world map cannot resolve safe land positions.")
+		return false
+	var occupied_cells: Dictionary = {}
+	var sect_resolve_started_at: int = Time.get_ticks_msec()
+	var sects: Array = WorldDataManager.get_all_sects().duplicate()
+	sects.sort_custom(func(left: Dictionary, right: Dictionary) -> bool: return str(left.get("sect_id", "")) < str(right.get("sect_id", "")))
+	for sect_data in sects:
+		var sect_id: String = str(sect_data.get("sect_id", ""))
+		var resolved: Vector2 = pixel_world.call(
+			"find_nearest_available_land_world_position",
+			WorldMapSpec.clamp_world_position(sect_data.get("location", WorldMapSpec.world_center())),
+			occupied_cells,
+			0
+		)
+		if not WorldMapSpec.is_world_position_in_bounds(resolved):
+			push_error("Could not place sect on safe compact world land: " + sect_id)
+			return false
+		WorldDataManager.update_sect_data(sect_id, "location", resolved)
+		occupied_cells[pixel_world.call("world_position_to_cell", resolved)] = true
+	print("[WorldPerf] Sect land resolve: %d ms" % (Time.get_ticks_msec() - sect_resolve_started_at))
+	var resource_resolve_started_at: int = Time.get_ticks_msec()
+	var resources: Array = WorldDataManager.get_all_resources().duplicate()
+	resources.sort_custom(func(left: Dictionary, right: Dictionary) -> bool: return int(left.get("resource_id", 0)) < int(right.get("resource_id", 0)))
+	for resource_data in resources:
+		var resource_id: int = int(resource_data.get("resource_id", -1))
+		var resolved: Vector2 = pixel_world.call(
+			"find_nearest_available_land_world_position",
+			WorldMapSpec.clamp_world_position(resource_data.get("position", WorldMapSpec.world_center())), occupied_cells, RESOURCE_MIN_CELL_DISTANCE
+		)
+		if not WorldMapSpec.is_world_position_in_bounds(resolved):
+			push_error("Could not place resource on safe compact world land: %d" % resource_id)
+			return false
+		WorldDataManager.update_resource_position(resource_id, resolved)
+		occupied_cells[pixel_world.call("world_position_to_cell", resolved)] = true
+	print("[WorldPerf] Resource land resolve: %d ms" % (Time.get_ticks_msec() - resource_resolve_started_at))
+	var build_slot_reposition_started_at: int = Time.get_ticks_msec()
+	var player_position: Vector2 = WorldDataManager.get_player_sect().get("location", WorldMapSpec.world_center())
+	WorldDataManager.reposition_player_build_slots(player_position)
+	print("[WorldPerf] Build slot reposition: %d ms" % (Time.get_ticks_msec() - build_slot_reposition_started_at))
+	return true
 
 
 # 未选择对象时，信息面板显示地图概况。

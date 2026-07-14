@@ -251,6 +251,7 @@ func migrate_snapshot(raw_snapshot: Dictionary) -> Dictionary:
 				version = 1
 			_:
 				return {"success": false, "message": "缺少版本迁移函数。"}
+	snapshot = _migrate_world_map_layout(snapshot)
 	snapshot["save_version"] = CURRENT_SAVE_VERSION
 	return {"success": true, "snapshot": snapshot}
 
@@ -405,6 +406,58 @@ func _migrate_v0_to_v1(old_snapshot: Dictionary) -> Dictionary:
 		"game_state": game_state_data,
 		"world_data": old_snapshot.get("world_data", WorldDataManager.export_world_state()),
 	}
+
+
+## 地图布局版本独立于存档格式版本。仅迁移明确的世界坐标字段，
+## 不会递归缩放任意 Vector2，避免污染战斗或 UI 等非地图数据。
+func _migrate_world_map_layout(snapshot: Dictionary) -> Dictionary:
+	var migrated: Dictionary = snapshot.duplicate(true)
+	var world_data: Dictionary = migrated.get("world_data", {})
+	if world_data.is_empty():
+		return migrated
+	var layout_version: int = int(world_data.get("world_map_layout_version", WorldMapSpec.OLD_MAP_LAYOUT_VERSION))
+	if layout_version >= WorldMapSpec.MAP_LAYOUT_VERSION:
+		return migrated
+	world_data["sects"] = _migrate_position_array(world_data.get("sects", []), ["location", "position"])
+	world_data["resources"] = _migrate_position_array(world_data.get("resources", []), ["position"])
+	world_data["build_slots"] = _migrate_position_array(world_data.get("build_slots", []), ["position"])
+	world_data["war_campaigns"] = _migrate_position_array(world_data.get("war_campaigns", []), ["target_position"])
+	world_data["territory_states"] = _migrate_territory_state_positions(world_data.get("territory_states", {}))
+	world_data["world_map_layout_version"] = WorldMapSpec.MAP_LAYOUT_VERSION
+	migrated["world_data"] = world_data
+	return migrated
+
+
+func _migrate_position_array(raw_values: Variant, position_keys: Array[String]) -> Array:
+	var migrated_values: Array = []
+	for raw_value in raw_values as Array:
+		var value: Dictionary = (raw_value as Dictionary).duplicate(true)
+		for key in position_keys:
+			if value.get(key) is Vector2:
+				value[key] = _migrate_world_position(value[key] as Vector2)
+		migrated_values.append(value)
+	return migrated_values
+
+
+func _migrate_territory_state_positions(raw_states: Variant) -> Dictionary:
+	var migrated_states: Dictionary = (raw_states as Dictionary).duplicate(true)
+	for sect_id in migrated_states:
+		var state: Dictionary = (migrated_states[sect_id] as Dictionary).duplicate(true)
+		if state.get("center") is Vector2:
+			state["center"] = _migrate_world_position(state["center"] as Vector2)
+		for key in ["control_positions", "boundary_points"]:
+			var updated: Array = []
+			for position in state.get(key, []):
+				updated.append(_migrate_world_position(position as Vector2) if position is Vector2 else position)
+			state[key] = updated
+		migrated_states[sect_id] = state
+	return migrated_states
+
+
+func _migrate_world_position(position: Vector2) -> Vector2:
+	# Task-0064 及更早版本的 world_data 统一使用 4096 逻辑坐标。
+	# 一份旧存档只能使用这一种比例，禁止按单个坐标值猜测来源。
+	return WorldMapSpec.compact_from_legacy_source_position(position)
 
 
 func _atomic_replace(temporary_path: String, target_path: String) -> Error:

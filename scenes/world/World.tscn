@@ -92,6 +92,6 @@ layout_mode = 2
 text = "进入宗门"
 
 [node name="WorldCamera" type="Camera2D" parent="."]
-position = Vector2(2048, 2048)
+position = Vector2(2176, 2176)
 enabled = true
 script = ExtResource("2_world_camera")

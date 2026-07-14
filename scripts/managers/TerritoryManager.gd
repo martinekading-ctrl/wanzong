@@ -3,7 +3,7 @@ extends Node
 signal territories_recalculated(summary: Dictionary)
 
 const MAP_MIN := Vector2.ZERO
-const MAP_MAX := Vector2(6144.0, 6144.0)
+const MAP_MAX := Vector2(WorldMapSpec.WORLD_SIZE)
 const BASE_CONTROL_PADDING: float = 90.0
 
 

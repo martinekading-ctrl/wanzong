@@ -156,6 +156,7 @@ func init_world_data() -> void:
 		{"slot_id": 6, "owner_sect_id": "sect_001", "position": Vector2(2268, 2148), "is_empty": true},
 	]
 	building_instances = []
+	_apply_compact_map_anchors()
 
 	disciples = [
 		_create_disciple_data("disciple_001", "sect_001", "林青", "男", 18, "炼气三层", "木灵根", "上品", 72, 88, 76, "修炼", 420, "正常", "性情沉稳，擅长吐纳行气，是青玄宗年轻弟子中的中坚。", {"role": "外门弟子", "appearance_id": "male_disciple_01", "portrait_id": "portrait_male_01", "model_id": "model_male_01", "battle_model_id": "battle_male_01", "color_scheme": "outer_gray", "tags": ["稳重"], "battle_position": "middle", "weapon_type": "剑", "hp": 320, "max_hp": 320, "attack": 72, "defense": 48, "speed": 56, "spiritual_power": 84}),
@@ -230,6 +231,38 @@ func reset_world_data() -> void:
 	_disciple_index_by_id.clear()
 	_disciple_indexes_by_sect.clear()
 	init_world_data()
+
+
+## 新地图布局只在新游戏初始化时生成绝对世界坐标；正式 World 会再落到安全陆地。
+func _apply_compact_map_anchors() -> void:
+	var anchor_errors := WorldMapAnchors.validate()
+	if not anchor_errors.is_empty():
+		for anchor_error in anchor_errors:
+			push_error("World map anchor validation failed: " + anchor_error)
+		return
+	if sects.size() != WorldMapAnchors.SECT_ANCHORS_NORMALIZED.size():
+		push_error("Compact map sect anchor count does not match baseline sects.")
+		return
+	for index in range(sects.size()):
+		var sect_data: Dictionary = sects[index]
+		var world_position: Vector2 = WorldMapSpec.normalized_to_world(WorldMapAnchors.SECT_ANCHORS_NORMALIZED[index])
+		sect_data["location"] = world_position
+		sect_data["position"] = world_position
+		sects[index] = sect_data
+	if WorldMapAnchors.RESOURCE_ANCHORS_NORMALIZED.size() != resources.size():
+		push_error("Compact map resource anchor count does not match baseline resources.")
+		return
+	for index in range(resources.size()):
+		var resource_data: Dictionary = resources[index]
+		resource_data["position"] = WorldMapSpec.normalized_to_world(WorldMapAnchors.RESOURCE_ANCHORS_NORMALIZED[index])
+		resources[index] = resource_data
+	if WorldMapAnchors.BUILD_SLOT_ANCHORS_NORMALIZED.size() != build_slots.size():
+		push_error("Compact map build slot anchor count does not match baseline build slots.")
+		return
+	for index in range(build_slots.size()):
+		var slot_data: Dictionary = build_slots[index]
+		slot_data["position"] = WorldMapSpec.normalized_to_world(WorldMapAnchors.BUILD_SLOT_ANCHORS_NORMALIZED[index])
+		build_slots[index] = slot_data
 
 
 func _create_sect_resource_data(
@@ -504,6 +537,7 @@ func add_ai_sect_data(sect_data: Dictionary, resources_data: Dictionary, ai_stat
 
 func export_world_state() -> Dictionary:
 	return {
+		"world_map_layout_version": WorldMapSpec.MAP_LAYOUT_VERSION,
 		"sects": sects.duplicate(true),
 		"resources": resources.duplicate(true),
 		"build_slots": build_slots.duplicate(true),
@@ -564,6 +598,32 @@ func restore_world_state(state: Dictionary) -> bool:
 	is_initialized = true
 	_rebuild_runtime_indexes()
 	return true
+
+
+func update_resource_position(resource_id: int, position: Vector2) -> bool:
+	for index in range(resources.size()):
+		if int(resources[index].get("resource_id", -1)) != resource_id:
+			continue
+		var resource_data: Dictionary = resources[index]
+		resource_data["position"] = position
+		resources[index] = resource_data
+		return true
+	push_warning("Cannot update missing resource position: %d" % resource_id)
+	return false
+
+
+func reposition_player_build_slots(player_position: Vector2) -> void:
+	if WorldMapAnchors.BUILD_SLOT_ANCHORS_NORMALIZED.size() != build_slots.size():
+		push_error("Compact map build slot anchor count does not match baseline build slots.")
+		return
+	var player_anchor_position := WorldMapSpec.normalized_to_world(WorldMapAnchors.SECT_ANCHORS_NORMALIZED[0])
+	for index in range(build_slots.size()):
+		var slot_data: Dictionary = build_slots[index]
+		if str(slot_data.get("owner_sect_id", "")) != "sect_001":
+			continue
+		var slot_anchor_position := WorldMapSpec.normalized_to_world(WorldMapAnchors.BUILD_SLOT_ANCHORS_NORMALIZED[index])
+		slot_data["position"] = WorldMapSpec.clamp_world_position(player_position + slot_anchor_position - player_anchor_position)
+		build_slots[index] = slot_data
 
 
 func remove_disciple_data(disciple_id: String) -> bool:

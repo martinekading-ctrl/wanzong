@@ -1,7 +1,10 @@
 extends Node2D
 
-const WORLD_SIZE := Vector2(6144, 6144)
-const SAFE_AREA := Rect2(900, 700, 4344, 4744)
+const WORLD_SIZE := Vector2(WorldMapSpec.WORLD_SIZE)
+const SAFE_AREA := Rect2(
+	Vector2(WorldMapSpec.WORLD_SIZE) * 0.18,
+	Vector2(WorldMapSpec.WORLD_SIZE) * 0.64
+)
 
 
 func _ready() -> void:
