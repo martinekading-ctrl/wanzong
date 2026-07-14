@@ -1,6 +1,7 @@
 extends SceneTree
 
 var failures := PackedStringArray()
+const WorldDataManagerScript := preload("res://scripts/managers/WorldDataManager.gd")
 
 func _initialize() -> void: call_deferred("_run")
 func _run() -> void:
@@ -21,6 +22,12 @@ func _run() -> void:
 		source_map.free()
 		runtime_map.free()
 	_expect(_generated_files_are_clean(), "生成目录不得残留 staging、tmp 或 bak")
+	var world_data := WorldDataManagerScript.new()
+	world_data.init_world_data()
+	_expect(world_data.get_all_sects().size() == 10, "必须保留10个宗门")
+	_expect(world_data.get_all_resources().size() == 26, "必须保留基准的26个资源点")
+	_expect(world_data.get_all_build_slots().size() == 6, "必须保留6个建设点")
+	_expect(_resource_metadata_is_baseline(world_data.get_all_resources()), "资源元数据不得被紧凑地图改写")
 	_expect(FileAccess.file_exists("res://export_presets.cfg"), "导出配置必须存在")
 	_expect("Windows Desktop" in FileAccess.get_file_as_string("res://export_presets.cfg"), "必须存在 Windows Desktop 预设")
 	_expect("tests/*" in FileAccess.get_file_as_string("res://export_presets.cfg") and "scripts/tools/*" in FileAccess.get_file_as_string("res://export_presets.cfg"), "导出必须排除测试与工具")
@@ -47,3 +54,13 @@ func _generated_files_are_clean() -> bool:
 			return false
 	var staging := DirAccess.open("res://assets/generated/.world_bake_staging")
 	return staging == null or staging.get_directories().is_empty()
+
+
+func _resource_metadata_is_baseline(resources: Array) -> bool:
+	if resources.size() != 26:
+		return false
+	var signatures: PackedStringArray = []
+	for resource in resources:
+		var data: Dictionary = resource
+		signatures.append("%d|%s|%s|%d|%d|%s" % [int(data.get("resource_id", 0)), str(data.get("resource_name", "")), str(data.get("resource_type", "")), int(data.get("level", 0)), int(data.get("amount", 0)), str(data.get("owner_sect_id", ""))])
+	return signatures[0] == "1|灵矿|spirit_mine|1|1200|0" and signatures[25] == "26|秘境入口|secret_realm|1|1|0"
