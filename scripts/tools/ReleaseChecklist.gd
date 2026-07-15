@@ -4,11 +4,18 @@ const WorldSectRoster = preload("res://scripts/world/WorldSectRoster.gd")
 const WorldSectReferenceValidator = preload("res://scripts/world/WorldSectReferenceValidator.gd")
 const WorldSectBaseline = preload("res://scripts/world/WorldSectBaseline.gd")
 
+const EXPECTED_PRODUCT_VERSION := "0.5.0"
+const EXPECTED_STAGE := "Pre-Alpha"
+const EXPECTED_CHANNEL := "development"
+const EXPECTED_WINDOWS_VERSION := "0.5.0.0"
+
 var failures := PackedStringArray()
 
 func _initialize() -> void: call_deferred("_run")
 func _run() -> void:
-	_expect(str(ProjectSettings.get_setting("application/config/version")) == "1.0.0", "项目版本必须为 1.0.0")
+	_expect(str(ProjectSettings.get_setting("application/config/version", "")) == EXPECTED_PRODUCT_VERSION, "项目版本必须为 0.5.0")
+	_expect(str(ProjectSettings.get_setting("wanzong/build/stage", "")) == EXPECTED_STAGE, "项目阶段必须为 Pre-Alpha")
+	_expect(str(ProjectSettings.get_setting("wanzong/build/channel", "")) == EXPECTED_CHANNEL, "构建渠道必须为 development")
 	_expect(ResourceLoader.exists("res://scenes/main/Main.tscn"), "主场景必须存在")
 	_expect(ResourceLoader.exists("res://scenes/world/GeneratedWorldMap.tscn"), "地图源场景必须存在")
 	_expect(ResourceLoader.exists("res://scenes/world/GeneratedWorldMap.scn"), "运行时地图必须存在")
@@ -43,9 +50,14 @@ func _run() -> void:
 	_expect(world_data.get_all_build_slots().size() == 6, "必须保留6个建设点")
 	_expect(_resource_metadata_is_baseline(world_data.get_all_resources()), "资源元数据不得被紧凑地图改写")
 	_expect(FileAccess.file_exists("res://export_presets.cfg"), "导出配置必须存在")
-	_expect("Windows Desktop" in FileAccess.get_file_as_string("res://export_presets.cfg"), "必须存在 Windows Desktop 预设")
-	_expect("tests/*" in FileAccess.get_file_as_string("res://export_presets.cfg") and "scripts/tools/*" in FileAccess.get_file_as_string("res://export_presets.cfg"), "导出必须排除测试与工具")
-	_expect("1.0.0 Release Candidate" in FileAccess.get_file_as_string("res://PROJECT_STATUS.md"), "项目状态必须保持 RC")
+	var export_presets := FileAccess.get_file_as_string("res://export_presets.cfg")
+	_expect("Windows Desktop" in export_presets, "必须存在 Windows Desktop 预设")
+	_expect("application/file_version=\"%s\"" % EXPECTED_WINDOWS_VERSION in export_presets, "Windows 文件版本必须为 0.5.0.0")
+	_expect("application/product_version=\"%s\"" % EXPECTED_WINDOWS_VERSION in export_presets, "Windows 产品版本必须为 0.5.0.0")
+	_expect("tests/*" in export_presets and "scripts/tools/*" in export_presets, "导出必须排除测试与工具")
+	var project_status := FileAccess.get_file_as_string("res://PROJECT_STATUS.md")
+	_expect("0.5.0 Pre-Alpha" in project_status, "项目状态必须声明 0.5.0 Pre-Alpha")
+	_expect(not "1.0.0 Release Candidate" in project_status, "项目状态不得仍声明为 1.0.0 Release Candidate")
 	if failures.is_empty(): print("[ReleaseChecklist] PASS"); quit(0)
 	else:
 		for item in failures: push_error("[ReleaseChecklist][FAIL] " + item)
