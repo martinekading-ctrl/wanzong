@@ -1,4 +1,19 @@
-[gd_resource type="Theme" load_steps=9 format=3]
+[gd_resource type="Theme" load_steps=23 format=3]
+
+[ext_resource type="Texture2D" path="res://assets/ui/world_map/panels/panel_top_resource.png" id="1_top_resource"]
+[ext_resource type="Texture2D" path="res://assets/ui/world_map/panels/panel_top_sect.png" id="2_top_sect"]
+[ext_resource type="Texture2D" path="res://assets/ui/world_map/panels/panel_navigation.png" id="3_navigation"]
+[ext_resource type="Texture2D" path="res://assets/ui/world_map/panels/panel_details.png" id="4_details"]
+[ext_resource type="Texture2D" path="res://assets/ui/world_map/panels/panel_details_group.png" id="5_details_group"]
+[ext_resource type="Texture2D" path="res://assets/ui/world_map/panels/panel_bottom_bar.png" id="6_bottom_bar"]
+[ext_resource type="Texture2D" path="res://assets/ui/world_map/buttons/button_primary_normal.png" id="7_primary_normal"]
+[ext_resource type="Texture2D" path="res://assets/ui/world_map/buttons/button_primary_hover.png" id="8_primary_hover"]
+[ext_resource type="Texture2D" path="res://assets/ui/world_map/buttons/button_primary_pressed.png" id="9_primary_pressed"]
+[ext_resource type="Texture2D" path="res://assets/ui/world_map/buttons/button_primary_disabled.png" id="10_primary_disabled"]
+[ext_resource type="Texture2D" path="res://assets/ui/world_map/buttons/button_nav_normal.png" id="11_nav_normal"]
+[ext_resource type="Texture2D" path="res://assets/ui/world_map/buttons/button_nav_hover.png" id="12_nav_hover"]
+[ext_resource type="Texture2D" path="res://assets/ui/world_map/buttons/button_nav_selected.png" id="13_nav_selected"]
+[ext_resource type="Texture2D" path="res://assets/ui/world_map/buttons/button_nav_disabled.png" id="14_nav_disabled"]
 
 [sub_resource type="StyleBoxFlat" id="StyleButtonNormal"]
 bg_color = Color(0.105, 0.13, 0.14, 0.96)
@@ -109,6 +124,160 @@ bg_color = Color(0.49, 0.4, 0.22, 0.65)
 content_margin_top = 1.0
 content_margin_bottom = 1.0
 
+[sub_resource type="StyleBoxTexture" id="StyleWorldTopResource"]
+texture = ExtResource("1_top_resource")
+texture_margin_left = 32.0
+texture_margin_top = 32.0
+texture_margin_right = 32.0
+texture_margin_bottom = 32.0
+content_margin_left = 18.0
+content_margin_top = 8.0
+content_margin_right = 18.0
+content_margin_bottom = 8.0
+
+[sub_resource type="StyleBoxTexture" id="StyleWorldTopSect"]
+texture = ExtResource("2_top_sect")
+texture_margin_left = 32.0
+texture_margin_top = 32.0
+texture_margin_right = 32.0
+texture_margin_bottom = 32.0
+content_margin_left = 18.0
+content_margin_top = 8.0
+content_margin_right = 18.0
+content_margin_bottom = 8.0
+
+[sub_resource type="StyleBoxTexture" id="StyleWorldNavigation"]
+texture = ExtResource("3_navigation")
+texture_margin_left = 36.0
+texture_margin_top = 36.0
+texture_margin_right = 36.0
+texture_margin_bottom = 36.0
+content_margin_left = 14.0
+content_margin_top = 20.0
+content_margin_right = 14.0
+content_margin_bottom = 20.0
+
+[sub_resource type="StyleBoxTexture" id="StyleWorldDetails"]
+texture = ExtResource("4_details")
+texture_margin_left = 42.0
+texture_margin_top = 42.0
+texture_margin_right = 42.0
+texture_margin_bottom = 42.0
+content_margin_left = 18.0
+content_margin_top = 22.0
+content_margin_right = 18.0
+content_margin_bottom = 18.0
+
+[sub_resource type="StyleBoxTexture" id="StyleWorldDetailsGroup"]
+texture = ExtResource("5_details_group")
+texture_margin_left = 40.0
+texture_margin_top = 40.0
+texture_margin_right = 40.0
+texture_margin_bottom = 40.0
+content_margin_left = 12.0
+content_margin_top = 12.0
+content_margin_right = 12.0
+content_margin_bottom = 12.0
+
+[sub_resource type="StyleBoxTexture" id="StyleWorldBottom"]
+texture = ExtResource("6_bottom_bar")
+texture_margin_left = 30.0
+texture_margin_top = 30.0
+texture_margin_right = 30.0
+texture_margin_bottom = 30.0
+content_margin_left = 18.0
+content_margin_top = 8.0
+content_margin_right = 18.0
+content_margin_bottom = 8.0
+
+[sub_resource type="StyleBoxTexture" id="StylePrimaryNormal"]
+texture = ExtResource("7_primary_normal")
+texture_margin_left = 12.0
+texture_margin_top = 12.0
+texture_margin_right = 12.0
+texture_margin_bottom = 12.0
+content_margin_left = 14.0
+content_margin_top = 7.0
+content_margin_right = 14.0
+content_margin_bottom = 7.0
+
+[sub_resource type="StyleBoxTexture" id="StylePrimaryHover"]
+texture = ExtResource("8_primary_hover")
+texture_margin_left = 12.0
+texture_margin_top = 12.0
+texture_margin_right = 12.0
+texture_margin_bottom = 12.0
+content_margin_left = 14.0
+content_margin_top = 7.0
+content_margin_right = 14.0
+content_margin_bottom = 7.0
+
+[sub_resource type="StyleBoxTexture" id="StylePrimaryPressed"]
+texture = ExtResource("9_primary_pressed")
+texture_margin_left = 12.0
+texture_margin_top = 12.0
+texture_margin_right = 12.0
+texture_margin_bottom = 12.0
+content_margin_left = 14.0
+content_margin_top = 9.0
+content_margin_right = 14.0
+content_margin_bottom = 5.0
+
+[sub_resource type="StyleBoxTexture" id="StylePrimaryDisabled"]
+texture = ExtResource("10_primary_disabled")
+texture_margin_left = 12.0
+texture_margin_top = 12.0
+texture_margin_right = 12.0
+texture_margin_bottom = 12.0
+content_margin_left = 14.0
+content_margin_top = 7.0
+content_margin_right = 14.0
+content_margin_bottom = 7.0
+
+[sub_resource type="StyleBoxTexture" id="StyleNavigationNormal"]
+texture = ExtResource("11_nav_normal")
+texture_margin_left = 20.0
+texture_margin_top = 20.0
+texture_margin_right = 20.0
+texture_margin_bottom = 20.0
+content_margin_left = 10.0
+content_margin_top = 7.0
+content_margin_right = 10.0
+content_margin_bottom = 7.0
+
+[sub_resource type="StyleBoxTexture" id="StyleNavigationHover"]
+texture = ExtResource("12_nav_hover")
+texture_margin_left = 20.0
+texture_margin_top = 20.0
+texture_margin_right = 20.0
+texture_margin_bottom = 20.0
+content_margin_left = 10.0
+content_margin_top = 7.0
+content_margin_right = 10.0
+content_margin_bottom = 7.0
+
+[sub_resource type="StyleBoxTexture" id="StyleNavigationSelected"]
+texture = ExtResource("13_nav_selected")
+texture_margin_left = 20.0
+texture_margin_top = 20.0
+texture_margin_right = 20.0
+texture_margin_bottom = 20.0
+content_margin_left = 10.0
+content_margin_top = 7.0
+content_margin_right = 10.0
+content_margin_bottom = 7.0
+
+[sub_resource type="StyleBoxTexture" id="StyleNavigationDisabled"]
+texture = ExtResource("14_nav_disabled")
+texture_margin_left = 20.0
+texture_margin_top = 20.0
+texture_margin_right = 20.0
+texture_margin_bottom = 20.0
+content_margin_left = 10.0
+content_margin_top = 7.0
+content_margin_right = 10.0
+content_margin_bottom = 7.0
+
 [resource]
 default_font_size = 16
 Button/colors/font_color = Color(0.9, 0.86, 0.72, 1)
@@ -133,3 +302,64 @@ OptionButton/styles/focus = SubResource("StyleFocus")
 Panel/styles/panel = SubResource("StylePanel")
 PanelContainer/styles/panel = SubResource("StylePanel")
 HSeparator/styles/separator = SubResource("StyleSeparator")
+WZWorldTopPanel/base_type = &"PanelContainer"
+WZWorldTopPanel/styles/panel = SubResource("StyleWorldTopSect")
+WZWorldTopResourcePanel/base_type = &"PanelContainer"
+WZWorldTopResourcePanel/styles/panel = SubResource("StyleWorldTopResource")
+WZWorldNavigationPanel/base_type = &"PanelContainer"
+WZWorldNavigationPanel/styles/panel = SubResource("StyleWorldNavigation")
+WZWorldDetailsPanel/base_type = &"PanelContainer"
+WZWorldDetailsPanel/styles/panel = SubResource("StyleWorldDetails")
+WZWorldDetailsGroup/base_type = &"PanelContainer"
+WZWorldDetailsGroup/styles/panel = SubResource("StyleWorldDetailsGroup")
+WZWorldBottomPanel/base_type = &"PanelContainer"
+WZWorldBottomPanel/styles/panel = SubResource("StyleWorldBottom")
+WZPrimaryTextureButton/base_type = &"Button"
+WZPrimaryTextureButton/colors/font_color = Color(0.95, 0.92, 0.76, 1)
+WZPrimaryTextureButton/colors/font_hover_color = Color(1, 0.96, 0.78, 1)
+WZPrimaryTextureButton/colors/font_pressed_color = Color(1, 0.9, 0.58, 1)
+WZPrimaryTextureButton/colors/font_disabled_color = Color(0.48, 0.5, 0.46, 1)
+WZPrimaryTextureButton/styles/normal = SubResource("StylePrimaryNormal")
+WZPrimaryTextureButton/styles/hover = SubResource("StylePrimaryHover")
+WZPrimaryTextureButton/styles/pressed = SubResource("StylePrimaryPressed")
+WZPrimaryTextureButton/styles/disabled = SubResource("StylePrimaryDisabled")
+WZPrimaryTextureButton/styles/focus = SubResource("StyleFocus")
+WZNavigationButton/base_type = &"Button"
+WZNavigationButton/colors/font_color = Color(0.86, 0.82, 0.67, 1)
+WZNavigationButton/colors/font_hover_color = Color(0.76, 1, 0.9, 1)
+WZNavigationButton/colors/font_pressed_color = Color(0.96, 0.83, 0.5, 1)
+WZNavigationButton/styles/normal = SubResource("StyleNavigationNormal")
+WZNavigationButton/styles/hover = SubResource("StyleNavigationHover")
+WZNavigationButton/styles/pressed = SubResource("StyleNavigationSelected")
+WZNavigationButton/styles/focus = SubResource("StyleFocus")
+WZNavigationButtonSelected/base_type = &"Button"
+WZNavigationButtonSelected/colors/font_color = Color(0.82, 1, 0.9, 1)
+WZNavigationButtonSelected/colors/font_hover_color = Color(1, 0.92, 0.62, 1)
+WZNavigationButtonSelected/styles/normal = SubResource("StyleNavigationSelected")
+WZNavigationButtonSelected/styles/hover = SubResource("StyleNavigationHover")
+WZNavigationButtonSelected/styles/pressed = SubResource("StyleNavigationSelected")
+WZNavigationButtonSelected/styles/focus = SubResource("StyleFocus")
+WZNavigationButtonDisabled/base_type = &"Button"
+WZNavigationButtonDisabled/colors/font_color = Color(0.43, 0.46, 0.42, 1)
+WZNavigationButtonDisabled/styles/normal = SubResource("StyleNavigationDisabled")
+WZNavigationButtonDisabled/styles/disabled = SubResource("StyleNavigationDisabled")
+WZWorldSectionTitle/base_type = &"Label"
+WZWorldSectionTitle/colors/font_color = Color(0.94, 0.8, 0.45, 1)
+WZWorldSectionTitle/constants/outline_size = 2
+WZWorldSectionTitle/colors/font_outline_color = Color(0.02, 0.09, 0.09, 1)
+WZWorldSectionTitle/font_sizes/font_size = 20
+WZWorldBody/base_type = &"Label"
+WZWorldBody/colors/font_color = Color(0.87, 0.87, 0.78, 1)
+WZWorldBody/constants/outline_size = 1
+WZWorldBody/colors/font_outline_color = Color(0.02, 0.08, 0.08, 1)
+WZWorldBody/font_sizes/font_size = 15
+WZWorldMutedText/base_type = &"Label"
+WZWorldMutedText/colors/font_color = Color(0.57, 0.68, 0.64, 1)
+WZWorldMutedText/constants/outline_size = 1
+WZWorldMutedText/colors/font_outline_color = Color(0.02, 0.08, 0.08, 1)
+WZWorldMutedText/font_sizes/font_size = 13
+WZWorldResourceText/base_type = &"Label"
+WZWorldResourceText/colors/font_color = Color(0.82, 0.92, 0.78, 1)
+WZWorldResourceText/constants/outline_size = 1
+WZWorldResourceText/colors/font_outline_color = Color(0.02, 0.08, 0.08, 1)
+WZWorldResourceText/font_sizes/font_size = 15

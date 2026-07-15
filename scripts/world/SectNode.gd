@@ -25,6 +25,7 @@ var is_selected: bool = false
 
 const HOVER_SCALE: float = 1.08
 const SELECT_RING_COLOR: Color = Color(0.92, 0.76, 0.35, 0.62)
+const PLAYER_SELECT_RING_COLOR: Color = Color(0.43, 0.92, 0.72, 0.72)
 
 
 # 初始化宗门节点。
@@ -54,12 +55,12 @@ func set_sect_data(data: Dictionary) -> void:
 func _draw() -> void:
 	if is_selected:
 		draw_arc(
-			Vector2(0, -5),
-			icon_size * 0.30,
+			Vector2(0, -icon_size * 0.50),
+			icon_size * 0.62,
 			0.0,
 			TAU,
 			32,
-			SELECT_RING_COLOR,
+			PLAYER_SELECT_RING_COLOR if is_player else SELECT_RING_COLOR,
 			2.0,
 			true
 		)
@@ -154,8 +155,11 @@ func _create_info_label() -> void:
 	info_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	info_label.text = sect_name
 	info_label.add_theme_font_size_override("font_size", 14)
+	info_label.add_theme_color_override("font_color", Color("#aef2cd") if is_player else Color("#e4d69e"))
+	info_label.add_theme_color_override("font_outline_color", Color("#061011"))
+	info_label.add_theme_constant_override("outline_size", 3)
 	info_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	info_label.visible = false
+	info_label.visible = true
 	add_child(info_label)
 
 
@@ -192,4 +196,4 @@ func _update_visual_state() -> void:
 # 悬停或选中时显示宗门名称，默认保持隐藏。
 func _update_label_visible() -> void:
 	if info_label != null:
-		info_label.visible = is_hovered or is_selected
+		info_label.visible = true

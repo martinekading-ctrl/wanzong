@@ -96,19 +96,12 @@ var _world_initialization_successful: bool = false
 
 # UI 层，只放信息面板、以后的小地图、时间、按钮。
 @onready var ui_layer: CanvasLayer = $UILayer
+@onready var world_hud: WorldHUD = $UILayer/WorldHUD
 
 # 世界镜头。
 @onready var world_camera: Camera2D = $WorldCamera
 
 # 右侧信息面板。
-@onready var title_label: Label = $UILayer/InfoPanel/InfoBox/TitleLabel
-@onready var name_label: Label = $UILayer/InfoPanel/InfoBox/NameLabel
-@onready var owner_label: Label = $UILayer/InfoPanel/InfoBox/OwnerLabel
-@onready var disciple_count_label: Label = $UILayer/InfoPanel/InfoBox/DiscipleCountLabel
-@onready var spirit_stone_label: Label = $UILayer/InfoPanel/InfoBox/SpiritStoneLabel
-@onready var power_label: Label = $UILayer/InfoPanel/InfoBox/PowerLabel
-@onready var tip_label: Label = $UILayer/InfoPanel/InfoBox/TipLabel
-@onready var enter_sect_button: Button = $UILayer/InfoPanel/InfoBox/EnterSectButton
 
 
 # 地图启动时，初始化世界数据，并生成宗门和资源点。
@@ -121,6 +114,8 @@ func _ready() -> void:
 	world_camera.position = MAP_ORIGIN + MAP_SIZE * 0.5
 	world_camera.make_current()
 	WorldDataManager.init_world_data()
+	_connect_world_hud()
+	_refresh_world_hud_header()
 	if pixel_world == null or not _resolve_world_positions_on_generated_land():
 		_abort_world_initialization("无法将世界对象放置到烘焙地图的安全陆地。")
 		return
@@ -135,6 +130,8 @@ func _ready() -> void:
 	var territory_nodes_started_at: int = Time.get_ticks_msec()
 	_create_territory_areas()
 	print("[WorldPerf] Territory nodes: %d ms" % (Time.get_ticks_msec() - territory_nodes_started_at))
+	territory_layer.visible = false
+	world_hud.set_territory_visible(false)
 	visual_assets_started_at = Time.get_ticks_msec()
 	var resource_started_at: int = Time.get_ticks_msec()
 	_create_resource_nodes()
@@ -146,7 +143,6 @@ func _ready() -> void:
 	var sect_started_at: int = Time.get_ticks_msec()
 	_create_sect_nodes()
 	print("[WorldPerf] Sect nodes: %d ms" % (Time.get_ticks_msec() - sect_started_at))
-	enter_sect_button.pressed.connect(_on_enter_sect_button_pressed)
 	_show_empty_panel()
 	_world_initialization_successful = true
 	var ready_elapsed: int = Time.get_ticks_msec() - ready_started_at
@@ -170,7 +166,7 @@ func _abort_world_initialization(message: String) -> void:
 	pixel_world = null
 	build_slot_layer.visible = false
 	_set_enter_sect_button_visible(false)
-	tip_label.text = "世界地图初始化失败，请检查烘焙地图与日志。"
+	world_hud.set_hint("世界地图初始化失败，请检查烘焙地图与日志。")
 
 
 func _process(_delta: float) -> void:
@@ -510,16 +506,86 @@ func _resolve_world_positions_on_generated_land() -> bool:
 	return true
 
 
+func _connect_world_hud() -> void:
+	world_hud.enter_sect_requested.connect(_on_enter_sect_button_pressed)
+	world_hud.sect_navigation_requested.connect(_on_world_hud_sect_navigation_requested)
+	world_hud.world_navigation_requested.connect(_on_world_hud_world_navigation_requested)
+	world_hud.save_requested.connect(_on_world_hud_save_requested)
+	world_hud.zoom_requested.connect(_on_world_hud_zoom_requested)
+	world_hud.locate_player_requested.connect(_on_world_hud_locate_player_requested)
+	world_hud.territory_visibility_requested.connect(_on_world_hud_territory_visibility_requested)
+	world_hud.full_map_requested.connect(_on_world_hud_full_map_requested)
+	GameState.day_advanced.connect(_on_world_date_advanced)
+
+
+func _refresh_world_hud_header() -> void:
+	var player_sect: Dictionary = WorldDataManager.get_player_sect()
+	var player_sect_id: String = str(player_sect.get("sect_id", ""))
+	world_hud.set_top_bar(
+		str(player_sect.get("sect_name", "青玄宗")),
+		"第%d年 %d月 %d日" % [GameState.year, GameState.month, GameState.day],
+		WorldDataManager.get_sect_resources(player_sect_id)
+	)
+
+
+func _on_world_date_advanced(_year: int, _month: int, _day: int) -> void:
+	_refresh_world_hud_header()
+
+
+func _on_world_hud_sect_navigation_requested() -> void:
+	SceneManager.go_to_player_sect_overview()
+
+
+func _on_world_hud_world_navigation_requested() -> void:
+	_clear_current_selection()
+	build_slot_layer.visible = false
+	_show_empty_panel()
+	world_hud.set_hint("已回到世界概览；地图没有重新加载。")
+
+
+func _on_world_hud_save_requested() -> void:
+	var save_result: Dictionary = SaveManager.quick_save()
+	world_hud.set_save_result(bool(save_result.get("success", false)), str(save_result.get("message", "未知错误")))
+
+
+func _on_world_hud_zoom_requested(amount: float) -> void:
+	world_camera.zoom_by(amount)
+	world_hud.set_hint("当前缩放：%.2f" % world_camera.zoom.x)
+
+
+func _on_world_hud_locate_player_requested() -> void:
+	var player_sect: Dictionary = WorldDataManager.get_player_sect()
+	world_camera.focus_on(player_sect.get("location", WorldMapSpec.world_center()))
+	world_hud.set_hint("已定位青玄宗。")
+
+
+func _on_world_hud_territory_visibility_requested(is_visible: bool) -> void:
+	territory_layer.visible = is_visible
+	world_hud.set_territory_visible(is_visible)
+	world_hud.set_hint("已显示宗门领地。" if is_visible else "已隐藏宗门领地。")
+
+
+func _on_world_hud_full_map_requested() -> void:
+	world_camera.show_full_map()
+	world_hud.set_hint("已切换到全图视野。")
+
+
 # 未选择对象时，信息面板显示地图概况。
 func _show_empty_panel() -> void:
 	_set_enter_sect_button_visible(false)
-	title_label.text = "地图信息"
-	name_label.text = "宗门名称：未选择"
-	owner_label.text = "资源点：未选择"
-	disciple_count_label.text = "宗门数量：" + str(WorldDataManager.get_all_sects().size())
-	spirit_stone_label.text = "资源点数量：" + str(WorldDataManager.get_all_resources().size())
-	power_label.text = "建设点数量：" + str(WorldDataManager.get_all_build_slots().size())
-	tip_label.text = "点击宗门或资源点查看信息。"
+	world_hud.set_details({
+		"context": "世界地图",
+		"title": "世界概览",
+		"badge": "未选择地图对象",
+		"primary": "宗门数量：%d\n资源点数量：%d\n建设点数量：%d" % [
+			WorldDataManager.get_all_sects().size(),
+			WorldDataManager.get_all_resources().size(),
+			WorldDataManager.get_all_build_slots().size(),
+		],
+		"secondary": "点击地图上的宗门、资源点或建设点查看真实数据。",
+		"description": "领地显示可由底部工具栏切换；地图本身不会在此处重新生成。",
+		"show_primary_action": false,
+	})
 
 
 # 取消旧对象的视觉选中状态，并重置当前选择记录。
@@ -547,7 +613,7 @@ func _set_current_selection(
 
 # 点击宗门后，右侧显示宗门信息。
 func _set_enter_sect_button_visible(value: bool) -> void:
-	enter_sect_button.visible = value
+	world_hud.set_primary_action_visible(value)
 
 
 func _on_enter_sect_button_pressed() -> void:
@@ -575,29 +641,26 @@ func _on_sect_selected(node_data: Dictionary, sect_node: SectNode) -> void:
 	build_slot_layer.visible = is_player_sect
 	_set_enter_sect_button_visible(is_player_sect)
 
-	title_label.text = "宗门信息"
-	name_label.text = "宗门名称：" + str(sect_data["sect_name"])
-	owner_label.text = (
-		"宗门类型：" + _get_sect_type_name(str(sect_data["sect_type"]))
-		+ "\n是否玩家宗门：" + ("是" if bool(sect_data["is_player"]) else "否")
-	)
-	disciple_count_label.text = (
-		"宗主：" + str(sect_data["master_name"])
-		+ "\n宗门品阶：" + str(sect_data["realm_rank"])
-	)
-	spirit_stone_label.text = (
-		"弟子数量：" + str(sect_data["disciple_count"])
-		+ "\n灵石：" + str(sect_resource_data.get("spirit_stone", "-"))
-	)
-	power_label.text = (
-		"声望：" + str(sect_data["reputation"])
-		+ "\n战力：" + str(sect_data["combat_power"])
-	)
-	tip_label.text = (
-		"关系：" + str(sect_data["relation_to_player"])
-		+ "\n影响力：" + str(TerritoryManager.get_territory(str(sect_data["sect_id"])).get("influence", 0))
-		+ "\n介绍：" + str(sect_data["description"])
-	)
+	world_hud.set_details({
+		"context": "宗门信息",
+		"title": str(sect_data.get("sect_name", "未知宗门")),
+		"badge": "玩家宗门" if is_player_sect else "其他宗门",
+		"primary": "宗门类型：%s\n宗主：%s\n宗门品阶：%s\n弟子数量：%d" % [
+			_get_sect_type_name(str(sect_data.get("sect_type", ""))),
+			str(sect_data.get("master_name", "未知")),
+			str(sect_data.get("realm_rank", "未知")),
+			int(sect_data.get("disciple_count", 0)),
+		],
+		"secondary": "灵石：%d\n声望：%d\n战力：%d\n关系：%s\n影响力：%d" % [
+			int(sect_resource_data.get("spirit_stone", 0)),
+			int(sect_data.get("reputation", 0)),
+			int(sect_data.get("combat_power", 0)),
+			str(sect_data.get("relation_to_player", "neutral")),
+			int(TerritoryManager.get_territory(selected_sect_id).get("influence", 0)),
+		],
+		"description": str(sect_data.get("description", "暂无介绍。")),
+		"show_primary_action": is_player_sect,
+	})
 
 
 # 点击资源点后，右侧显示资源点信息。
@@ -606,13 +669,18 @@ func _on_resource_selected(resource_data: Dictionary, resource_node: ResourceNod
 	build_slot_layer.visible = false
 	_set_enter_sect_button_visible(false)
 
-	title_label.text = "资源点信息"
-	name_label.text = "名称：" + str(resource_data["resource_name"])
-	owner_label.text = "类型：" + _get_resource_type_name(str(resource_data["resource_type"]))
-	disciple_count_label.text = "等级：Lv" + str(resource_data["level"])
-	spirit_stone_label.text = "储量：" + str(resource_data["amount"])
-	power_label.text = "当前归属：" + _get_resource_owner_name(resource_data["owner_sect_id"])
-	tip_label.text = "resource_id：" + str(resource_data["resource_id"])
+	world_hud.set_details({
+		"context": "资源点信息",
+		"title": str(resource_data.get("resource_name", "未知资源")),
+		"badge": _get_resource_type_name(str(resource_data.get("resource_type", ""))),
+		"primary": "等级：Lv%d\n储量：%d" % [
+			int(resource_data.get("level", 0)),
+			int(resource_data.get("amount", 0)),
+		],
+		"secondary": "当前归属：%s" % _get_resource_owner_name(resource_data.get("owner_sect_id", "")),
+		"description": "资源点可在后续经营步骤中用于宗门发展。",
+		"show_primary_action": false,
+	})
 
 
 # 点击建设点后，右侧显示建设点信息。
@@ -621,13 +689,15 @@ func _on_build_slot_selected(slot_data: Dictionary, build_slot_node: BuildSlotNo
 	build_slot_layer.visible = true
 	_set_enter_sect_button_visible(false)
 
-	title_label.text = "建设点信息"
-	name_label.text = "建设点ID：" + str(slot_data["slot_id"])
-	owner_label.text = "所属宗门：" + _get_sect_name_by_id(str(slot_data["owner_sect_id"]))
-	disciple_count_label.text = "状态：" + ("空地" if bool(slot_data["is_empty"]) else "已占用")
-	spirit_stone_label.text = "类型：可建设区域"
-	power_label.text = "说明：这里以后可以建造宗门建筑"
-	tip_label.text = "当前只显示空地，不开放建造。"
+	world_hud.set_details({
+		"context": "建设点信息",
+		"title": "建设点",
+		"badge": "空地" if bool(slot_data.get("is_empty", true)) else "已占用",
+		"primary": "所属宗门：%s\n类型：可建设区域" % _get_sect_name_by_id(str(slot_data.get("owner_sect_id", ""))),
+		"secondary": "当前状态：%s" % ("空地" if bool(slot_data.get("is_empty", true)) else "已占用"),
+		"description": "建设功能尚未开放；本轮只保留建设点显示与选择。",
+		"show_primary_action": false,
+	})
 
 
 # 检查资源点是否离宗门太近，方便开发阶段排查摆放问题。
