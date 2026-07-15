@@ -1,7 +1,8 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/MainMenu.gd" id="1_main_menu_script"]
 [ext_resource type="Texture2D" path="res://assets/pixel/sects/processed/sect_01_player_qingxuan.png" id="2_qingxuan_icon"]
+[ext_resource type="Texture2D" path="res://assets/placeholder_art/scenes/main_menu/main_menu_background.png" id="3_background"]
 
 [node name="MainMenu" type="Control"]
 layout_mode = 3
@@ -12,7 +13,7 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_main_menu_script")
 
-[node name="Background" type="ColorRect" parent="."]
+[node name="Background" type="TextureRect" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -20,7 +21,10 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-color = Color(0.025, 0.04, 0.045, 1)
+texture_filter = 1
+texture = ExtResource("3_background")
+expand_mode = 1
+stretch_mode = 6
 
 [node name="VersionLabel" type="Label" parent="."]
 layout_mode = 1
@@ -55,6 +59,7 @@ theme_override_constants/separation = 24
 
 [node name="TitleLabel" type="Label" parent="CenterContainer/MenuBox"]
 layout_mode = 2
+theme_type_variation = &"WZScreenTitle"
 theme_override_font_sizes/font_size = 72
 text = "《万宗》"
 horizontal_alignment = 1
@@ -76,11 +81,13 @@ stretch_mode = 5
 [node name="StartButton" type="Button" parent="CenterContainer/MenuBox"]
 custom_minimum_size = Vector2(320, 64)
 layout_mode = 2
+theme_type_variation = &"WZPrimaryButton"
 text = "开始游戏"
 
 [node name="ContinueButton" type="Button" parent="CenterContainer/MenuBox"]
 custom_minimum_size = Vector2(320, 64)
 layout_mode = 2
+theme_type_variation = &"WZSecondaryButton"
 text = "继续游戏"
 disabled = true
 
@@ -92,11 +99,13 @@ horizontal_alignment = 1
 [node name="SettingsButton" type="Button" parent="CenterContainer/MenuBox"]
 custom_minimum_size = Vector2(320, 56)
 layout_mode = 2
+theme_type_variation = &"WZSecondaryButton"
 text = "声音设置"
 
 [node name="QuitButton" type="Button" parent="CenterContainer/MenuBox"]
 custom_minimum_size = Vector2(320, 64)
 layout_mode = 2
+theme_type_variation = &"WZDangerButton"
 text = "退出游戏"
 
 [node name="SettingsPanel" type="PanelContainer" parent="."]
@@ -114,6 +123,7 @@ offset_right = 210.0
 offset_bottom = 180.0
 grow_horizontal = 2
 grow_vertical = 2
+theme_type_variation = &"WZDialogPanel"
 
 [node name="SettingsBox" type="VBoxContainer" parent="SettingsPanel"]
 layout_mode = 2

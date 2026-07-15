@@ -7,7 +7,8 @@ const WORLD_SIZE: Vector2i = WorldMapSpec.WORLD_SIZE
 const TILE_SIZE: Vector2i = WorldMapSpec.TILE_SIZE
 const GRID_SIZE: Vector2i = WorldMapSpec.GRID_SIZE
 
-const WORLD_OBJECT_DIRECTORY: String = "res://assets/pixel/world_objects/processed"
+const WORLD_OBJECT_DIRECTORY: String = "res://assets/placeholder_art/world/nature"
+const TERRAIN_ASSET_DIRECTORY: String = "res://assets/placeholder_art/world/terrain"
 const TREE_ICON_SIZE: int = 28
 const PINE_ICON_SIZE: int = 30
 const BAMBOO_ICON_SIZE: int = 28
@@ -30,31 +31,45 @@ const SNOW: String = "snow"
 const WASTELAND: String = "wasteland"
 
 const TILE_COLORS: Dictionary = {
-	DEEP_WATER: Color("#1f5f9e"),
-	WATER: Color("#2f7fc0"),
-	SHALLOW_WATER: Color("#65b6d6"),
-	SAND: Color("#e2c16f"),
-	GRASS: Color("#5fa34a"),
-	FROST_GRASS: Color("#759a7c"),
-	FOREST: Color("#2f6b3c"),
-	DIRT: Color("#8b6138"),
-	MOUNTAIN: Color("#777066"),
-	SNOW: Color("#dceff2"),
-	WASTELAND: Color("#9b7a42"),
+	DEEP_WATER: Color("#28566f"),
+	WATER: Color("#386c82"),
+	SHALLOW_WATER: Color("#5592a3"),
+	SAND: Color("#ad9c70"),
+	GRASS: Color("#557e57"),
+	FROST_GRASS: Color("#71956a"),
+	FOREST: Color("#365f47"),
+	DIRT: Color("#745b40"),
+	MOUNTAIN: Color("#696a62"),
+	SNOW: Color("#d5ded8"),
+	WASTELAND: Color("#a98a59"),
 }
 
 const TILE_ACCENTS: Dictionary = {
-	DEEP_WATER: Color("#174b80"),
-	WATER: Color("#286da5"),
-	SHALLOW_WATER: Color("#8acde3"),
-	SAND: Color("#c9a95b"),
-	GRASS: Color("#45843d"),
-	FROST_GRASS: Color("#a8bcae"),
-	FOREST: Color("#1f4f31"),
-	DIRT: Color("#704a2c"),
-	MOUNTAIN: Color("#55504a"),
-	SNOW: Color("#a9cfd8"),
-	WASTELAND: Color("#775d31"),
+	DEEP_WATER: Color("#376f87"),
+	WATER: Color("#5c91a0"),
+	SHALLOW_WATER: Color("#7eb4b9"),
+	SAND: Color("#c3b180"),
+	GRASS: Color("#6e9866"),
+	FROST_GRASS: Color("#8aaa78"),
+	FOREST: Color("#4b7654"),
+	DIRT: Color("#8b6d4c"),
+	MOUNTAIN: Color("#85847a"),
+	SNOW: Color("#eef0e6"),
+	WASTELAND: Color("#c1a06b"),
+}
+
+const TERRAIN_ASSET_NAMES: Dictionary = {
+	DEEP_WATER: "deep_water",
+	WATER: "lake",
+	SHALLOW_WATER: "shallow_water",
+	SAND: "coast_sand",
+	GRASS: "grass_medium",
+	FROST_GRASS: "grass_light",
+	FOREST: "forest_floor",
+	DIRT: "dirt",
+	MOUNTAIN: "mountain",
+	SNOW: "snow",
+	WASTELAND: "desert_sand",
 }
 
 # 五座外围小岛，位置与形状属于《万宗》自己的世界布局。
@@ -219,25 +234,21 @@ func _draw() -> void:
 
 
 func _load_world_object_textures() -> void:
-	tree_green_textures = _load_texture_series("trees", "tree_green", 5)
-	tree_pine_textures = _load_texture_series("trees", "tree_pine", 2)
-	bamboo_textures = _load_texture_series("bamboo", "bamboo", 3)
-	dead_tree_textures = _load_texture_series("special", "tree_dead", 2)
-	spirit_tree_textures = _load_named_textures(
-		["special/resource_spirit_tree_01.png"]
-	)
-	rock_textures = _load_texture_series("rocks", "rock", 8)
-	hill_textures = _load_texture_series("hills", "hill_grass", 4)
-	mountain_rock_textures = _load_texture_series("mountains", "mountain_rock", 6)
-	mountain_snow_textures = _load_texture_series("mountains", "mountain_snow", 4)
+	tree_green_textures = _load_texture_series("tree_medium", 3)
+	tree_pine_textures = _load_texture_series("pine_tree", 3)
+	bamboo_textures = _load_texture_series("bamboo", 3)
+	dead_tree_textures = _load_texture_series("dead_tree", 3)
+	spirit_tree_textures = _load_texture_series("crystal_cluster", 3)
+	rock_textures = _load_texture_series("rock_small", 3)
+	hill_textures = _load_texture_series("rock_large", 3)
+	mountain_rock_textures = _load_texture_series("rock_large", 3)
+	mountain_snow_textures = _load_texture_series("snow_rock", 3)
 
 
-func _load_texture_series(category: String, prefix: String, count: int) -> Array[Texture2D]:
+func _load_texture_series(prefix: String, count: int) -> Array[Texture2D]:
 	var relative_paths: Array[String] = []
 	for texture_index in range(1, count + 1):
-		relative_paths.append(
-			category.path_join("%s_%02d.png" % [prefix, texture_index])
-		)
+		relative_paths.append("%s_%02d.png" % [prefix, texture_index])
 	return _load_named_textures(relative_paths)
 
 
@@ -272,7 +283,7 @@ func _setup_noises() -> void:
 	river_noise.fractal_octaves = 3
 
 
-# 每类地形使用八个同色系变体，保持细节但不形成规则纹路。
+# 每类地形使用三张固定种子像素变体；加载失败时保留程序化回退。
 func _create_tile_set() -> void:
 	var started_at: int = Time.get_ticks_msec()
 	terrain_layer.tile_set = TileSet.new()
@@ -281,7 +292,7 @@ func _create_tile_set() -> void:
 
 	for terrain_type in TILE_COLORS.keys():
 		var source_ids: Array[int] = []
-		for variant in range(8):
+		for variant in range(3):
 			var base_color: Color = TILE_COLORS[terrain_type]
 			if variant % 4 == 1:
 				base_color = base_color.lightened(0.025)
@@ -289,12 +300,18 @@ func _create_tile_set() -> void:
 				base_color = base_color.darkened(0.025)
 
 			var source := TileSetAtlasSource.new()
-			source.texture = _create_tile_texture(
-				terrain_type,
-				base_color,
-				TILE_ACCENTS[terrain_type],
-				variant
+			var texture_path := TERRAIN_ASSET_DIRECTORY.path_join(
+				"%s_%02d.png" % [str(TERRAIN_ASSET_NAMES[terrain_type]), variant + 1]
 			)
+			source.texture = load(texture_path) as Texture2D
+			if source.texture == null:
+				push_warning("Terrain placeholder missing; using procedural fallback: " + texture_path)
+				source.texture = _create_tile_texture(
+					terrain_type,
+					base_color,
+					TILE_ACCENTS[terrain_type],
+					variant
+				)
 			source.texture_region_size = TILE_SIZE
 			source.create_tile(Vector2i.ZERO)
 			source_ids.append(terrain_layer.tile_set.add_source(source))

@@ -14,6 +14,7 @@ anchor_right = 1.0
 grow_horizontal = 0
 mouse_filter = 1
 script = ExtResource("1")
+theme_type_variation = &"WZDialogPanel"
 
 [node name="Content" type="VBoxContainer" parent="."]
 layout_mode = 2
