@@ -1,8 +1,6 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=2 format=3]
 
 [ext_resource type="Script" path="res://scenes/ui/components/WorldHUD.gd" id="1_script"]
-[ext_resource type="Texture2D" path="res://assets/ui/world_map/emblems/emblem_qingxuan.png" id="2_emblem"]
-[ext_resource type="Texture2D" path="res://assets/ui/world_map/decorations/divider_horizontal.png" id="3_divider"]
 
 [node name="WorldHUD" type="Control"]
 layout_mode = 3
@@ -12,311 +10,219 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-texture_filter = 1
 script = ExtResource("1_script")
 
-[node name="TopBar" type="MarginContainer" parent="."]
+[node name="TopBar" type="PanelContainer" parent="."]
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
 offset_left = 16.0
 offset_top = 12.0
 offset_right = -16.0
-offset_bottom = 96.0
+offset_bottom = 76.0
 grow_horizontal = 2
-theme_override_constants/margin_left = 0
-theme_override_constants/margin_top = 0
-theme_override_constants/margin_right = 0
-theme_override_constants/margin_bottom = 0
-mouse_filter = 2
+theme_type_variation = &"WZWorldTopPanel"
 
-[node name="TopBarBox" type="HBoxContainer" parent="TopBar"]
+[node name="Margin" type="MarginContainer" parent="TopBar"]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 8
+
+[node name="TopBarRow" type="HBoxContainer" parent="TopBar/Margin"]
 layout_mode = 2
 theme_override_constants/separation = 12
-mouse_filter = 2
 
-[node name="SectSection" type="PanelContainer" parent="TopBar/TopBarBox"]
-custom_minimum_size = Vector2(340, 0)
+[node name="SectBlock" type="VBoxContainer" parent="TopBar/Margin/TopBarRow"]
+custom_minimum_size = Vector2(240, 0)
 layout_mode = 2
-size_flags_horizontal = 3
-theme_type_variation = &"WZWorldTopPanel"
-mouse_filter = 2
-
-[node name="Margin" type="MarginContainer" parent="TopBar/TopBarBox/SectSection"]
-layout_mode = 2
-theme_override_constants/margin_left = 16
-theme_override_constants/margin_top = 8
-theme_override_constants/margin_right = 16
-theme_override_constants/margin_bottom = 8
-mouse_filter = 2
-
-[node name="Box" type="HBoxContainer" parent="TopBar/TopBarBox/SectSection/Margin"]
-layout_mode = 2
-theme_override_constants/separation = 10
-mouse_filter = 2
-
-[node name="Emblem" type="TextureRect" parent="TopBar/TopBarBox/SectSection/Margin/Box"]
-custom_minimum_size = Vector2(58, 58)
-layout_mode = 2
-texture = ExtResource("2_emblem")
-expand_mode = 1
-stretch_mode = 5
-mouse_filter = 2
-
-[node name="TextBox" type="VBoxContainer" parent="TopBar/TopBarBox/SectSection/Margin/Box"]
-layout_mode = 2
-size_flags_horizontal = 3
 alignment = 1
-mouse_filter = 2
 
-[node name="SectNameLabel" type="Label" parent="TopBar/TopBarBox/SectSection/Margin/Box/TextBox"]
+[node name="SectNameLabel" type="Label" parent="TopBar/Margin/TopBarRow/SectBlock"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_type_variation = &"WZWorldSectionTitle"
+theme_type_variation = &"WZWorldTitle"
 text = ""
-mouse_filter = 2
 
-[node name="DateLabel" type="Label" parent="TopBar/TopBarBox/SectSection/Margin/Box/TextBox"]
+[node name="DateLabel" type="Label" parent="TopBar/Margin/TopBarRow/SectBlock"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"WZWorldMutedText"
 text = ""
-mouse_filter = 2
 
-[node name="ResourceSection" type="PanelContainer" parent="TopBar/TopBarBox"]
-custom_minimum_size = Vector2(440, 0)
+[node name="ResourceStrip" type="HBoxContainer" parent="TopBar/Margin/TopBarRow"]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_type_variation = &"WZWorldTopResourcePanel"
-mouse_filter = 2
-
-[node name="Margin" type="MarginContainer" parent="TopBar/TopBarBox/ResourceSection"]
-layout_mode = 2
-theme_override_constants/margin_left = 22
-theme_override_constants/margin_top = 8
-theme_override_constants/margin_right = 22
-theme_override_constants/margin_bottom = 8
-mouse_filter = 2
-
-[node name="Resources" type="HBoxContainer" parent="TopBar/TopBarBox/ResourceSection/Margin"]
-layout_mode = 2
-theme_override_constants/separation = 18
+theme_override_constants/separation = 14
 alignment = 1
-mouse_filter = 2
 
-[node name="SpiritStoneLabel" type="Label" parent="TopBar/TopBarBox/ResourceSection/Margin/Resources"]
+[node name="SpiritStoneLabel" type="Label" parent="TopBar/Margin/TopBarRow/ResourceStrip"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"WZWorldResourceText"
-mouse_filter = 2
 
-[node name="FoodLabel" type="Label" parent="TopBar/TopBarBox/ResourceSection/Margin/Resources"]
+[node name="FoodLabel" type="Label" parent="TopBar/Margin/TopBarRow/ResourceStrip"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"WZWorldResourceText"
-mouse_filter = 2
 
-[node name="WoodLabel" type="Label" parent="TopBar/TopBarBox/ResourceSection/Margin/Resources"]
+[node name="WoodLabel" type="Label" parent="TopBar/Margin/TopBarRow/ResourceStrip"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"WZWorldResourceText"
-mouse_filter = 2
 
-[node name="StoneLabel" type="Label" parent="TopBar/TopBarBox/ResourceSection/Margin/Resources"]
+[node name="StoneLabel" type="Label" parent="TopBar/Margin/TopBarRow/ResourceStrip"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"WZWorldResourceText"
-mouse_filter = 2
 
-[node name="SaveButton" type="Button" parent="TopBar/TopBarBox"]
+[node name="SaveButton" type="Button" parent="TopBar/Margin/TopBarRow"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(86, 0)
+custom_minimum_size = Vector2(68, 40)
 layout_mode = 2
-theme_type_variation = &"WZPrimaryTextureButton"
+theme_type_variation = &"WZWorldPrimaryButton"
 text = "保存"
 tooltip_text = "快速保存当前世界"
 
-[node name="SettingsButton" type="Button" parent="TopBar/TopBarBox"]
+[node name="SettingsButton" type="Button" parent="TopBar/Margin/TopBarRow"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(86, 0)
+custom_minimum_size = Vector2(68, 40)
 layout_mode = 2
-theme_type_variation = &"WZPrimaryTextureButton"
+theme_type_variation = &"WZWorldSecondaryButton"
 text = "设置"
 
 [node name="LeftNavigation" type="PanelContainer" parent="."]
 layout_mode = 1
-anchors_preset = 5
-anchor_top = 0.12
-anchor_bottom = 0.76
+anchors_preset = 0
 offset_left = 16.0
-offset_right = 204.0
-grow_vertical = 2
-theme_type_variation = &"WZWorldNavigationPanel"
-mouse_filter = 2
+offset_top = 88.0
+offset_right = 92.0
+offset_bottom = 400.0
+theme_type_variation = &"WZWorldNavPanel"
 
 [node name="Margin" type="MarginContainer" parent="LeftNavigation"]
 layout_mode = 2
-theme_override_constants/margin_left = 16
-theme_override_constants/margin_top = 26
-theme_override_constants/margin_right = 16
-theme_override_constants/margin_bottom = 26
-mouse_filter = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
 
-[node name="Buttons" type="VBoxContainer" parent="LeftNavigation/Margin"]
+[node name="NavigationBox" type="VBoxContainer" parent="LeftNavigation/Margin"]
 layout_mode = 2
-theme_override_constants/separation = 14
-alignment = 1
-mouse_filter = 2
+theme_override_constants/separation = 8
 
-[node name="SectButton" type="Button" parent="LeftNavigation/Margin/Buttons"]
+[node name="SectButton" type="Button" parent="LeftNavigation/Margin/NavigationBox"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 48)
+custom_minimum_size = Vector2(0, 52)
 layout_mode = 2
-theme_type_variation = &"WZNavigationButton"
+theme_type_variation = &"WZWorldNavButton"
 text = "宗门"
 
-[node name="DiscipleButton" type="Button" parent="LeftNavigation/Margin/Buttons"]
+[node name="DiscipleButton" type="Button" parent="LeftNavigation/Margin/NavigationBox"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 48)
+custom_minimum_size = Vector2(0, 52)
 layout_mode = 2
-theme_type_variation = &"WZNavigationButtonDisabled"
+theme_type_variation = &"WZWorldNavButtonDisabled"
 text = "弟子"
 
-[node name="BuildingButton" type="Button" parent="LeftNavigation/Margin/Buttons"]
+[node name="BuildingButton" type="Button" parent="LeftNavigation/Margin/NavigationBox"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 48)
+custom_minimum_size = Vector2(0, 52)
 layout_mode = 2
-theme_type_variation = &"WZNavigationButtonDisabled"
-text = "建设"
+theme_type_variation = &"WZWorldNavButtonDisabled"
+text = "建筑"
 
-[node name="WorldButton" type="Button" parent="LeftNavigation/Margin/Buttons"]
+[node name="WorldButton" type="Button" parent="LeftNavigation/Margin/NavigationBox"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 48)
+custom_minimum_size = Vector2(0, 52)
 layout_mode = 2
 toggle_mode = true
-theme_type_variation = &"WZNavigationButtonSelected"
+theme_type_variation = &"WZWorldNavButtonSelected"
 text = "世界"
 
-[node name="DiplomacyButton" type="Button" parent="LeftNavigation/Margin/Buttons"]
+[node name="DiplomacyButton" type="Button" parent="LeftNavigation/Margin/NavigationBox"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 48)
+custom_minimum_size = Vector2(0, 52)
 layout_mode = 2
-theme_type_variation = &"WZNavigationButtonDisabled"
+theme_type_variation = &"WZWorldNavButtonDisabled"
 text = "外交"
 
 [node name="DetailsPanel" type="PanelContainer" parent="."]
 layout_mode = 1
-anchors_preset = 1
+anchors_preset = 7
 anchor_left = 1.0
+anchor_top = 0.0
 anchor_right = 1.0
-anchor_bottom = 0.76
-offset_left = -390.0
-offset_top = 130.0
+anchor_bottom = 1.0
+offset_left = -356.0
+offset_top = 88.0
 offset_right = -16.0
-offset_bottom = 0.0
+offset_bottom = -72.0
 grow_horizontal = 0
 grow_vertical = 2
 theme_type_variation = &"WZWorldDetailsPanel"
-mouse_filter = 2
 
 [node name="Margin" type="MarginContainer" parent="DetailsPanel"]
 layout_mode = 2
-theme_override_constants/margin_left = 24
-theme_override_constants/margin_top = 28
-theme_override_constants/margin_right = 24
-theme_override_constants/margin_bottom = 22
-mouse_filter = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 16
 
-[node name="Box" type="VBoxContainer" parent="DetailsPanel/Margin"]
+[node name="DetailsScroll" type="ScrollContainer" parent="DetailsPanel/Margin"]
 layout_mode = 2
-theme_override_constants/separation = 8
-mouse_filter = 2
+horizontal_scroll_mode = 0
+vertical_scroll_mode = 2
 
-[node name="ContextLabel" type="Label" parent="DetailsPanel/Margin/Box"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_type_variation = &"WZWorldMutedText"
-mouse_filter = 2
-
-[node name="TitleRow" type="HBoxContainer" parent="DetailsPanel/Margin/Box"]
-layout_mode = 2
-theme_override_constants/separation = 10
-mouse_filter = 2
-
-[node name="Emblem" type="TextureRect" parent="DetailsPanel/Margin/Box/TitleRow"]
-custom_minimum_size = Vector2(46, 46)
-layout_mode = 2
-texture = ExtResource("2_emblem")
-expand_mode = 1
-stretch_mode = 5
-mouse_filter = 2
-
-[node name="TitleBox" type="VBoxContainer" parent="DetailsPanel/Margin/Box/TitleRow"]
+[node name="DetailsBox" type="VBoxContainer" parent="DetailsPanel/Margin/DetailsScroll"]
 layout_mode = 2
 size_flags_horizontal = 3
-alignment = 1
-mouse_filter = 2
+theme_override_constants/separation = 10
 
-[node name="TitleLabel" type="Label" parent="DetailsPanel/Margin/Box/TitleRow/TitleBox"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_type_variation = &"WZWorldSectionTitle"
-mouse_filter = 2
-
-[node name="BadgeLabel" type="Label" parent="DetailsPanel/Margin/Box/TitleRow/TitleBox"]
+[node name="ContextLabel" type="Label" parent="DetailsPanel/Margin/DetailsScroll/DetailsBox"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"WZWorldMutedText"
-mouse_filter = 2
 
-[node name="Divider" type="TextureRect" parent="DetailsPanel/Margin/Box"]
-custom_minimum_size = Vector2(0, 14)
-layout_mode = 2
-texture = ExtResource("3_divider")
-expand_mode = 1
-stretch_mode = 6
-mouse_filter = 2
-
-[node name="PrimaryInfoLabel" type="Label" parent="DetailsPanel/Margin/Box"]
+[node name="TitleLabel" type="Label" parent="DetailsPanel/Margin/DetailsScroll/DetailsBox"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_type_variation = &"WZWorldBody"
+theme_type_variation = &"WZWorldTitle"
 autowrap_mode = 3
-mouse_filter = 2
 
-[node name="DetailGroup" type="PanelContainer" parent="DetailsPanel/Margin/Box"]
-layout_mode = 2
-size_flags_vertical = 3
-theme_type_variation = &"WZWorldDetailsGroup"
-mouse_filter = 2
-
-[node name="InnerMargin" type="MarginContainer" parent="DetailsPanel/Margin/Box/DetailGroup"]
-layout_mode = 2
-theme_override_constants/margin_left = 14
-theme_override_constants/margin_top = 14
-theme_override_constants/margin_right = 14
-theme_override_constants/margin_bottom = 14
-mouse_filter = 2
-
-[node name="SecondaryInfoLabel" type="Label" parent="DetailsPanel/Margin/Box/DetailGroup/InnerMargin"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_type_variation = &"WZWorldBody"
-autowrap_mode = 3
-mouse_filter = 2
-
-[node name="DescriptionLabel" type="Label" parent="DetailsPanel/Margin/Box"]
+[node name="BadgeLabel" type="Label" parent="DetailsPanel/Margin/DetailsScroll/DetailsBox"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"WZWorldMutedText"
 autowrap_mode = 3
-mouse_filter = 2
 
-[node name="PrimaryActionButton" type="Button" parent="DetailsPanel/Margin/Box"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 44)
+[node name="Separator" type="HSeparator" parent="DetailsPanel/Margin/DetailsScroll/DetailsBox"]
 layout_mode = 2
-theme_type_variation = &"WZPrimaryTextureButton"
+
+[node name="PrimaryInfoLabel" type="Label" parent="DetailsPanel/Margin/DetailsScroll/DetailsBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"WZWorldBody"
+autowrap_mode = 3
+
+[node name="SecondaryInfoLabel" type="Label" parent="DetailsPanel/Margin/DetailsScroll/DetailsBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"WZWorldBody"
+autowrap_mode = 3
+
+[node name="DescriptionLabel" type="Label" parent="DetailsPanel/Margin/DetailsScroll/DetailsBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"WZWorldMutedText"
+autowrap_mode = 3
+
+[node name="PrimaryActionButton" type="Button" parent="DetailsPanel/Margin/DetailsScroll/DetailsBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+theme_type_variation = &"WZWorldPrimaryButton"
 text = "进入宗门"
 
 [node name="BottomBar" type="PanelContainer" parent="."]
@@ -326,64 +232,61 @@ anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = 16.0
-offset_top = -92.0
+offset_top = -60.0
 offset_right = -16.0
-offset_bottom = -14.0
+offset_bottom = -12.0
 grow_horizontal = 2
 grow_vertical = 0
 theme_type_variation = &"WZWorldBottomPanel"
-mouse_filter = 2
 
 [node name="Margin" type="MarginContainer" parent="BottomBar"]
 layout_mode = 2
-theme_override_constants/margin_left = 24
-theme_override_constants/margin_top = 12
-theme_override_constants/margin_right = 24
-theme_override_constants/margin_bottom = 12
-mouse_filter = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 4
 
-[node name="Controls" type="HBoxContainer" parent="BottomBar/Margin"]
+[node name="BottomBarRow" type="HBoxContainer" parent="BottomBar/Margin"]
 layout_mode = 2
-theme_override_constants/separation = 10
-mouse_filter = 2
+theme_override_constants/separation = 8
 
-[node name="ZoomOutButton" type="Button" parent="BottomBar/Margin/Controls"]
+[node name="ZoomOutButton" type="Button" parent="BottomBar/Margin/BottomBarRow"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(72, 0)
+custom_minimum_size = Vector2(64, 0)
 layout_mode = 2
-theme_type_variation = &"WZNavigationButton"
+theme_type_variation = &"WZWorldSecondaryButton"
 text = "缩小"
 
-[node name="ZoomInButton" type="Button" parent="BottomBar/Margin/Controls"]
+[node name="ZoomInButton" type="Button" parent="BottomBar/Margin/BottomBarRow"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(72, 0)
+custom_minimum_size = Vector2(64, 0)
 layout_mode = 2
-theme_type_variation = &"WZNavigationButton"
+theme_type_variation = &"WZWorldSecondaryButton"
 text = "放大"
 
-[node name="LocateButton" type="Button" parent="BottomBar/Margin/Controls"]
+[node name="LocateButton" type="Button" parent="BottomBar/Margin/BottomBarRow"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(88, 0)
+custom_minimum_size = Vector2(64, 0)
 layout_mode = 2
-theme_type_variation = &"WZNavigationButton"
-text = "定位宗门"
+theme_type_variation = &"WZWorldSecondaryButton"
+text = "定位"
 
-[node name="TerritoryButton" type="Button" parent="BottomBar/Margin/Controls"]
+[node name="TerritoryButton" type="Button" parent="BottomBar/Margin/BottomBarRow"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(88, 0)
+custom_minimum_size = Vector2(64, 0)
 layout_mode = 2
 toggle_mode = true
-theme_type_variation = &"WZNavigationButton"
+theme_type_variation = &"WZWorldSecondaryButton"
 text = "领地"
 
-[node name="FullMapButton" type="Button" parent="BottomBar/Margin/Controls"]
+[node name="FullMapButton" type="Button" parent="BottomBar/Margin/BottomBarRow"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(88, 0)
+custom_minimum_size = Vector2(64, 0)
 layout_mode = 2
-theme_type_variation = &"WZNavigationButton"
+theme_type_variation = &"WZWorldSecondaryButton"
 text = "全图"
 
-[node name="HintLabel" type="Label" parent="BottomBar/Margin/Controls"]
+[node name="HintLabel" type="Label" parent="BottomBar/Margin/BottomBarRow"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3

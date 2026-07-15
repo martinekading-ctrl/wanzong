@@ -41,9 +41,13 @@ const UNAVAILABLE_NAVIGATION_TOOLTIP := "将在青玄宗经营垂直切片的后
 @onready var territory_button: Button = %TerritoryButton
 @onready var full_map_button: Button = %FullMapButton
 @onready var hint_label: Label = %HintLabel
+@onready var details_panel: PanelContainer = $DetailsPanel
 
 
 func _ready() -> void:
+	get_viewport().size_changed.connect(_apply_responsive_layout)
+	resized.connect(_apply_responsive_layout)
+	call_deferred("_apply_responsive_layout")
 	primary_action_button.pressed.connect(func() -> void: enter_sect_requested.emit())
 	sect_button.pressed.connect(func() -> void: sect_navigation_requested.emit())
 	world_button.pressed.connect(func() -> void: world_navigation_requested.emit())
@@ -57,10 +61,19 @@ func _ready() -> void:
 	_set_unavailable_navigation(building_button)
 	_set_unavailable_navigation(diplomacy_button)
 	settings_button.disabled = true
-	settings_button.tooltip_text = "设置界面将在后续步骤开放"
+	settings_button.tooltip_text = "设置界面将在后续步骤接入"
 	world_button.set_pressed_no_signal(true)
 	set_primary_action_visible(false)
 	set_hint("滚轮缩放；中键拖动地图；点击宗门、资源点或建设点查看详情")
+
+
+func _apply_responsive_layout() -> void:
+	var viewport_width := get_viewport_rect().size.x
+	if get_parent() is Control:
+		viewport_width = (get_parent() as Control).size.x
+	var panel_width := clampf(viewport_width * 0.18, 300.0, 360.0)
+	details_panel.offset_left = -16.0 - panel_width
+	details_panel.offset_right = -16.0
 
 
 func _set_unavailable_navigation(button: Button) -> void:
