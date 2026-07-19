@@ -73,6 +73,24 @@ func _set_zoom(new_zoom: float) -> void:
 	_clamp_camera_position()
 
 
+## Public HUD entry point: uses the same clamped zoom implementation as wheel input.
+func zoom_by(direction: float) -> void:
+	_set_zoom(zoom.x + zoom_step * direction)
+
+
+## Public HUD entry point: center on a real world location without bypassing bounds checks.
+func focus_on(world_position: Vector2) -> void:
+	position = world_position
+	_clamp_camera_position()
+
+
+## Public HUD entry point: reset to the actual overview zoom and map centre.
+func show_full_map() -> void:
+	_set_zoom(min_zoom)
+	position = map_origin + map_size * 0.5
+	_clamp_camera_position()
+
+
 # 窗口尺寸变化后重新限制镜头位置。
 func _on_viewport_size_changed() -> void:
 	_clamp_camera_position()

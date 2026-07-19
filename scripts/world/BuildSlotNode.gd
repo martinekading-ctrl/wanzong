@@ -42,11 +42,11 @@ func setup(data: Dictionary) -> void:
 	queue_redraw()
 
 
-# 绘制黄色像素方块，表示可建设空地。
+# 绘制古金色细框，表示可建设空地，避免看起来像调试方块。
 func _draw() -> void:
 	var rect := Rect2(SLOT_SIZE * -0.5, SLOT_SIZE)
-	draw_rect(rect, Color(0.30, 0.24, 0.08), true)
-	draw_rect(rect.grow(-2.0), Color(1.0, 0.86, 0.30), true)
+	draw_rect(rect, Color(0.73, 0.58, 0.28, 0.88), false, 1.0)
+	draw_rect(rect.grow(-2.0), Color(0.25, 0.19, 0.08, 0.70), false, 1.0)
 	if is_selected:
 		draw_rect(rect.grow(3.0), SELECT_COLOR, false, 2.0)
 

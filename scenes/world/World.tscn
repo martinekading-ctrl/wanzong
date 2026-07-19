@@ -1,13 +1,20 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://scripts/world/World.gd" id="1_world"]
 [ext_resource type="Script" path="res://scripts/world/WorldCamera.gd" id="2_world_camera"]
+[ext_resource type="PackedScene" path="res://scenes/ui/components/WorldHUD.tscn" id="3_world_hud"]
+[ext_resource type="Script" path="res://scripts/world/GroundPreview.gd" id="4_ground_preview"]
 
 [node name="World" type="Node2D"]
 script = ExtResource("1_world")
 
 [node name="MapLayer" type="Node2D" parent="."]
+visible = false
 z_index = -100
+
+[node name="GroundPreviewLayer" type="Node2D" parent="."]
+z_index = -90
+script = ExtResource("4_ground_preview")
 
 [node name="TerritoryLayer" type="Node2D" parent="."]
 z_index = -60
@@ -34,62 +41,9 @@ z_index = 50
 z_index = 60
 
 [node name="UILayer" type="CanvasLayer" parent="."]
-
-[node name="InfoPanel" type="PanelContainer" parent="UILayer"]
-anchors_preset = 1
-anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -360.0
-offset_top = 34.0
-offset_right = -32.0
-offset_bottom = 338.0
-modulate = Color(1, 1, 1, 0.65)
-
-[node name="InfoBox" type="VBoxContainer" parent="UILayer/InfoPanel"]
-layout_mode = 2
-theme_override_constants/separation = 8
-
-[node name="TitleLabel" type="Label" parent="UILayer/InfoPanel/InfoBox"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 20
-text = "宗门信息"
-
-[node name="NameLabel" type="Label" parent="UILayer/InfoPanel/InfoBox"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 15
-text = "宗门名称：未选择"
-
-[node name="OwnerLabel" type="Label" parent="UILayer/InfoPanel/InfoBox"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 15
-text = "是否玩家宗门：-"
-
-[node name="DiscipleCountLabel" type="Label" parent="UILayer/InfoPanel/InfoBox"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 15
-text = "弟子数量：-"
-
-[node name="SpiritStoneLabel" type="Label" parent="UILayer/InfoPanel/InfoBox"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 15
-text = "灵石：-"
-
-[node name="PowerLabel" type="Label" parent="UILayer/InfoPanel/InfoBox"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 15
-text = "战力：-"
-
-[node name="TipLabel" type="Label" parent="UILayer/InfoPanel/InfoBox"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 13
-text = "点击地图上的宗门查看信息"
-autowrap_mode = 3
-
-[node name="EnterSectButton" type="Button" parent="UILayer/InfoPanel/InfoBox"]
 visible = false
-custom_minimum_size = Vector2(0, 40)
-layout_mode = 2
-text = "进入宗门"
+
+[node name="WorldHUD" parent="UILayer" instance=ExtResource("3_world_hud")]
 
 [node name="WorldCamera" type="Camera2D" parent="."]
 position = Vector2(2176, 2176)

@@ -1,4 +1,4 @@
-[gd_resource type="Theme" load_steps=9 format=3]
+[gd_resource type="Theme" load_steps=23 format=3]
 
 [sub_resource type="StyleBoxFlat" id="StyleButtonNormal"]
 bg_color = Color(0.105, 0.13, 0.14, 0.96)
@@ -44,9 +44,9 @@ corner_radius_top_right = 4
 corner_radius_bottom_right = 4
 corner_radius_bottom_left = 4
 content_margin_left = 12.0
-content_margin_top = 7.0
+content_margin_top = 8.0
 content_margin_right = 12.0
-content_margin_bottom = 7.0
+content_margin_bottom = 6.0
 
 [sub_resource type="StyleBoxFlat" id="StyleButtonDisabled"]
 bg_color = Color(0.09, 0.1, 0.1, 0.8)
@@ -98,16 +98,184 @@ border_width_left = 2
 border_width_top = 2
 border_width_right = 2
 border_width_bottom = 2
-border_color = Color(0.88, 0.7, 0.3, 0.9)
+border_color = Color(0.33, 0.73, 0.66, 0.95)
 corner_radius_top_left = 4
 corner_radius_top_right = 4
 corner_radius_bottom_right = 4
 corner_radius_bottom_left = 4
 
 [sub_resource type="StyleBoxFlat" id="StyleSeparator"]
-bg_color = Color(0.49, 0.4, 0.22, 0.65)
+bg_color = Color(0.564706, 0.478431, 0.286275, 0.7)
 content_margin_top = 1.0
 content_margin_bottom = 1.0
+
+[sub_resource type="StyleBoxFlat" id="StyleWorldPanel"]
+bg_color = Color(0.0627451, 0.141176, 0.14902, 0.909804)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.564706, 0.478431, 0.286275, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleWorldRaisedPanel"]
+bg_color = Color(0.0862745, 0.188235, 0.2, 0.941176)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.564706, 0.478431, 0.286275, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleWorldPrimaryNormal"]
+bg_color = Color(0.0862745, 0.188235, 0.2, 0.941176)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.564706, 0.478431, 0.286275, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+content_margin_left = 10.0
+content_margin_top = 6.0
+content_margin_right = 10.0
+content_margin_bottom = 6.0
+
+[sub_resource type="StyleBoxFlat" id="StyleWorldPrimaryHover"]
+bg_color = Color(0.0980392, 0.243137, 0.239216, 0.96)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.478431, 0.819608, 0.74902, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+content_margin_left = 10.0
+content_margin_top = 6.0
+content_margin_right = 10.0
+content_margin_bottom = 6.0
+
+[sub_resource type="StyleBoxFlat" id="StyleWorldPrimaryPressed"]
+bg_color = Color(0.0588235, 0.160784, 0.164706, 0.98)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.333333, 0.733333, 0.658824, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+content_margin_left = 10.0
+content_margin_top = 8.0
+content_margin_right = 10.0
+content_margin_bottom = 4.0
+
+[sub_resource type="StyleBoxFlat" id="StyleWorldPrimaryDisabled"]
+bg_color = Color(0.0627451, 0.0862745, 0.0823529, 0.78)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.235294, 0.262745, 0.247059, 0.9)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+content_margin_left = 10.0
+content_margin_top = 6.0
+content_margin_right = 10.0
+content_margin_bottom = 6.0
+
+[sub_resource type="StyleBoxFlat" id="StyleWorldSecondaryNormal"]
+bg_color = Color(0.0627451, 0.141176, 0.14902, 0.909804)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.564706, 0.478431, 0.286275, 0.85)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+content_margin_left = 8.0
+content_margin_top = 6.0
+content_margin_right = 8.0
+content_margin_bottom = 6.0
+
+[sub_resource type="StyleBoxFlat" id="StyleWorldSecondaryHover"]
+bg_color = Color(0.0862745, 0.188235, 0.2, 0.941176)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.333333, 0.733333, 0.658824, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+content_margin_left = 8.0
+content_margin_top = 6.0
+content_margin_right = 8.0
+content_margin_bottom = 6.0
+
+[sub_resource type="StyleBoxFlat" id="StyleWorldSecondaryPressed"]
+bg_color = Color(0.0431373, 0.113725, 0.117647, 0.98)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.333333, 0.733333, 0.658824, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+content_margin_left = 8.0
+content_margin_top = 8.0
+content_margin_right = 8.0
+content_margin_bottom = 4.0
+
+[sub_resource type="StyleBoxFlat" id="StyleWorldSecondaryDisabled"]
+bg_color = Color(0.0627451, 0.0862745, 0.0823529, 0.78)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.235294, 0.262745, 0.247059, 0.9)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+content_margin_left = 8.0
+content_margin_top = 6.0
+content_margin_right = 8.0
+content_margin_bottom = 6.0
+
+[sub_resource type="StyleBoxFlat" id="StyleWorldNavSelected"]
+bg_color = Color(0.0980392, 0.243137, 0.239216, 0.96)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.478431, 0.819608, 0.74902, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+content_margin_left = 6.0
+content_margin_top = 6.0
+content_margin_right = 6.0
+content_margin_bottom = 6.0
 
 [resource]
 default_font_size = 16
@@ -133,3 +301,81 @@ OptionButton/styles/focus = SubResource("StyleFocus")
 Panel/styles/panel = SubResource("StylePanel")
 PanelContainer/styles/panel = SubResource("StylePanel")
 HSeparator/styles/separator = SubResource("StyleSeparator")
+WZWorldTopPanel/base_type = &"PanelContainer"
+WZWorldTopPanel/styles/panel = SubResource("StyleWorldPanel")
+WZWorldNavPanel/base_type = &"PanelContainer"
+WZWorldNavPanel/styles/panel = SubResource("StyleWorldRaisedPanel")
+WZWorldDetailsPanel/base_type = &"PanelContainer"
+WZWorldDetailsPanel/styles/panel = SubResource("StyleWorldPanel")
+WZWorldBottomPanel/base_type = &"PanelContainer"
+WZWorldBottomPanel/styles/panel = SubResource("StyleWorldPanel")
+WZWorldPrimaryButton/base_type = &"Button"
+WZWorldPrimaryButton/colors/font_color = Color(0.894118, 0.866667, 0.780392, 1)
+WZWorldPrimaryButton/colors/font_hover_color = Color(0.478431, 0.819608, 0.74902, 1)
+WZWorldPrimaryButton/colors/font_pressed_color = Color(0.894118, 0.866667, 0.780392, 1)
+WZWorldPrimaryButton/colors/font_disabled_color = Color(0.376471, 0.415686, 0.396078, 1)
+WZWorldPrimaryButton/styles/normal = SubResource("StyleWorldPrimaryNormal")
+WZWorldPrimaryButton/styles/hover = SubResource("StyleWorldPrimaryHover")
+WZWorldPrimaryButton/styles/pressed = SubResource("StyleWorldPrimaryPressed")
+WZWorldPrimaryButton/styles/disabled = SubResource("StyleWorldPrimaryDisabled")
+WZWorldPrimaryButton/styles/focus = SubResource("StyleFocus")
+WZWorldSecondaryButton/base_type = &"Button"
+WZWorldSecondaryButton/colors/font_color = Color(0.894118, 0.866667, 0.780392, 1)
+WZWorldSecondaryButton/colors/font_hover_color = Color(0.478431, 0.819608, 0.74902, 1)
+WZWorldSecondaryButton/colors/font_pressed_color = Color(0.894118, 0.866667, 0.780392, 1)
+WZWorldSecondaryButton/colors/font_disabled_color = Color(0.376471, 0.415686, 0.396078, 1)
+WZWorldSecondaryButton/styles/normal = SubResource("StyleWorldSecondaryNormal")
+WZWorldSecondaryButton/styles/hover = SubResource("StyleWorldSecondaryHover")
+WZWorldSecondaryButton/styles/pressed = SubResource("StyleWorldSecondaryPressed")
+WZWorldSecondaryButton/styles/disabled = SubResource("StyleWorldSecondaryDisabled")
+WZWorldSecondaryButton/styles/focus = SubResource("StyleFocus")
+WZWorldNavButton/base_type = &"Button"
+WZWorldNavButton/colors/font_color = Color(0.894118, 0.866667, 0.780392, 1)
+WZWorldNavButton/colors/font_hover_color = Color(0.478431, 0.819608, 0.74902, 1)
+WZWorldNavButton/colors/font_pressed_color = Color(0.894118, 0.866667, 0.780392, 1)
+WZWorldNavButton/colors/font_disabled_color = Color(0.376471, 0.415686, 0.396078, 1)
+WZWorldNavButton/styles/normal = SubResource("StyleWorldSecondaryNormal")
+WZWorldNavButton/styles/hover = SubResource("StyleWorldSecondaryHover")
+WZWorldNavButton/styles/pressed = SubResource("StyleWorldSecondaryPressed")
+WZWorldNavButton/styles/disabled = SubResource("StyleWorldSecondaryDisabled")
+WZWorldNavButton/styles/focus = SubResource("StyleFocus")
+WZWorldNavButtonSelected/base_type = &"Button"
+WZWorldNavButtonSelected/colors/font_color = Color(0.894118, 0.866667, 0.780392, 1)
+WZWorldNavButtonSelected/colors/font_hover_color = Color(0.478431, 0.819608, 0.74902, 1)
+WZWorldNavButtonSelected/colors/font_pressed_color = Color(0.894118, 0.866667, 0.780392, 1)
+WZWorldNavButtonSelected/colors/font_disabled_color = Color(0.376471, 0.415686, 0.396078, 1)
+WZWorldNavButtonSelected/styles/normal = SubResource("StyleWorldNavSelected")
+WZWorldNavButtonSelected/styles/hover = SubResource("StyleWorldPrimaryHover")
+WZWorldNavButtonSelected/styles/pressed = SubResource("StyleWorldPrimaryPressed")
+WZWorldNavButtonSelected/styles/disabled = SubResource("StyleWorldSecondaryDisabled")
+WZWorldNavButtonSelected/styles/focus = SubResource("StyleFocus")
+WZWorldNavButtonDisabled/base_type = &"Button"
+WZWorldNavButtonDisabled/colors/font_color = Color(0.376471, 0.415686, 0.396078, 1)
+WZWorldNavButtonDisabled/colors/font_hover_color = Color(0.376471, 0.415686, 0.396078, 1)
+WZWorldNavButtonDisabled/colors/font_pressed_color = Color(0.376471, 0.415686, 0.396078, 1)
+WZWorldNavButtonDisabled/colors/font_disabled_color = Color(0.376471, 0.415686, 0.396078, 1)
+WZWorldNavButtonDisabled/styles/normal = SubResource("StyleWorldSecondaryDisabled")
+WZWorldNavButtonDisabled/styles/hover = SubResource("StyleWorldSecondaryDisabled")
+WZWorldNavButtonDisabled/styles/pressed = SubResource("StyleWorldSecondaryDisabled")
+WZWorldNavButtonDisabled/styles/disabled = SubResource("StyleWorldSecondaryDisabled")
+WZWorldNavButtonDisabled/styles/focus = SubResource("StyleFocus")
+WZWorldTitle/base_type = &"Label"
+WZWorldTitle/colors/font_color = Color(0.894118, 0.866667, 0.780392, 1)
+WZWorldTitle/constants/outline_size = 1
+WZWorldTitle/colors/font_outline_color = Color(0.0196078, 0.054902, 0.054902, 1)
+WZWorldTitle/font_sizes/font_size = 18
+WZWorldBody/base_type = &"Label"
+WZWorldBody/colors/font_color = Color(0.894118, 0.866667, 0.780392, 1)
+WZWorldBody/constants/outline_size = 1
+WZWorldBody/colors/font_outline_color = Color(0.0196078, 0.054902, 0.054902, 1)
+WZWorldBody/font_sizes/font_size = 14
+WZWorldMutedText/base_type = &"Label"
+WZWorldMutedText/colors/font_color = Color(0.611765, 0.65098, 0.615686, 1)
+WZWorldMutedText/constants/outline_size = 1
+WZWorldMutedText/colors/font_outline_color = Color(0.0196078, 0.054902, 0.054902, 1)
+WZWorldMutedText/font_sizes/font_size = 12
+WZWorldResourceText/base_type = &"Label"
+WZWorldResourceText/colors/font_color = Color(0.894118, 0.866667, 0.780392, 1)
+WZWorldResourceText/constants/outline_size = 1
+WZWorldResourceText/colors/font_outline_color = Color(0.0196078, 0.054902, 0.054902, 1)
+WZWorldResourceText/font_sizes/font_size = 14

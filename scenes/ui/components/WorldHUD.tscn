@@ -1,0 +1,297 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scenes/ui/components/WorldHUD.gd" id="1_script"]
+
+[node name="WorldHUD" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_script")
+
+[node name="TopBar" type="PanelContainer" parent="."]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 16.0
+offset_top = 12.0
+offset_right = -16.0
+offset_bottom = 76.0
+grow_horizontal = 2
+theme_type_variation = &"WZWorldTopPanel"
+
+[node name="Margin" type="MarginContainer" parent="TopBar"]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 8
+
+[node name="TopBarRow" type="HBoxContainer" parent="TopBar/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="SectBlock" type="VBoxContainer" parent="TopBar/Margin/TopBarRow"]
+custom_minimum_size = Vector2(240, 0)
+layout_mode = 2
+alignment = 1
+
+[node name="SectNameLabel" type="Label" parent="TopBar/Margin/TopBarRow/SectBlock"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"WZWorldTitle"
+text = ""
+
+[node name="DateLabel" type="Label" parent="TopBar/Margin/TopBarRow/SectBlock"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"WZWorldMutedText"
+text = ""
+
+[node name="ResourceStrip" type="HBoxContainer" parent="TopBar/Margin/TopBarRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 14
+alignment = 1
+
+[node name="SpiritStoneLabel" type="Label" parent="TopBar/Margin/TopBarRow/ResourceStrip"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"WZWorldResourceText"
+
+[node name="FoodLabel" type="Label" parent="TopBar/Margin/TopBarRow/ResourceStrip"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"WZWorldResourceText"
+
+[node name="WoodLabel" type="Label" parent="TopBar/Margin/TopBarRow/ResourceStrip"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"WZWorldResourceText"
+
+[node name="StoneLabel" type="Label" parent="TopBar/Margin/TopBarRow/ResourceStrip"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"WZWorldResourceText"
+
+[node name="SaveButton" type="Button" parent="TopBar/Margin/TopBarRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(68, 40)
+layout_mode = 2
+theme_type_variation = &"WZWorldPrimaryButton"
+text = "保存"
+tooltip_text = "快速保存当前世界"
+
+[node name="SettingsButton" type="Button" parent="TopBar/Margin/TopBarRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(68, 40)
+layout_mode = 2
+theme_type_variation = &"WZWorldSecondaryButton"
+text = "设置"
+
+[node name="LeftNavigation" type="PanelContainer" parent="."]
+layout_mode = 1
+anchors_preset = 0
+offset_left = 16.0
+offset_top = 88.0
+offset_right = 92.0
+offset_bottom = 400.0
+theme_type_variation = &"WZWorldNavPanel"
+
+[node name="Margin" type="MarginContainer" parent="LeftNavigation"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="NavigationBox" type="VBoxContainer" parent="LeftNavigation/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="SectButton" type="Button" parent="LeftNavigation/Margin/NavigationBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+theme_type_variation = &"WZWorldNavButton"
+text = "宗门"
+
+[node name="DiscipleButton" type="Button" parent="LeftNavigation/Margin/NavigationBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+theme_type_variation = &"WZWorldNavButtonDisabled"
+text = "弟子"
+
+[node name="BuildingButton" type="Button" parent="LeftNavigation/Margin/NavigationBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+theme_type_variation = &"WZWorldNavButtonDisabled"
+text = "建筑"
+
+[node name="WorldButton" type="Button" parent="LeftNavigation/Margin/NavigationBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+toggle_mode = true
+theme_type_variation = &"WZWorldNavButtonSelected"
+text = "世界"
+
+[node name="DiplomacyButton" type="Button" parent="LeftNavigation/Margin/NavigationBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+theme_type_variation = &"WZWorldNavButtonDisabled"
+text = "外交"
+
+[node name="DetailsPanel" type="PanelContainer" parent="."]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 1.0
+anchor_top = 0.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -356.0
+offset_top = 88.0
+offset_right = -16.0
+offset_bottom = -72.0
+grow_horizontal = 0
+grow_vertical = 2
+theme_type_variation = &"WZWorldDetailsPanel"
+
+[node name="Margin" type="MarginContainer" parent="DetailsPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 16
+
+[node name="DetailsScroll" type="ScrollContainer" parent="DetailsPanel/Margin"]
+layout_mode = 2
+horizontal_scroll_mode = 0
+vertical_scroll_mode = 2
+
+[node name="DetailsBox" type="VBoxContainer" parent="DetailsPanel/Margin/DetailsScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+
+[node name="ContextLabel" type="Label" parent="DetailsPanel/Margin/DetailsScroll/DetailsBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"WZWorldMutedText"
+
+[node name="TitleLabel" type="Label" parent="DetailsPanel/Margin/DetailsScroll/DetailsBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"WZWorldTitle"
+autowrap_mode = 3
+
+[node name="BadgeLabel" type="Label" parent="DetailsPanel/Margin/DetailsScroll/DetailsBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"WZWorldMutedText"
+autowrap_mode = 3
+
+[node name="Separator" type="HSeparator" parent="DetailsPanel/Margin/DetailsScroll/DetailsBox"]
+layout_mode = 2
+
+[node name="PrimaryInfoLabel" type="Label" parent="DetailsPanel/Margin/DetailsScroll/DetailsBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"WZWorldBody"
+autowrap_mode = 3
+
+[node name="SecondaryInfoLabel" type="Label" parent="DetailsPanel/Margin/DetailsScroll/DetailsBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"WZWorldBody"
+autowrap_mode = 3
+
+[node name="DescriptionLabel" type="Label" parent="DetailsPanel/Margin/DetailsScroll/DetailsBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"WZWorldMutedText"
+autowrap_mode = 3
+
+[node name="PrimaryActionButton" type="Button" parent="DetailsPanel/Margin/DetailsScroll/DetailsBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+theme_type_variation = &"WZWorldPrimaryButton"
+text = "进入宗门"
+
+[node name="BottomBar" type="PanelContainer" parent="."]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = -60.0
+offset_right = -16.0
+offset_bottom = -12.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_type_variation = &"WZWorldBottomPanel"
+
+[node name="Margin" type="MarginContainer" parent="BottomBar"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 4
+
+[node name="BottomBarRow" type="HBoxContainer" parent="BottomBar/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="ZoomOutButton" type="Button" parent="BottomBar/Margin/BottomBarRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(64, 0)
+layout_mode = 2
+theme_type_variation = &"WZWorldSecondaryButton"
+text = "缩小"
+
+[node name="ZoomInButton" type="Button" parent="BottomBar/Margin/BottomBarRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(64, 0)
+layout_mode = 2
+theme_type_variation = &"WZWorldSecondaryButton"
+text = "放大"
+
+[node name="LocateButton" type="Button" parent="BottomBar/Margin/BottomBarRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(64, 0)
+layout_mode = 2
+theme_type_variation = &"WZWorldSecondaryButton"
+text = "定位"
+
+[node name="TerritoryButton" type="Button" parent="BottomBar/Margin/BottomBarRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(64, 0)
+layout_mode = 2
+toggle_mode = true
+theme_type_variation = &"WZWorldSecondaryButton"
+text = "领地"
+
+[node name="FullMapButton" type="Button" parent="BottomBar/Margin/BottomBarRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(64, 0)
+layout_mode = 2
+theme_type_variation = &"WZWorldSecondaryButton"
+text = "全图"
+
+[node name="HintLabel" type="Label" parent="BottomBar/Margin/BottomBarRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"WZWorldMutedText"
+horizontal_alignment = 2
+vertical_alignment = 1
+autowrap_mode = 2
+mouse_filter = 2

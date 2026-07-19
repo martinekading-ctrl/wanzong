@@ -164,6 +164,9 @@ func _create_info_label() -> void:
 	info_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	info_label.text = resource_name + " Lv" + str(level)
 	info_label.add_theme_font_size_override("font_size", 13)
+	info_label.add_theme_color_override("font_color", Color("#d6efe0"))
+	info_label.add_theme_color_override("font_outline_color", Color("#061011"))
+	info_label.add_theme_constant_override("outline_size", 3)
 	info_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	info_label.visible = false
 	add_child(info_label)
