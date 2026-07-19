@@ -13,6 +13,7 @@ const ResourceNodeScript := preload("res://scripts/world/ResourceNode.gd")
 const BuildSlotNodeScript := preload("res://scripts/world/BuildSlotNode.gd")
 
 const USE_RUNTIME_WORLD_GENERATION := false
+const USE_WORLD_SCENE_ART := false
 const GENERATED_WORLD_MAP_PATH := "res://scenes/world/GeneratedWorldMap.scn"
 const SIMPLE_WORLD_FALLBACK_PATH := "res://scenes/world/SimpleWorldFallback.tscn"
 const WORLD_READY_WARNING_MS: int = 2000
@@ -282,6 +283,10 @@ func _create_sect_nodes() -> void:
 
 # 优先扫描处理后的小图；目录为空时回退到原图目录。
 func _load_sect_icon_paths() -> void:
+	if not USE_WORLD_SCENE_ART:
+		sect_icon_paths.clear()
+		active_sect_icon_directory = ""
+		return
 	sect_icon_paths = _scan_sect_icon_directory(SECT_ICON_DIRECTORY)
 	active_sect_icon_directory = SECT_ICON_DIRECTORY
 	if sect_icon_paths.is_empty():
@@ -333,6 +338,8 @@ func _get_sect_icon_path(sect_index: int, is_player: bool) -> String:
 func _load_resource_icon_paths() -> void:
 	resource_icon_paths_by_type.clear()
 	resource_icon_rng.seed = RESOURCE_ICON_RANDOM_SEED
+	if not USE_WORLD_SCENE_ART:
+		return
 
 	for resource_type in RESOURCE_TYPE_DIRECTORIES:
 		var category_directory: String = str(RESOURCE_TYPE_DIRECTORIES[resource_type])
